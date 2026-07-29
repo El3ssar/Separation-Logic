@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="assets/base.css">
 <link rel="stylesheet" href="assets/blocks.css">
 <link rel="stylesheet" href="assets/editor.css">
+<link rel="stylesheet" href="assets/responsive.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0969DA">
 </head>
@@ -51,9 +52,13 @@
       <button class="tb-btn railToggle" id="railToggle" aria-label="Menu">☰</button>
       <div class="crumb" id="crumb"></div>
       <span class="lean-pill idle" id="leanStatus" title="Lean runtime">Lean idle</span>
-      <button class="tb-btn" id="find">Search <kbd>/</kbd></button>
-      <button class="tb-btn" id="notation">Notation <kbd>n</kbd></button>
-      <button class="tb-btn" id="theme"><span id="themeIcon"></span><span id="themeLabel">Auto</span></button>
+      <button class="tb-btn" id="find" title="Search" aria-label="Search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.3-4.3"/></svg>
+        <span class="tb-label">Search</span> <kbd>/</kbd></button>
+      <button class="tb-btn" id="notation" title="Notation" aria-label="Notation">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h13v16H6.5A2.5 2.5 0 0 0 4 22.5V19.5Z"/><path d="M9 8h6M9 12h4"/></svg>
+        <span class="tb-label">Notation</span> <kbd>n</kbd></button>
+      <button class="tb-btn" id="theme" title="Theme" aria-label="Theme"><span id="themeIcon"></span><span class="tb-label" id="themeLabel">Auto</span></button>
       <div class="readbar"><i id="read"></i></div>
     </div>
     <div class="wrap" id="content"></div>

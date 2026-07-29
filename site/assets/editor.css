@@ -71,7 +71,8 @@
   color:var(--code-ink);background:transparent
 }
 .ed-ta{
-  position:relative;display:block;width:100%;resize:none;overflow:hidden;
+  position:relative;display:block;width:100%;resize:none;
+  overflow-x:auto;overflow-y:hidden;          /* long lines must stay reachable */
   background:transparent;color:transparent;caret-color:var(--accent);outline:0
 }
 .ed-ta::selection{background:var(--sel);color:transparent}

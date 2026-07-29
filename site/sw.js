@@ -14,14 +14,14 @@
       service worker has to put them back or Lean silently refuses to start.
    ========================================================================== */
 
-const VERSION = 'sl-v3';
+const VERSION = 'sl-v4';
 const SHELL = VERSION + '-shell';
 const LEAN = VERSION + '-lean';
 
 /* Everything needed to read the course. Small — a couple of megabytes. */
 const SHELL_FILES = [
   './', './index.html', './manifest.webmanifest',
-  './assets/base.css', './assets/blocks.css', './assets/editor.css',
+  './assets/base.css', './assets/blocks.css', './assets/editor.css', './assets/responsive.css',
   './assets/app.js', './assets/editor.js', './assets/lean-runtime.js',
   './assets/icon.svg',
   './lean/context.lean', './lean/context-index.json',
