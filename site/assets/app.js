@@ -396,7 +396,7 @@ function go(i, opts) {
   if (i < 0 || i >= COURSE.length) return;
   cur = i;
   renderLesson(); renderNav();
-  setRail(false);
+  if (narrow()) setRail(false);
   Store.set('sl:cur', String(i));
   if (!opts || !opts.silent) history.replaceState(null, '', '#' + COURSE[i].id);
 }
@@ -477,19 +477,42 @@ document.getElementById('reset').onclick = async () => {
 };
 
 /* ---- rail (the sidebar) ----
-   On a phone the rail slides over the page, so it needs a way out: tapping the
-   dimmed area beside it, the × in its corner, Escape, or picking a chapter. */
-const rail = document.getElementById('rail');
+   Hideable at every width, because "wide enough for a sidebar" is not the same
+   question as "wants a sidebar" — and a phone reporting a desktop-sized
+   viewport should not be stuck with one it cannot dismiss.
+
+   Narrow: it slides over the page, and closes on the dimmed area, the × in its
+   corner, Escape, or picking a chapter.
+   Wide: it is a column, and the ☰ button collapses it. That choice is
+   remembered; the narrow drawer always starts closed. */
+const railEl = document.getElementById('rail');
 const railScrim = document.getElementById('railScrim');
-function setRail(open) {
-  rail.classList.toggle('on', open);
-  if (railScrim) railScrim.classList.toggle('on', open);
-  document.body.classList.toggle('rail-open', open);
+const appEl = document.querySelector('.app');
+/* Drawer mode, not column mode. Width alone is not enough: a phone at a
+   larger display-size setting can report a desktop-width viewport, and it
+   still wants a drawer. Must stay in step with responsive.css. */
+const DRAWER_Q = '(max-width:960px), (pointer:coarse) and (max-width:1400px)';
+const narrow = () => matchMedia(DRAWER_Q).matches;
+let railOpen = false;
+
+function setRail(open, remember) {
+  railOpen = !!open;
+  const overlay = railOpen && narrow();
+  appEl.dataset.rail = railOpen ? 'open' : 'closed';
+  railEl.classList.toggle('on', overlay);
+  if (railScrim) railScrim.classList.toggle('on', overlay);
+  document.body.classList.toggle('rail-open', overlay);
+  if (remember !== false && !narrow()) Store.set('sl:rail', railOpen ? '1' : '0');
 }
-document.getElementById('railToggle').onclick = () => setRail(!rail.classList.contains('on'));
+
+document.getElementById('railToggle').onclick = () => setRail(!railOpen);
 if (railScrim) railScrim.onclick = () => setRail(false);
 const railCloseBtn = document.getElementById('railClose');
 if (railCloseBtn) railCloseBtn.onclick = () => setRail(false);
+
+/* Crossing the breakpoint (rotating the phone, resizing a window) changes what
+   "open" means, so re-derive rather than leaving a drawer stuck open. */
+matchMedia(DRAWER_Q).addEventListener('change', () => setRail(!narrow() && railOpen, false));
 
 /* ---- notation drawer ---- */
 const drawer = document.getElementById('drawer');
@@ -625,6 +648,11 @@ window.__boot = async function boot() {
     const c = await Store.get('sl:cur');
     if (c !== null && !isNaN(+c)) cur = Math.min(+c, COURSE.length - 1);
   }
+
+  /* Wide screens remember whether the sidebar was collapsed; the narrow
+     drawer always starts closed. */
+  const railPref = await Store.get('sl:rail');
+  setRail(!narrow() && railPref !== '0', false);
 
   buildIndex(); renderLesson(); renderNav();
   if (window.EditorUI) EditorUI.mountLeanStatus();
