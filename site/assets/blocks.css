@@ -1,0 +1,240 @@
+/* ==========================================================================
+   blocks.css — styles for the v2 block vocabulary added on top of base.css
+   Everything here is additive: base.css is the original workbook design.
+   ========================================================================== */
+
+/* ---------- orientation card (top of each chapter) ---------- */
+.orient{
+  margin:26px 0 8px;border:1px solid var(--line-2);border-radius:14px;background:var(--card);
+  overflow:hidden;box-shadow:var(--shadow)
+}
+.orient-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media (max-width:720px){.orient-grid{grid-template-columns:1fr}}
+.orient-col{padding:16px 18px}
+.orient-col + .orient-col{border-left:1px solid var(--line)}
+@media (max-width:720px){.orient-col + .orient-col{border-left:0;border-top:1px solid var(--line)}}
+.orient-h{
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px;display:flex;align-items:center;gap:7px
+}
+.orient-col:last-child .orient-h{color:var(--ink-3)}
+.orient ul{margin:0;padding-left:18px;max-width:none}
+.orient li{font-size:15px;color:var(--ink-2);margin-bottom:6px}
+.orient li::marker{color:var(--line-2)}
+.orient-pay{
+  padding:12px 18px;border-top:1px solid var(--line);background:var(--card-2);
+  font-size:15px;color:var(--ink-2)
+}
+.orient-pay b{color:var(--ink)}
+
+/* ---------- definition card ---------- */
+.defn{
+  margin:22px 0;border:1px solid var(--line-2);border-left:3px solid var(--violet);
+  border-radius:0 12px 12px 0;background:var(--card);padding:15px 18px
+}
+.defn-t{
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--violet);margin-bottom:7px
+}
+.defn-term{font-family:var(--mono);font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.defn p{margin:0 0 10px;max-width:none}
+.defn p:last-child{margin-bottom:0}
+
+/* ---------- numbered steps ---------- */
+.steps{margin:22px 0;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.steps-t{
+  padding:10px 16px;border-bottom:1px solid var(--line);background:var(--card-2);
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)
+}
+.step{display:grid;grid-template-columns:26px 1fr;gap:13px;padding:14px 16px}
+.step + .step{border-top:1px solid var(--line)}
+.step-n{
+  width:24px;height:24px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  background:var(--accent-soft);color:var(--accent-ink);margin-top:1px
+}
+.step-k{font-family:var(--sans);font-size:14px;font-weight:700;color:var(--ink);margin-bottom:5px}
+.step-b{font-size:16px;color:var(--ink-2)}
+.step-b p{margin:0 0 10px;max-width:none}
+.step-b p:last-child{margin-bottom:0}
+.step-b .cb{margin:11px 0}
+
+/* ---------- table ---------- */
+.tblwrap{margin:22px 0;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.tblwrap table{width:100%;border-collapse:collapse;font-size:15px}
+.tblwrap th{
+  text-align:left;padding:10px 14px;background:var(--card-2);border-bottom:1px solid var(--line-2);
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3);white-space:nowrap
+}
+.tblwrap td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2)}
+.tblwrap tr:last-child td{border-bottom:0}
+.tblwrap td:first-child{color:var(--ink)}
+.tblwrap code{white-space:nowrap}
+
+/* ---------- description list ---------- */
+.dl{margin:20px 0;border-left:2px solid var(--line-2);padding-left:0}
+.dl-row{display:grid;grid-template-columns:minmax(120px,26%) 1fr;gap:14px;padding:9px 0 9px 15px}
+@media (max-width:640px){.dl-row{grid-template-columns:1fr;gap:3px}}
+.dl-row + .dl-row{border-top:1px solid var(--line)}
+.dl-k{font-family:var(--mono);font-size:13px;color:var(--accent-ink);font-weight:600;overflow-wrap:anywhere}
+.dl-v{font-size:16px;color:var(--ink-2)}
+.dl-v p{margin:0 0 9px;max-width:none}
+.dl-v p:last-child{margin-bottom:0}
+
+/* ---------- two-column comparison ---------- */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0}
+@media (max-width:720px){.cmp{grid-template-columns:1fr}}
+.cmp-c{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px}
+.cmp-c.good{border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
+.cmp-c.bad{border-color:color-mix(in srgb,var(--rust) 40%,var(--line));background:var(--rust-soft)}
+.cmp-t{
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:8px
+}
+.cmp-c.good .cmp-t{color:var(--green)}
+.cmp-c.bad .cmp-t{color:var(--rust-ink)}
+.cmp-c p{margin:0 0 10px;max-width:none;font-size:15.5px}
+.cmp-c p:last-child{margin-bottom:0}
+.cmp-c .cb{margin:10px 0 0}
+
+/* ---------- proof-state trace ---------- */
+.trace{margin:22px 0;border:1px solid var(--line-2);border-radius:12px;background:var(--card);overflow:hidden}
+.trace-t{
+  padding:9px 15px;border-bottom:1px solid var(--line);background:var(--card-2);
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);display:flex;align-items:center;gap:8px
+}
+.trace-t .pin{color:var(--accent)}
+.tr-step{padding:0}
+.tr-step + .tr-step{border-top:1px solid var(--line)}
+.tr-tac{
+  display:flex;align-items:baseline;gap:10px;padding:10px 15px 8px;
+  font-family:var(--mono);font-size:13px;color:var(--ink);background:color-mix(in srgb,var(--accent-soft) 45%,transparent)
+}
+.tr-tac .tr-ar{color:var(--accent);font-weight:700;flex:0 0 auto}
+.tr-tac code{background:none;border:0;padding:0;font-size:inherit;color:inherit}
+.tr-state{
+  margin:0;padding:11px 15px;font-family:var(--mono);font-size:12.5px;line-height:1.6;
+  white-space:pre;overflow-x:auto;color:var(--ink-2);background:var(--code-bg);
+  border-top:1px dashed var(--line-2)
+}
+.tr-state::-webkit-scrollbar{height:8px}
+.tr-state::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:8px}
+.tr-note{padding:10px 15px;font-size:15.5px;color:var(--ink-2)}
+.tr-note p{margin:0 0 9px;max-width:none}
+.tr-note p:last-child{margin-bottom:0}
+.tr-done{
+  padding:9px 15px;font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.04em;
+  color:var(--green);background:color-mix(in srgb,var(--green) 9%,transparent);
+  display:flex;align-items:center;gap:8px
+}
+
+/* ---------- code anatomy ---------- */
+.anat{margin:22px 0}
+.anat .cb{margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
+.anat-parts{
+  border:1px solid var(--line);border-top:0;border-radius:0 0 11px 11px;background:var(--card);overflow:hidden
+}
+.anat-p{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:11px 15px;align-items:start}
+.anat-p + .anat-p{border-top:1px solid var(--line)}
+.anat-m{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--violet);
+  background:var(--violet-soft);border-radius:5px;padding:2px 7px;white-space:nowrap;margin-top:1px
+}
+.anat-h{font-size:15.5px;color:var(--ink-2)}
+.anat-h p{margin:0 0 9px;max-width:none}
+.anat-h p:last-child{margin-bottom:0}
+
+/* ---------- collapsible deep dive ---------- */
+details.detail{
+  margin:22px 0;border:1px solid var(--line-2);border-radius:12px;background:var(--card-2);overflow:hidden
+}
+details.detail > summary{
+  list-style:none;cursor:pointer;padding:12px 16px;display:flex;align-items:center;gap:10px;
+  font-family:var(--sans);font-size:13px;font-weight:700;color:var(--ink-2);user-select:none
+}
+details.detail > summary::-webkit-details-marker{display:none}
+details.detail > summary:hover{color:var(--accent-ink)}
+details.detail > summary .tw{
+  flex:0 0 auto;transition:transform .18s;color:var(--accent);display:inline-flex
+}
+details.detail[open] > summary .tw{transform:rotate(90deg)}
+details.detail > summary .dtag{
+  margin-left:auto;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);
+  border:1px solid var(--line-2);border-radius:4px;padding:1px 6px;font-weight:600
+}
+.detail-body{padding:2px 16px 14px;border-top:1px solid var(--line);background:var(--card)}
+.detail-body > *:first-child{margin-top:14px}
+.detail-body p{max-width:none}
+
+/* ---------- exercise: rich "why it works" panel ---------- */
+.walk{margin:4px 0 14px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card-2)}
+.walk-t{
+  padding:8px 13px;border-bottom:1px solid var(--line);
+  font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)
+}
+.walk-r{display:grid;grid-template-columns:minmax(130px,34%) 1fr;gap:13px;padding:10px 13px;align-items:start}
+@media (max-width:680px){.walk-r{grid-template-columns:1fr;gap:4px}}
+.walk-r + .walk-r{border-top:1px solid var(--line)}
+.walk-tac{
+  font-family:var(--mono);font-size:12.5px;color:var(--violet);font-weight:600;
+  white-space:pre-wrap;overflow-wrap:anywhere;margin-top:1px
+}
+.walk-h{font-size:15.5px;color:var(--ink-2)}
+.walk-h p{margin:0 0 9px;max-width:none}
+.walk-h p:last-child{margin-bottom:0}
+
+.panel .sub-h{
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-3);margin:18px 0 8px
+}
+.panel .sub-h:first-child{margin-top:2px}
+.panel .note{margin:14px 0}
+.panel .trace,.panel .steps,.panel .tblwrap,.panel .anat,.panel .dl{margin:14px 0}
+
+/* progressive hints */
+.hintlist{counter-reset:hn}
+.hint-i{
+  display:grid;grid-template-columns:auto 1fr;gap:11px;padding:9px 0;align-items:start
+}
+.hint-i + .hint-i{border-top:1px dashed var(--line-2)}
+.hint-n{
+  font-family:var(--mono);font-size:10px;font-weight:700;color:var(--gold);
+  background:var(--gold-soft);border-radius:5px;padding:2px 7px;white-space:nowrap;margin-top:2px
+}
+.hint-h{font-size:16px;color:var(--ink-2)}
+.hint-h p{margin:0;max-width:none}
+
+/* code-block tag variants */
+.cb-lang.illus{color:var(--violet)}
+.cb-lang.sketch{color:var(--gold)}
+.cb-lang.state{color:var(--ink-3)}
+
+/* ---------- chapter table of contents (in-page) ---------- */
+.toc{
+  margin:22px 0 10px;padding:13px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card-2)
+}
+.toc-t{
+  font-family:var(--sans);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:8px
+}
+.toc a{
+  display:block;font-family:var(--sans);font-size:13.5px;color:var(--ink-2);text-decoration:none;
+  padding:3px 0;border-radius:5px
+}
+.toc a:hover{color:var(--accent-ink)}
+.toc a.sub{padding-left:16px;font-size:12.5px;color:var(--ink-3)}
+.toc a.sub2{padding-left:32px;font-size:12px;color:var(--ink-3)}
+
+/* anchor offset so sticky topbar does not cover headings */
+.wrap h3,.wrap h4,.sec-head{scroll-margin-top:70px}
+.ex{scroll-margin-top:70px}
+
+/* ---------- print ---------- */
+@media print{
+  details.detail{border:1px solid #ccc}
+  details.detail > summary{font-weight:700}
+  .detail-body{display:block!important}
+  .trace,.steps,.anat,.walk{break-inside:avoid}
+}

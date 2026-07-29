@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Separation Logic in Lean — a mathematician's workbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Karla:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/base.css">
+<link rel="stylesheet" href="assets/blocks.css">
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="rail" id="rail">
+    <div class="brand">
+      <div class="mark">∗</div>
+      <div>
+        <h1>Separation Logic<br>in Lean 4</h1>
+        <p>A mathematician's workbook</p>
+      </div>
+    </div>
+
+    <div class="prog">
+      <div class="prog-top"><span>Exercises</span><b id="pct">0%</b></div>
+      <div class="bar"><i id="pbar"></i></div>
+      <div class="prog-top" style="margin-top:8px;text-transform:none;letter-spacing:0">
+        <span id="pcount" style="font-family:var(--mono);font-size:11px">0 / 0</span>
+        <button class="prog-reset" id="reset">reset</button>
+      </div>
+      <div id="storeNote" style="display:none;margin-top:8px;font-family:var(--sans);font-size:10px;color:var(--ink-3);line-height:1.4">
+        Persistent storage unavailable here — progress lasts for this session only.
+      </div>
+    </div>
+
+    <nav id="nav"></nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="tb-btn railToggle" id="railToggle" aria-label="Menu">☰</button>
+      <div class="crumb" id="crumb"></div>
+      <button class="tb-btn" id="find">Search <kbd>/</kbd></button>
+      <button class="tb-btn" id="notation">Notation <kbd>n</kbd></button>
+      <button class="tb-btn" id="theme"><span id="themeIcon"></span><span id="themeLabel">Auto</span></button>
+      <div class="readbar"><i id="read"></i></div>
+    </div>
+    <div class="wrap" id="content"></div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="finder" id="finder">
+  <input id="q" placeholder="Search milestones, exercises, definitions…" autocomplete="off" spellcheck="false">
+  <div class="hits" id="hits"></div>
+</div>
+
+<div class="drawer" id="drawer">
+  <button class="dr-close" id="drClose" aria-label="Close">×</button>
+  <h4>Notation</h4>
+  <table>
+    <tr><td>h l = some v</td><td>location <code>l</code> is allocated in <code>h</code> and holds <code>v</code></td></tr>
+    <tr><td>h l = none</td><td>location <code>l</code> is not in <code>h</code></td></tr>
+    <tr><td>emp</td><td>I own nothing</td></tr>
+    <tr><td>l ↦ v</td><td>I own <b>exactly</b> the cell <code>l</code>, holding <code>v</code></td></tr>
+    <tr><td>P ∗ Q</td><td>the heap splits into disjoint parts satisfying <code>P</code> and <code>Q</code></td></tr>
+    <tr><td>P -∗ Q</td><td>give me a disjoint <code>P</code>-heap and the union satisfies <code>Q</code></td></tr>
+    <tr><td>P ⊢ Q</td><td>every state satisfying <code>P</code> satisfies <code>Q</code></td></tr>
+    <tr><td>P ⊣⊢ Q</td><td><code>P ⊢ Q</code> and <code>Q ⊢ P</code></td></tr>
+    <tr><td>fact φ</td><td><code>φ</code> holds; says nothing about the heap &nbsp;(pairs with <code>∧</code>)</td></tr>
+    <tr><td>pure φ</td><td><code>φ</code> holds <i>and</i> I own nothing &nbsp;(pairs with <code>∗</code>)</td></tr>
+    <tr><td>⌜φ⌝</td><td>textbook notation for <code>pure φ</code></td></tr>
+    <tr><td>Heap.disjoint h₁ h₂</td><td><code>∀ l, h₁ l = none ∨ h₂ l = none</code></td></tr>
+    <tr><td>Heap.union h₁ h₂</td><td>left-biased union; total, but only used with a disjointness proof</td></tr>
+    <tr><td>Hoare P c Q</td><td>from every <code>P</code>-state, <code>c</code> terminates safely in a <code>Q</code>-state</td></tr>
+    <tr><td>PartialHoare P c Q</td><td><i>if</i> <code>c</code> terminates, it lands in <code>Q</code></td></tr>
+    <tr><td>wp c Q</td><td>weakest precondition: states from which <code>c</code> safely reaches <code>Q</code></td></tr>
+    <tr><td>HeapLocal c</td><td><code>c</code> ignores and preserves disjoint memory</td></tr>
+    <tr><td>Preserves c R</td><td><code>c</code> cannot invalidate <code>R</code> by changing the store</td></tr>
+  </table>
+
+  <h4 style="margin-top:26px">Keyboard</h4>
+  <table>
+    <tr><td>/ &nbsp;or&nbsp; ⌘K</td><td>search everything</td></tr>
+    <tr><td>→ &nbsp;/&nbsp; j</td><td>next milestone</td></tr>
+    <tr><td>← &nbsp;/&nbsp; k</td><td>previous milestone</td></tr>
+    <tr><td>e</td><td>expand every panel on the page</td></tr>
+    <tr><td>n</td><td>notation drawer</td></tr>
+    <tr><td>t</td><td>cycle theme: auto → light → dark</td></tr>
+    <tr><td>Esc</td><td>close</td></tr>
+  </table>
+
+  <h4 style="margin-top:26px">About these solutions</h4>
+  <p style="font-size:14px;color:var(--ink-2);margin:0">
+    Every Lean proof in this workbook is machine-checked. The full corpus of milestones
+    M0–M13 — 127 theorems — compiles as a single self-contained file under
+    <b>Lean 4.32.2</b> with no <code>import</code>s, no Mathlib, and zero <code>sorry</code>s.
+    Where a statement in the original syllabus was unprovable as written, the corrected
+    statement is given and the reason is explained in the surrounding text.
+  </p>
+</div>
+
+<!-- ======================================================================
+     Content. One file per chapter; each calls registerChapter().
+     Order here is the order in the sidebar. Plain <script> tags (not
+     modules) so the site also works when opened directly from disk.
+     ====================================================================== -->
+<script src="assets/app.js"></script>
+<script src="content/00-overview.js"></script>
+<script src="content/01-m0.js"></script>
+<script src="content/02-m1.js"></script>
+<script src="content/03-m2.js"></script>
+<script src="content/04-m3.js"></script>
+<script src="content/05-m4.js"></script>
+<script src="content/06-m5.js"></script>
+<script src="content/07-m6.js"></script>
+<script src="content/08-m7.js"></script>
+<script src="content/09-m8.js"></script>
+<script src="content/10-m9.js"></script>
+<script src="content/11-m10.js"></script>
+<script src="content/12-m11.js"></script>
+<script src="content/13-m12.js"></script>
+<script src="content/14-m13.js"></script>
+<script src="content/15-m14.js"></script>
+<script src="content/16-ref.js"></script>
+<script>window.__boot && window.__boot();</script>
+</body>
+</html>

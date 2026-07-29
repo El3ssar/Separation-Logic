@@ -1,0 +1,26 @@
+# Lean WASM runtime — ~73 MB of prebuilt binaries, fetched by
+# site/tools/fetch-lean-wasm.sh rather than committed.
+site/lean-wasm/
+
+# Lean build output
+.lake/
+*.olean
+*.ilean
+build/
+
+# editors / OS
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# scratch
+/tmp/
+*.log
+
+# transient harness state
+.claude/scheduled_tasks.lock
+
+# stray Lean scratch files at the repo root
+/*.lean
