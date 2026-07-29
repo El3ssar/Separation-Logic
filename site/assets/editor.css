@@ -164,3 +164,30 @@
 }
 .off-bar{height:5px;background:var(--line);border-radius:4px;margin:8px 0;overflow:hidden}
 .off-bar>i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .3s}
+
+/* ---------- sidebar on a phone: it must be closable ----------
+   The rail slides over the page on narrow screens. Give it a dimmed backdrop
+   that closes on tap, and an explicit × — a panel you can open but not close
+   is a trap. */
+.rail-scrim{
+  position:fixed;inset:0;z-index:55;display:none;
+  background:rgba(20,14,4,.42);backdrop-filter:blur(2px)
+}
+.rail-scrim.on{display:block}
+.rail-close{
+  display:none;position:absolute;top:12px;right:12px;z-index:2;
+  width:34px;height:34px;border-radius:9px;
+  border:1px solid var(--line-2);background:var(--card);color:var(--ink-2);
+  font-size:22px;line-height:1;cursor:pointer;padding:0
+}
+.rail-close:active{background:var(--card-2)}
+body.rail-open{overflow:hidden}          /* no scrolling the page behind it */
+
+@media (max-width:960px){
+  .rail-close{display:block}
+  .rail{width:min(320px,86vw);box-shadow:var(--shadow-lg)}
+  .brand{padding-right:44px}             /* keep the title clear of the × */
+}
+@media (min-width:961px){
+  .rail-scrim{display:none!important}    /* on a wide screen the rail is just there */
+}

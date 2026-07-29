@@ -396,7 +396,7 @@ function go(i, opts) {
   if (i < 0 || i >= COURSE.length) return;
   cur = i;
   renderLesson(); renderNav();
-  document.getElementById('rail').classList.remove('on');
+  setRail(false);
   Store.set('sl:cur', String(i));
   if (!opts || !opts.silent) history.replaceState(null, '', '#' + COURSE[i].id);
 }
@@ -476,8 +476,20 @@ document.getElementById('reset').onclick = async () => {
   DONE = {}; await Store.set('sl:done', '{}'); renderLesson(); renderNav();
 };
 
-/* ---- rail toggle ---- */
-document.getElementById('railToggle').onclick = () => document.getElementById('rail').classList.toggle('on');
+/* ---- rail (the sidebar) ----
+   On a phone the rail slides over the page, so it needs a way out: tapping the
+   dimmed area beside it, the × in its corner, Escape, or picking a chapter. */
+const rail = document.getElementById('rail');
+const railScrim = document.getElementById('railScrim');
+function setRail(open) {
+  rail.classList.toggle('on', open);
+  if (railScrim) railScrim.classList.toggle('on', open);
+  document.body.classList.toggle('rail-open', open);
+}
+document.getElementById('railToggle').onclick = () => setRail(!rail.classList.contains('on'));
+if (railScrim) railScrim.onclick = () => setRail(false);
+const railCloseBtn = document.getElementById('railClose');
+if (railCloseBtn) railCloseBtn.onclick = () => setRail(false);
 
 /* ---- notation drawer ---- */
 const drawer = document.getElementById('drawer');
@@ -573,7 +585,7 @@ qin.onkeydown = e => {
 
 /* ---- keyboard ---- */
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeFind(); drawer.classList.remove('on'); return; }
+  if (e.key === 'Escape') { closeFind(); drawer.classList.remove('on'); setRail(false); return; }
   const typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
   if (typing) return;
   if (e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) { e.preventDefault(); openFind(); }
