@@ -136,17 +136,24 @@ function mountEditor(root, ex) {
     runBtn.disabled = true;
     out.classList.add('on');
 
+    /* There is one Lean process, so a check started elsewhere has to finish
+       first. LeanRuntime.check queues rather than refusing; say so. */
     const rt = LeanRuntime.snapshot();
-    if (rt.state !== LeanRuntime.S.READY) {
+    if (rt.state === LeanRuntime.S.BUSY) {
+      out.innerHTML = '<div class="ed-msg info">Waiting for the check already running…</div>';
+      setStatus('running', 'queued');
+    } else if (rt.state !== LeanRuntime.S.READY) {
       out.innerHTML = '<div class="ed-msg info"><b>Starting Lean…</b><br>'
-        + 'The first run of a session loads Lean’s core library. This takes a minute or two, '
-        + 'once — after that every check is quick. You can keep reading meanwhile.</div>';
+        + 'The first run of a session loads Lean’s core library — about ten seconds, '
+        + 'once. After that every check is quick. You can keep reading meanwhile.</div>';
+      setStatus('running', 'starting Lean');
     } else {
       out.innerHTML = '<div class="ed-msg info">Checking…</div>';
+      setStatus('running', 'checking');
     }
-    setStatus('running', 'checking');
 
-    const res = await LeanRuntime.check(ta.value, await loadContext(ex.id));
+    const context = await loadContext(ex.id);
+    const res = await LeanRuntime.check(ta.value, context);
     runBtn.disabled = false;
     renderResult(res);
   }
@@ -159,7 +166,6 @@ function mountEditor(root, ex) {
         + 'COOP/COEP headers the Lean runtime needs.</div>';
       return;
     }
-    if (res.busy) { setStatus('warn', 'busy'); out.innerHTML = '<div class="ed-msg warn">Another check is still running.</div>'; return; }
     if (res.broken) {
       setStatus('err', 'Lean failed');
       out.innerHTML = '<div class="ed-msg err"><b>The Lean runtime failed — this is not a verdict on your proof.</b>'

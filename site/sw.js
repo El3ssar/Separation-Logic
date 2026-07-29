@@ -14,7 +14,7 @@
       service worker has to put them back or Lean silently refuses to start.
    ========================================================================== */
 
-const VERSION = 'sl-v1';
+const VERSION = 'sl-v2';
 const SHELL = VERSION + '-shell';
 const LEAN = VERSION + '-lean';
 
@@ -75,24 +75,35 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
 
+  const bare = new Request(url.origin + url.pathname, { headers: req.headers });
+  const isLean = url.pathname.includes('/lean-wasm/');
+
   e.respondWith((async () => {
-    /* Ignore the dev server's ?v= cache-busting when matching. */
-    const bare = new Request(url.origin + url.pathname, { headers: req.headers });
+    /* The Lean runtime is hundreds of megabytes and never changes within a
+       build, so serve it from cache and do not go near the network. */
+    if (isLean) {
+      const hit = await caches.match(bare, { ignoreSearch: true });
+      if (hit) return isolated(hit);
+      const res = await fetch(req);
+      return isolated(res);
+    }
 
-    const hit = (await caches.match(req, { ignoreSearch: true }))
-             || (await caches.match(bare, { ignoreSearch: true }));
-    if (hit) return isolated(hit);
-
+    /* Everything else is network-first, cache as a fallback.
+       Cache-first here was a mistake: matching with ignoreSearch made the
+       worker serve a stale app.js even though the page had asked for a fresh
+       ?v=, which silently undid every edit during development. Freshness when
+       there is a network, the cached copy when there is not. */
     try {
       const res = await fetch(req);
-      /* Opportunistically keep anything small we fetched successfully. */
-      if (res.ok && !url.pathname.includes('/lean-wasm/')) {
+      if (res.ok) {
         const c = await caches.open(SHELL);
         c.put(bare, res.clone()).catch(() => {});
       }
       return isolated(res);
     } catch (err) {
-      /* Offline and not cached. For a navigation, fall back to the shell. */
+      const hit = (await caches.match(bare, { ignoreSearch: true }))
+               || (await caches.match(req, { ignoreSearch: true }));
+      if (hit) return isolated(hit);
       if (req.mode === 'navigate') {
         const shell = await caches.match('./index.html', { ignoreSearch: true });
         if (shell) return isolated(shell);

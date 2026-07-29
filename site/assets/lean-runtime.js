@@ -223,11 +223,21 @@ const LeanRuntime = (() => {
   /* Check `userCode` in the context of `prelude`.
      Returns {ok, messages:[{severity, line, col, text}], raw, elapsed}
      with line numbers already translated back into the reader's own text. */
-  async function check(userCode, prelude) {
+  /* There is one Lean process, so checks must not overlap. Rather than reject a
+     second request — which made pressing Check in another exercise fail with
+     "busy" instead of just waiting its turn — queue them and run in order. */
+  let queue = Promise.resolve();
+  function check(userCode, prelude) {
+    const run = () => checkNow(userCode, prelude);
+    const result = queue.then(run, run);
+    queue = result.then(() => {}, () => {});
+    return result;
+  }
+
+  async function checkNow(userCode, prelude) {
     if (dead) return { ok: false, broken: true, messages: [], raw: 'The Lean runtime stopped responding. Reload the page to restart it.' };
     const ok = await warmup();
     if (!ok) return { ok: false, messages: [], raw: detail, unavailable: true };
-    if (state === S.BUSY) return { ok: false, messages: [], raw: 'a check is already running', busy: true };
 
     /* The WASM build tracks Lean master, where declarations are private by
        default — a public `infix` notation then cannot see the `def` it names.
