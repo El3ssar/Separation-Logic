@@ -4,7 +4,7 @@
    Two jobs:
 
    1. Serve the workbook from cache, so it works with the network off. The text
-      is small and cached on install; the 295 MB Lean runtime is only fetched
+      is small and cached on install; the 222 MB Lean runtime is only fetched
       when you ask for it, on the "Make available offline" button — nobody
       should download that by accident on mobile data.
 
@@ -14,7 +14,7 @@
       service worker has to put them back or Lean silently refuses to start.
    ========================================================================== */
 
-const VERSION = 'sl-v2';
+const VERSION = 'sl-v3';
 const SHELL = VERSION + '-shell';
 const LEAN = VERSION + '-lean';
 
@@ -88,34 +88,44 @@ self.addEventListener('fetch', (e) => {
       return isolated(res);
     }
 
-    /* Everything else is network-first, cache as a fallback.
-       Cache-first here was a mistake: matching with ignoreSearch made the
-       worker serve a stale app.js even though the page had asked for a fresh
-       ?v=, which silently undid every edit during development. Freshness when
-       there is a network, the cached copy when there is not. */
+    /* Everything else races the network against a short deadline and falls back
+       to cache. Cache-first served stale assets; plain network-first hangs when
+       the wi-fi is gone but the radio is still associated — the browser can sit
+       on a dead connection for half a minute, which reads as "it broke". A
+       1.5 s deadline keeps offline snappy without ever serving a stale file
+       while there is a working network. */
+    const cached = caches.match(bare, { ignoreSearch: true });
+
+    let res = null;
     try {
-      const res = await fetch(req);
-      if (res.ok) {
-        const c = await caches.open(SHELL);
-        c.put(bare, res.clone()).catch(() => {});
-      }
-      return isolated(res);
+      res = await Promise.race([
+        fetch(req),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('slow')), 1500))
+      ]);
     } catch (err) {
-      const hit = (await caches.match(bare, { ignoreSearch: true }))
-               || (await caches.match(req, { ignoreSearch: true }));
+      const hit = await cached;
       if (hit) return isolated(hit);
-      if (req.mode === 'navigate') {
-        const shell = await caches.match('./index.html', { ignoreSearch: true });
-        if (shell) return isolated(shell);
+      try { res = await fetch(req); }                 // no cache: wait it out
+      catch (err2) {
+        if (req.mode === 'navigate') {
+          const shell = await caches.match('./index.html', { ignoreSearch: true });
+          if (shell) return isolated(shell);
+        }
+        throw err2;
       }
-      throw err;
     }
+
+    if (res && res.ok) {
+      const copy = res.clone();
+      caches.open(SHELL).then(c => c.put(bare, copy)).catch(() => {});
+    }
+    return isolated(res);
   })());
 });
 
 /* ---- "Make available offline" ----------------------------------------
    Downloads the Lean runtime with progress, so the page can show a bar
-   instead of appearing to hang for 295 MB. */
+   instead of appearing to hang for 222 MB. */
 self.addEventListener('message', (e) => {
   const msg = e.data || {};
   if (msg.type === 'cache-lean') e.waitUntil(cacheLean(e.source));
@@ -143,31 +153,10 @@ async function cacheLean(client) {
     done++;
     client && client.postMessage({ type: 'lean-cache-progress', done, total: LEAN_FILES.length, url: u });
   }
-  /* The 1256 .olean files are fetched individually by the runtime; cache them
-     too, or an offline start dies on the first one. */
-  try {
-    const list = await (await fetch('./lean-wasm/lean-lib-files.json')).json();
-    const names = list.filter(n => !n.split('/').some(p => p.startsWith('._')));
-    let i = 0;
-    const pump = async () => {
-      for (;;) {
-        const k = i++;
-        if (k >= names.length) return;
-        const u = './lean-wasm/lean-lib/' + names[k];
-        try { if (!(await c.match(u, { ignoreSearch: true }))) await c.add(u); } catch (err) {}
-        if (k % 50 === 0) {
-          client && client.postMessage({
-            type: 'lean-cache-progress',
-            done: LEAN_FILES.length, total: LEAN_FILES.length,
-            lib: k, libTotal: names.length
-          });
-        }
-      }
-    };
-    await Promise.all(Array.from({ length: 8 }, pump));
-  } catch (err) {
-    client && client.postMessage({ type: 'lean-cache-error', url: 'lean-lib', error: String(err) });
-  }
+  /* The .olean files are deliberately NOT cached. The snapshot already carries
+     the whole imported Init environment, so the runtime never asks for them —
+     verified in tools/lean-harness.cjs with NO_LIB=1. Caching 1256 files that
+     are never read cost a long install and a lot of storage for nothing. */
   client && client.postMessage({ type: 'lean-cache-done' });
   await reportCached(client);
 }

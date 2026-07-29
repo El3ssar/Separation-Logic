@@ -82,15 +82,21 @@ const LeanRuntime = (() => {
         switch (m.type) {
 
           case 'worker_boot':
-            /* The .olean files must be on Lean's search path even when a
-               snapshot is used: the snapshot seeds the *environment*, but the
-               module resolver still stats /lib/lean to resolve `import Init`.
-               Skipping them yields "unknown module prefix 'Init'". */
+            /* A working snapshot seeds the whole Init environment, so the 1256
+               .olean files are not needed at all — they are only the fallback
+               for a build with no snapshot support. Fetching them anyway costs
+               1256 requests on every cold start, which is the difference
+               between a few seconds and a few minutes. */
             useSnapshot = await hasSnapshot();
-            set(S.LOADING_LIB, 'fetching the Lean standard library');
-            libFiles = await fetchLibrary();
-            if (!libFiles) { set(S.FAILED, 'could not fetch the Lean library'); return resolve(false); }
-            worker.postMessage({ type: 'load_library', files: libFiles }, libFiles.map(f => f.data));
+            if (useSnapshot) {
+              set(S.BOOTING, 'initialising the Lean runtime');
+              worker.postMessage({ type: 'load_library', files: [] });
+            } else {
+              set(S.LOADING_LIB, 'fetching Lean’s core library');
+              libFiles = await fetchLibrary();
+              if (!libFiles) { set(S.FAILED, 'could not fetch the Lean library'); return resolve(false); }
+              worker.postMessage({ type: 'load_library', files: libFiles }, libFiles.map(f => f.data));
+            }
             break;
 
           case 'library_received':
@@ -119,8 +125,19 @@ const LeanRuntime = (() => {
             break;
 
           case 'snapshot_loaded':
-            if (m.success) { set(S.READY, 'ready'); resolve(true); }
-            else { set(S.WARMING, 'importing Lean’s core library (one time, a minute or two)'); primeByCompiling(resolve); }
+            if (m.success) { set(S.READY, 'ready'); resolve(true); break; }
+            /* The snapshot is the only reason we skipped the library, so if it
+               fails we have to supply the .olean files after all before Lean
+               can import Init. */
+            set(S.LOADING_LIB, 'snapshot failed — fetching Lean’s core library instead');
+            libFiles = await fetchLibrary();
+            if (!libFiles) { set(S.FAILED, 'the Lean environment could not be loaded'); return resolve(false); }
+            worker.postMessage({ type: 'add_files', files: libFiles }, libFiles.map(f => f.data));
+            break;
+
+          case 'files_added':
+            set(S.WARMING, 'importing Lean’s core library (one time, a minute or two)');
+            primeByCompiling(resolve);
             break;
 
           case 'import_progress':

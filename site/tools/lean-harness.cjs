@@ -47,7 +47,7 @@ globalThis.Module = {
     const FS = Module.FS;
     Module.ENV['LEAN_PATH'] = '/lib/lean';
     for (const d of ['/lib', '/lib/lean', '/workspace', '/bin']) { try { FS.mkdir(d); } catch (e) {} }
-    const files = walk(path.join(WASM, 'lean-lib'));
+    const files = process.env.NO_LIB === '1' ? [] : walk(path.join(WASM, 'lean-lib'));
     for (const f of files) {
       const full = '/lib/lean/' + f.name;
       let cur = '';

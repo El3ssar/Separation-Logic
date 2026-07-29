@@ -2,7 +2,7 @@
    offline.js — registers the service worker and drives the offline panel.
 
    The course text caches itself on first visit (a couple of megabytes). The
-   Lean runtime is ~295 MB and is only downloaded when you press the button —
+   Lean runtime is ~222 MB and is only downloaded when you press the button —
    deliberately, because nobody wants that arriving unannounced on mobile data.
    ========================================================================== */
 
@@ -64,7 +64,7 @@
     }
     node.innerHTML = '<div class="off-t">Offline use</div>'
       + '<div class="off-note">The course text is already saved. The Lean runtime is a '
-      + '<b>295 MB</b> one-time download — do it on wi-fi.</div>'
+      + '<b>222 MB</b> one-time download — do it on wi-fi.</div>'
       + '<button class="off-btn" id="offGo">Save Lean for offline</button>';
     const g = document.getElementById('offGo');
     if (g) g.onclick = () => { paint({ busy: true, text: 'starting…', pct: 0 }); send('cache-lean'); };

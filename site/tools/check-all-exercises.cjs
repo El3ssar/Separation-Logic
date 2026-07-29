@@ -54,6 +54,7 @@ globalThis.Module = {
     const FS = Module.FS;
     Module.ENV['LEAN_PATH'] = '/lib/lean';
     for (const d of ['/lib', '/lib/lean', '/workspace', '/bin']) { try { FS.mkdir(d); } catch (e) {} }
+    if (process.env.NO_LIB === '1') { try { FS.chdir('/workspace'); } catch (e) {} return; }
     (function walk(dir, base) {
       for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
         if (e.name.startsWith('._')) continue;

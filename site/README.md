@@ -56,7 +56,27 @@ uses:
 node --stack-size=60000 site/tools/check-all-exercises.cjs
 ```
 
-## Using it on a phone
+## Using it on a phone — the simple way
+
+Serve it *from* the phone. Then the address is `http://localhost:8123`, and
+localhost is a secure context by definition: no certificate, no CA to install,
+no browser flag, and the PC does not have to be switched on.
+
+```bash
+site/tools/pack-for-phone.sh          # writes workbook-for-phone.tar.gz, ~48 MB
+```
+
+Copy it across, then in Termux:
+
+```bash
+pkg install python
+tar xzf workbook-for-phone.tar.gz
+python3 site/tools/serve.py --http --local
+```
+
+and open <http://localhost:8123>.
+
+## Using it on a phone — over the network
 
 Start the server on your PC. It prints two addresses:
 
