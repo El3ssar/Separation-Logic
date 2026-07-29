@@ -4,7 +4,8 @@
    Each exercise gets a real editor: syntax highlighting, line numbers, Lean's
    \to-style abbreviations, a tap-able symbol palette (typing ∗ or ↦ on a phone
    keyboard is otherwise hopeless), and a Check button that runs the actual
-   Lean kernel over your proof in the context of that chapter's prelude.
+   Lean kernel over your proof, in the context the course has built up to that
+   point — cut before that exercise's own solution.
 
    Marking an exercise done is driven by Lean, not by a checkbox: it turns
    green when your proof compiles with no errors and no `sorry`.
@@ -49,7 +50,7 @@ const EDITORS = new Map();     // exercise id -> editor instance
 
 /* ---- one editor ------------------------------------------------------- */
 
-function mountEditor(root, ex, chapterId) {
+function mountEditor(root, ex) {
   const ta = root.querySelector('.ed-ta');
   const hl = root.querySelector('.ed-hl');
   const gutter = root.querySelector('.ed-gutter');

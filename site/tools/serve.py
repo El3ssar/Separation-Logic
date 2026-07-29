@@ -13,6 +13,8 @@ import functools
 import io
 import os
 import re
+import ssl
+import subprocess
 import sys
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
@@ -84,11 +86,90 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             super().log_message(fmt, *args)
 
 
+def lan_address():
+    """Best guess at this machine's address on the local network."""
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("10.255.255.255", 1))      # no packet is sent
+        return s.getsockname()[0]
+    except OSError:
+        return None
+    finally:
+        s.close()
+
+
+CERT_DIR = os.path.join(ROOT, "tools", ".cert")
+
+
+def ensure_cert(ip):
+    """Self-signed cert covering localhost and this machine's LAN address.
+
+    Needed because the Lean runtime requires SharedArrayBuffer and the offline
+    install requires a service worker, and browsers grant neither outside a
+    *secure context*. localhost counts as secure; a plain-http LAN address does
+    not. So reaching this from a phone means HTTPS, which means a certificate.
+    """
+    key = os.path.join(CERT_DIR, "key.pem")
+    crt = os.path.join(CERT_DIR, "cert.pem")
+    stamp = os.path.join(CERT_DIR, "for")
+
+    want = ip or "localhost"
+    if os.path.exists(key) and os.path.exists(crt):
+        try:
+            if open(stamp).read().strip() == want:
+                return key, crt
+        except OSError:
+            pass
+
+    os.makedirs(CERT_DIR, exist_ok=True)
+    san = "DNS:localhost,IP:127.0.0.1" + (f",IP:{ip}" if ip else "")
+    cmd = [
+        "openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+        "-keyout", key, "-out", crt, "-days", "3650",
+        "-subj", "/CN=Separation Logic workbook",
+        "-addext", f"subjectAltName={san}",
+    ]
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        detail = getattr(e, "stderr", b"")
+        print(f"could not create a certificate ({detail.decode(errors='replace').strip() or e})", file=sys.stderr)
+        return None
+    with open(stamp, "w") as f:
+        f.write(want)
+    return key, crt
+
+
 def main():
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8123
+    port = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else 8123
+    # Bind on all interfaces so a phone on the same wi-fi can reach it — that is
+    # how you install the offline copy. Pass --local to restrict to this machine.
+    host = "127.0.0.1" if "--local" in sys.argv else "0.0.0.0"
+    ip = lan_address() if host != "127.0.0.1" else None
+    use_tls = "--http" not in sys.argv
+
     handler = functools.partial(Handler, directory=ROOT)
-    with http.server.ThreadingHTTPServer(("127.0.0.1", port), handler) as httpd:
-        print(f"workbook on http://localhost:{port}  (serving {os.path.realpath(ROOT)}, caching off)", flush=True)
+    httpd = http.server.ThreadingHTTPServer((host, port), handler)
+
+    scheme = "http"
+    if use_tls:
+        pair = ensure_cert(ip)
+        if pair:
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ctx.load_cert_chain(pair[1], pair[0])
+            httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+            scheme = "https"
+        else:
+            print("falling back to plain http — Lean will not start except on localhost", file=sys.stderr)
+
+    print(f"workbook on {scheme}://localhost:{port}   ({os.path.realpath(ROOT)}, caching off)", flush=True)
+    if ip:
+        print(f"on this network:  {scheme}://{ip}:{port}   ← open this on your phone", flush=True)
+        if scheme == "https":
+            print("  the certificate is self-signed, so the phone will warn once;", flush=True)
+            print("  choose Advanced → Proceed. Lean needs the secure origin.", flush=True)
+    with httpd:
         httpd.serve_forever()
 
 

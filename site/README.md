@@ -58,10 +58,23 @@ node --stack-size=60000 site/tools/check-all-exercises.cjs
 
 ## Using it on a phone
 
-Serve from your PC, open the address on the phone over wi-fi, then use the
-sidebar's **Save Lean for offline** button. The service worker stores the whole
-runtime, and after that the phone needs no network and no server — add it to
-the home screen and it opens as an app. The download is deliberately opt-in so
+Start the server on your PC. It prints two addresses:
+
+```
+workbook on https://localhost:8123
+on this network:  https://192.168.1.42:8123   ← open this on your phone
+```
+
+Open the second one on the phone, on the same wi-fi. It serves **HTTPS with a
+self-signed certificate**, so the phone warns once — choose *Advanced →
+Proceed*. That warning is unavoidable and it matters: both `SharedArrayBuffer`
+(which Lean needs) and service workers (which offline needs) are only granted
+in a **secure context**, and a plain-`http` LAN address is not one. `localhost`
+is, which is why the PC works either way.
+
+Then press **Save Lean for offline** in the sidebar. The service worker stores
+the runtime, and after that the phone needs no network and no server at all —
+add it to the home screen and it opens as an app. The download is opt-in so
 295 MB never arrives on mobile data by surprise.
 
 Typing `∗ ↦ ⊢ -∗` on a phone keyboard is hopeless, so the editor has a symbol

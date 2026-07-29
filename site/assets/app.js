@@ -381,7 +381,7 @@ function renderLesson() {
     const exs = m.blocks.filter(b => b.t === 'ex' && b.goal);
     exs.forEach(b => {
       const node = wrap.querySelector('[data-ed="' + b.id + '"]');
-      if (node) EditorUI.mountEditor(node, b, m.id);
+      if (node) EditorUI.mountEditor(node, b);
     });
     if (exs.length && window.LeanRuntime && !LeanRuntime.supported()) LeanRuntime.warmup();
   }

@@ -4,7 +4,7 @@
     {
       "name": "workbook",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["site/tools/serve.py", "8123"],
+      "runtimeArgs": ["site/tools/serve.py", "8123", "--http", "--local"],
       "port": 8123
     }
   ]

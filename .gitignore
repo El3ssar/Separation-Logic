@@ -24,3 +24,6 @@ build/
 
 # stray Lean scratch files at the repo root
 /*.lean
+
+# self-signed dev certificate
+site/tools/.cert/
