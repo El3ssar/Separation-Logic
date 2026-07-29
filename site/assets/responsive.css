@@ -14,6 +14,46 @@
       380px  small phone: tighten padding
    ========================================================================== */
 
+/* ==========================================================================
+   Typography scale.
+
+   The reading column used to be a fixed 772px whatever the screen, which on a
+   1080px-wide phone left a quarter of the display empty. The fix is not simply
+   "make it wider": a longer line at the same size is harder to read, not
+   easier. Scale the type and the measure together, so the line stays around
+   70-78 characters while filling more of the glass and getting genuinely
+   bigger.
+
+   `ch` does that arithmetic for us: the measure is expressed in characters, so
+   it tracks the font size automatically. The `min(100%, …)` keeps it honest on
+   narrow screens.
+   ========================================================================== */
+body{font-size:clamp(17px, 0.5rem + 0.95vw, 23px)}
+.wrap{max-width:min(100%, 80ch)}
+/* base.css caps paragraphs at 64ch inside the wrap; the wrap itself is now the
+   measure, so a second, narrower cap just reintroduces the wasted space. */
+.wrap p,.wrap ul,.wrap ol,.ex-why,.blurb{max-width:none}
+
+/* Everything derived from the body size in em, so one knob moves the whole
+   page and the proportions never drift apart. */
+h2.title{font-size:2.25em}
+.blurb{font-size:1.06em}
+.wrap h3{font-size:1.3em}
+.wrap h4{font-size:.72em}
+blockquote,.note,.dod p,.defn,.step-b,.dl-v,.tr-note,.anat-h,.walk-h,.ex-why,.panel p{font-size:inherit}
+.cb pre{font-size:.78em}
+.tr-state{font-size:.74em}
+.ed-hl,.ed-ta,.ed-gutter{font-size:.78em}
+.ex-name{font-size:.86em}
+
+/* A touch device reporting a wide viewport is a dense phone screen being shown
+   roughly 1:1 — 1080 CSS px across six inches of glass — not a large monitor.
+   The same CSS pixel is physically minuscule there, so scale hard on vw. The
+   floor protects ordinary phones, which report ~400px and must not shrink. */
+@media (pointer:coarse){
+  body{font-size:clamp(16.5px, 2.35vw, 34px)}
+}
+
 /* ---------- the sidebar is dismissible at every width ----------
    Below 960px base.css already turns it into an overlay drawer. Above that it
    is a column, and the ☰ button collapses that column outright — a wide
@@ -47,7 +87,7 @@
   .rail-close{display:block}
   .rail-scrim{display:none}
   .rail-scrim.on{display:block}
-  .wrap{max-width:820px;padding:26px 30px 120px}
+  .wrap{padding:26px 30px 120px}
 }
 
 /* ---------- large tablet / small laptop ----------
@@ -64,17 +104,14 @@
 
 /* ---------- tablet ---------- */
 @media (max-width:960px){
-  /* the rail is a drawer here, so the column is the whole screen: let the
-     measure grow a little rather than leaving a narrow ribbon of text */
-  .wrap{max-width:820px;padding:26px 30px 120px}
-  h2.title{font-size:clamp(28px,5.2vw,38px)}
-  .blurb{font-size:17px}
+  /* the rail is a drawer here, so the column is the whole screen; the measure
+     comes from the ch-based scale above */
+  .wrap{padding:26px 30px 120px}
 }
 
 /* ---------- tablet portrait ---------- */
 @media (max-width:760px){
   .wrap{padding:22px 22px 110px}
-  .wrap p,.wrap ul,.wrap ol{max-width:none}   /* 64ch is narrower than the screen */
   .lead{margin-bottom:24px}
   .rule{margin:24px 0 4px}
   .wrap h3{margin-top:32px}
@@ -82,7 +119,6 @@
 
 /* ---------- phone ---------- */
 @media (max-width:560px){
-  body{font-size:16.5px}
   .wrap{padding:18px 16px 100px}
 
   /* toolbar: the breadcrumb tells you where you are, so it gets the room.
@@ -95,17 +131,15 @@
   .lean-pill::before{width:8px;height:8px}   /* just the status dot */
 
   /* headings and prose */
-  h2.title{font-size:clamp(25px,7vw,32px)}
-  .blurb{font-size:16px}
-  .wrap h3{font-size:20px;padding-left:13px;margin-top:28px}
-  blockquote{padding:13px 15px;font-size:16px}
+  .wrap h3{padding-left:13px;margin-top:28px}
+  blockquote{padding:13px 15px}
 
   /* blocks: less inner padding, the screen is the scarce thing */
   .note,.dod,.defn,.orient-col,.orient-pay{padding-left:14px;padding-right:14px}
   .step{padding:12px 13px;gap:11px}
   .steps-t,.trace-t,.walk-t{padding-left:13px;padding-right:13px}
   .tr-tac,.tr-state,.tr-note,.tr-done,.anat-p{padding-left:13px;padding-right:13px}
-  .cb pre{padding:11px 13px;font-size:12.5px}
+  .cb pre{padding:11px 13px}
   .toc{padding:12px 13px}
 
   /* the anatomy chip and its text stack rather than fighting for width */
@@ -127,8 +161,8 @@
   .ed-pal{padding:7px 8px;gap:5px}
   .sym{min-width:34px;height:34px;font-size:15px}   /* thumbs, not cursors */
   .ed-btn{padding:7px 11px}
-  .ed-gutter{padding-left:9px;padding-right:6px;min-width:32px;font-size:12px}
-  .ed-hl,.ed-ta{padding:11px;font-size:12.5px}
+  .ed-gutter{padding-left:9px;padding-right:6px;min-width:32px}
+  .ed-hl,.ed-ta{padding:11px}
   .ed-hintbar{font-size:10.5px;padding:7px 10px}
 
   /* drawers and dialogs get the full screen */

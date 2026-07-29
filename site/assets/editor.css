@@ -189,6 +189,6 @@ body.rail-open{overflow:hidden}          /* no scrolling the page behind it */
   .rail{width:min(320px,86vw);box-shadow:var(--shadow-lg)}
   .brand{padding-right:44px}             /* keep the title clear of the × */
 }
-@media (min-width:961px){
-  .rail-scrim{display:none!important}    /* on a wide screen the rail is just there */
-}
+/* No wide-screen override for the scrim. It only ever carries `.on` when the
+   sidebar is acting as a drawer, and an !important here silently disabled
+   tap-to-close on touch devices that report a desktop-width viewport. */

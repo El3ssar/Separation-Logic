@@ -14,7 +14,7 @@
       service worker has to put them back or Lean silently refuses to start.
    ========================================================================== */
 
-const VERSION = 'sl-v5';
+const VERSION = 'sl-v6';
 const SHELL = VERSION + '-shell';
 const LEAN = VERSION + '-lean';
 
