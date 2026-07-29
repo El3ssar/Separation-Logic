@@ -229,6 +229,8 @@ function renderEx(b) {
   let body = '';
   if (b.setup) body += '<div class="ex-setup">' + wrapProse(b.setup) + '</div>';
   if (b.goal) body += codeBlock(b.goal, 'verified');
+  /* the live editor: present whenever there is something to prove */
+  if (b.goal && window.EditorUI) body += EditorUI.editorHtml(b);
   if (body) h += '<div class="ex-body">' + body + '</div>';
 
   const hasHint = !!(b.hint || (b.hints && b.hints.length));
@@ -371,6 +373,19 @@ function renderLesson() {
     + '</div>';
 
   wrap.innerHTML = h;
+
+  /* Bring the editors to life, and start Lean warming up in the background the
+     moment a chapter with exercises is opened — the reader gets a head start
+     on the one slow step while they read the prose. */
+  if (window.EditorUI) {
+    const exs = m.blocks.filter(b => b.t === 'ex' && b.goal);
+    exs.forEach(b => {
+      const node = wrap.querySelector('[data-ed="' + b.id + '"]');
+      if (node) EditorUI.mountEditor(node, b, m.id);
+    });
+    if (exs.length && window.LeanRuntime && !LeanRuntime.supported()) LeanRuntime.warmup();
+  }
+
   document.getElementById('crumb').innerHTML = m.phase + ' &nbsp;·&nbsp; <b>' + m.title + '</b>';
   document.title = m.num !== '§' ? (m.num + ' · ' + m.title + ' — Separation Logic in Lean')
                                  : (m.title + ' — Separation Logic in Lean');
@@ -600,5 +615,6 @@ window.__boot = async function boot() {
   }
 
   buildIndex(); renderLesson(); renderNav();
+  if (window.EditorUI) EditorUI.mountLeanStatus();
   if (Store.mode === 'mem') document.getElementById('storeNote').style.display = 'block';
 };

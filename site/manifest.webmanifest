@@ -1,0 +1,19 @@
+{
+  "name": "Separation Logic in Lean 4",
+  "short_name": "Sep Logic",
+  "description": "A mathematician's workbook: build a separation logic from nothing, in Lean 4, with every proof machine-checked in the browser.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0D1117",
+  "theme_color": "#0969DA",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

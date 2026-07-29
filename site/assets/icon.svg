@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0D1117"/>
+  <circle cx="176" cy="200" r="52" fill="none" stroke="#58A6FF" stroke-width="18"/>
+  <circle cx="336" cy="200" r="52" fill="none" stroke="#F85149" stroke-width="18"/>
+  <path d="M176 296v72M336 296v72" stroke="#8B949E" stroke-width="14" stroke-linecap="round"/>
+  <text x="256" y="200" font-family="ui-monospace,monospace" font-size="128" font-weight="700"
+        fill="#E6EDF3" text-anchor="middle" dominant-baseline="central">∗</text>
+  <text x="256" y="404" font-family="ui-monospace,monospace" font-size="86" font-weight="700"
+        fill="#E6EDF3" text-anchor="middle" dominant-baseline="central">↦</text>
+</svg>
