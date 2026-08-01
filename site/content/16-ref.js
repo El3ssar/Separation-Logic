@@ -35,7 +35,7 @@ registerChapter({
     },
     {
       t: "h3",
-      s: "Six laws, written down"
+      s: "The interface, instantiated"
     },
     {
       t: "p",
@@ -154,7 +154,7 @@ def HeapPCM : PCM where
     },
     {
       t: "p",
-      h: "That is the paper reading. Underneath, each of those is a plain <code>def</code> producing a <code>Store → Heap → Prop</code>, and every proof you have written went through the right-hand column below. When a goal stops making sense, the fix is almost always to unfold one row of this table by hand:"
+      h: "That is the paper reading. Every proof you have written went through the third column below instead. When a goal stops making sense, the fix is almost always to unfold one row of this table by hand:"
     },
     {
       t: "tbl",

@@ -1275,17 +1275,3 @@ theorem countdown_spec (x : Var) : ∀ n,
     show (!(decide (Atom.eval σ (.var x) = Atom.eval σ (.const 0)))) = false
     simp [Atom.eval, hx]
 
-inductive Cmd where
-  | skip
-  | assign : Var  → Atom → Cmd
-  | load   : Var  → Atom → Cmd      -- x := [a]     address is an expression
-  | write  : Atom → Atom → Cmd      -- [a] := e
-  | free   : Atom → Cmd             -- free a
-  | seq    : Cmd → Cmd → Cmd
-  | ite    : BExpr → Cmd → Cmd → Cmd
-  | loop   : BExpr → Cmd → Cmd
-
-theorem hoare_load' (x : Var) (a : Atom) (l : Loc) (v : Val) :
-    Hoare (aAnd (fact (fun σ => a.eval σ = l)) (l ↦ v))
-          (.load x a)
-          (pure (fun σ => σ x = v) ∗ (l ↦ v))

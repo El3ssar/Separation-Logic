@@ -1,0 +1,542 @@
+#!/usr/bin/env node
+/* The ledger check: nothing may be used before it has been introduced.
+ *
+ *   node site/tools/e2/ledger.mjs               check every content/*.js
+ *   node site/tools/e2/ledger.mjs 16-star       check one file
+ *   node site/tools/e2/ledger.mjs --json        machine-readable
+ *   node site/tools/e2/ledger.mjs --strict-names   promote unknown-name warnings
+ *
+ * WHY THIS EXISTS. Edition 1's second chapter expects the reader to parse
+ *
+ *     rcases hd l₁ with h | h <;> · rw [singleton_same] at h; exact absurd h (by simp)
+ *
+ * in which `rcases`, `<;>`, `·`, `;` and `absurd` all appear for the first time
+ * with no introduction. That is not a slip; it is what happens when the reading
+ * order lives only in an author's head. Edition 2 writes it down — COURSE-PLAN.md
+ * §E, the global ledger — and this tool mechanises it. `ledger.json` is §E as
+ * data: every tactic, keyword, syntactic form, library name and course-internal
+ * lemma, with the FILE (NN-id) that first introduces it.
+ *
+ * Three checks, in descending order of how much they matter:
+ *
+ *   1. ORDER.   An item used in NN-x whose ledger row says MM-y with MM > NN is
+ *               an error. This is the rule the whole edition exists to keep.
+ *   2. EXISTENCE. A course-internal lemma may be cited only if it is declared in
+ *               site/lean/e2/ at or before the citing unit's own fragment. This
+ *               is what would have caught Edition 1 citing `self_disjoint_empty`,
+ *               a lemma that does not exist. If site/lean/e2/ is empty or partial
+ *               the check degrades to a warning against lean/corpus.lean and says
+ *               so, rather than crashing or lying.
+ *   3. COVERAGE. A name that looks like a citation but has no ledger row is a
+ *               warning: either a plan gap or a typo, and both are worth seeing.
+ *
+ * WHAT IT READS. Only Lean text, never prose: code.src, txt.src, state.src,
+ * anat.src and anat.parts[].m, ex.goal, ex.sol, ex.walk[].tac, trace.start,
+ * trace.steps[].tac and .state, cmp.left/right.src, and everything nested inside
+ * detail.blocks[], ex.deep[] and steps.items[].h. Comments and string literals
+ * are blanked first. A name DECLARED in a file is not a use of it, and neither
+ * are the binders of that file's own proofs.
+ *
+ * KNOWN FALSE-POSITIVE CLASSES — read these before you switch the tool off:
+ *
+ *   a. `cases`. §E books three different forms of it in three different units
+ *      (`cases h : e with` at 02, bare inversion and `cases h with | ctor` at
+ *      19). The token is booked at the earliest, so a bare `cases h` inversion
+ *      used before unit 19 is missed — a false NEGATIVE, not a positive.
+ *   b. `subst` is both a tactic (unit 08) and the assertion transformer defined
+ *      in unit 22. Booked at the earlier; the transformer is unchecked.
+ *   c. `state` blocks are goal displays, not author-written Lean. A goal that
+ *      mentions `Heap.union` is evidence about the proof, not a citation the
+ *      reader must already understand — but it is still reported, flavour
+ *      `display`, because usually it does mean the unit is out of place.
+ *      `⊢` is special-cased: only the INFIX use (something to its left on the
+ *      line) counts as the entailment notation of unit 12.
+ *   d. `txt` blocks are deliberately schematic pseudo-notation with invented
+ *      placeholder names. Order checks apply; the name-existence check does not.
+ *   e. Shape rows like "explicit binder (x : T)" and "implicit binder {x : T}"
+ *      are matched by regex and also fire on type ascriptions and on structure
+ *      instance literals. Both are booked at or before the shape they collide
+ *      with, so the collision is silent — but a regex row is never as sharp as
+ *      a name row, and `--json` marks which is which (`via: "re"`).
+ *   f. Binder collection over-approximates: every `| ident` at the start of a
+ *      line is treated as a constructor/pattern binder, which also swallows
+ *      `rcases … with a | b`. Over-collecting only makes the tool quieter.
+ *   g. `simp?` output quoted verbatim in a chapter cites Lean core simp lemmas
+ *      (`ne_eq`, `Option.some.injEq`, `decide_eq_true_eq`, …). Those are not in
+ *      the ledger and cannot be; CORE below lists the ones the course actually
+ *      quotes, and anything else lands in the unknown-name WARNING bucket, not
+ *      the error bucket, unless it is a near-miss of a real course lemma.
+ *
+ * No dependencies, no build step. Exits non-zero on any error.
+ */
+import fs from 'fs';
+import path from 'path';
+import vm from 'vm';
+import { fileURLToPath, pathToFileURL } from 'url';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const SITE = path.join(HERE, '..', '..');
+
+/* Lean core names a chapter may cite without a ledger row. Kept short on
+   purpose: every addition is a decision that the reader is expected to know a
+   name the course never taught them. */
+const CORE = new Set(`
+rfl trivial id absurd funext congrArg congrFun propext Classical Decidable DecidableEq
+Eq Eq.symm Eq.trans Eq.mp Eq.mpr Eq.refl Eq.subst Ne Ne.symm Ne.intro Not
+Iff Iff.rfl Iff.intro Iff.mp Iff.mpr And And.intro And.left And.right Or Or.inl Or.inr
+Or.symm Or.elim Exists Exists.intro True False True.intro False.elim
+Prop Sort Type Nat Bool Option Unit List String Char Int Prod Sigma Subtype Fin Empty
+Nat.succ Nat.zero Nat.succ_ne_zero Nat.le_refl Nat.le_trans Nat.lt_irrefl Nat.pred
+Nat.add_zero Nat.zero_add Nat.succ_sub_one Nat.sub_zero Nat.sub_self Nat.le_of_lt_succ
+Nat.lt_succ_of_le Nat.le_succ Nat.le_max_left Nat.le_max_right Nat.max_def
+Option.some Option.none Option.some.inj Option.some.injEq Option.noConfusion Option.isSome
+List.length List.append List.nil List.cons List.length_cons List.length_nil
+Bool.true Bool.false Bool.noConfusion decide ite dite if_pos if_neg if_true if_false
+ne_eq not_false_eq_true not_true_eq_false eq_self_iff_true decide_eq_true_eq
+beq_iff_eq eq_comm and_true true_and or_false false_or and_self imp_self
+Function Function.comp Repr Inhabited Nonempty
+`.trim().split(/\s+/));
+
+/* ------------------------------------------------------------------ loading */
+
+const loadLedger = (file) => {
+  const L = JSON.parse(fs.readFileSync(file, 'utf8'));
+  L.index = new Map(L.order.map((u, i) => [u, i]));
+  L.byName = new Map();
+  L.shapes = [];
+  for (const e of L.entries) {
+    if (e.check === false) continue;
+    if (e.re) { e.rx = new RegExp(e.re, (e.flags || '') + 'g'); L.shapes.push(e); continue; }
+    for (const n of [e.name, ...(e.aliases || [])]) {
+      if (!L.byName.has(n)) L.byName.set(n, []);
+      L.byName.get(n).push(e);
+    }
+  }
+  return L;
+};
+
+/* Every declaration name the verified Lean knows about, and where. Prefers the
+   Edition-2 fragments; falls back, loudly, to the Edition-1 corpus. */
+const DECL = /^[ \t]*(?:@\[[^\]]*\][ \t]*)?(?:private[ \t]+|protected[ \t]+|noncomputable[ \t]+|partial[ \t]+)*(theorem|lemma|def|abbrev|instance|structure|inductive|opaque|axiom)[ \t]+([^\s({[:]+)/gm;
+
+function leanUniverse() {
+  const decls = new Map();          // name -> unit id (or null when unknown)
+  const e2 = path.join(SITE, 'lean', 'e2');
+  const frags = fs.existsSync(e2) ? fs.readdirSync(e2).filter(f => f.endsWith('.lean')).sort() : [];
+  /* `def write` inside `namespace Heap` is cited as `Heap.write`, so record
+     both. Namespaces do not nest in this corpus, but closing is by `end`. */
+  const scan = (text, unit) => {
+    let ns = [];
+    for (const line of text.split('\n')) {
+      const open = line.match(/^\s*namespace\s+([A-Za-z_][\w'.]*)/);
+      if (open) { ns.push(open[1]); continue; }
+      if (/^\s*end\b/.test(line)) { ns.pop(); continue; }
+      for (const m of line.matchAll(DECL)) {
+        const short = m[2];
+        if (!decls.has(short)) decls.set(short, unit);
+        if (ns.length) {
+          const q = ns.join('.') + '.' + short;
+          if (!decls.has(q)) decls.set(q, unit);
+        }
+      }
+    }
+  };
+  if (frags.length) {
+    for (const f of frags) scan(fs.readFileSync(path.join(e2, f), 'utf8'), f.replace(/\.lean$/, ''));
+    return { mode: 'e2', decls, frags, last: frags[frags.length - 1].replace(/\.lean$/, '') };
+  }
+  const corpus = path.join(SITE, 'lean', 'corpus.lean');
+  if (fs.existsSync(corpus)) scan(fs.readFileSync(corpus, 'utf8'), null);
+  const ed2 = path.join(SITE, 'lean', 'edition2');
+  if (fs.existsSync(ed2)) for (const f of fs.readdirSync(ed2).filter(f => f.endsWith('.lean')))
+    scan(fs.readFileSync(path.join(ed2, f), 'utf8'), null);
+  return { mode: 'fallback', decls, frags: [], last: null };
+}
+
+function chaptersOf(dir, files) {
+  const out = [];
+  for (const f of files) {
+    const got = [];
+    const ctx = vm.createContext({ registerChapter: (c) => got.push(c), console });
+    try { vm.runInContext(fs.readFileSync(path.join(dir, f), 'utf8'), ctx, { filename: f }); }
+    catch (e) { out.push({ file: f, error: e.message }); continue; }
+    for (const c of got) out.push({ file: f, chapter: c });
+  }
+  return out;
+}
+
+/* ---------------------------------------------------------------- harvesting */
+
+/* flavour: 'lean' author-written Lean · 'display' a goal Lean printed ·
+   'schematic' a txt block, pseudo-notation */
+function harvest(ch) {
+  const out = [];
+  const put = (p, flavour, text) => { if (typeof text === 'string' && text.trim()) out.push({ path: p, flavour, text }); };
+
+  const block = (b, p) => {
+    if (!b || typeof b !== 'object') return;
+    switch (b.t) {
+      case 'code': put(p + '.src', 'lean', b.src); break;
+      case 'txt': put(p + '.src', 'schematic', b.src); break;
+      case 'state': put(p + '.src', 'display', b.src); break;
+      case 'anat':
+        put(p + '.src', 'lean', b.src);
+        (b.parts || []).forEach((q, i) => put(`${p}.parts[${i}].m`, 'lean', q.m));
+        break;
+      case 'trace':
+        put(p + '.start', 'display', b.start);
+        (b.steps || []).forEach((s, i) => {
+          put(`${p}.steps[${i}].tac`, 'lean', s.tac);
+          put(`${p}.steps[${i}].state`, 'display', s.state);
+        });
+        put(p + '.done', 'display', b.done);
+        break;
+      case 'cmp':
+        for (const side of ['left', 'right']) if (b[side]) put(`${p}.${side}.src`, 'lean', b[side].src);
+        break;
+      case 'detail': (b.blocks || []).forEach((x, i) => block(x, `${p}.blocks[${i}]`)); break;
+      case 'steps': (b.items || []).forEach((it, i) => {
+        if (Array.isArray(it.h)) it.h.forEach((x, j) => block(x, `${p}.items[${i}].h[${j}]`));
+      }); break;
+      case 'ex': {
+        const q = `${p}(${b.id})`;
+        put(q + '.goal', 'lean', b.goal);
+        put(q + '.sol', 'lean', b.sol);
+        (b.walk || []).forEach((w, i) => put(`${q}.walk[${i}].tac`, 'lean', w.tac));
+        (b.deep || []).forEach((x, i) => block(x, `${q}.deep[${i}]`));
+        break;
+      }
+      default: /* prose, tables, svg: not Lean */ break;
+    }
+  };
+  (ch.blocks || []).forEach((b, i) => block(b, `blocks[${i}]`));
+
+  /* §E: an item below your row "does not exist yet and must not be mentioned".
+     So the <code> spans of the prose count too — that is where Edition 1 cites
+     `self_disjoint_empty`, a lemma that does not exist. Only name rows are
+     applied to prose; a code span is a fragment, not a syntactic context. */
+  const PLAIN = new Set(['src', 'state', 'goal', 'sol', 'tac', 'm', 'start', 'done']);
+  const spans = (node, p, acc) => {
+    if (typeof node === 'string') {
+      for (const m of node.matchAll(/<code[^>]*>([\s\S]*?)<\/code>/g)) acc.push(unhtml(m[1]));
+      return;
+    }
+    if (Array.isArray(node)) return node.forEach((x, i) => spans(x, p, acc));
+    if (node && typeof node === 'object')
+      for (const k of Object.keys(node)) if (!PLAIN.has(k)) spans(node[k], p, acc);
+  };
+  (ch.blocks || []).forEach((b, i) => {
+    const acc = [];
+    spans(b, '', acc);
+    if (acc.length) out.push({ path: `blocks[${i}]<code>`, flavour: 'prose', text: acc.join('\n') });
+  });
+  const acc = [];
+  spans(ch.orient || {}, '', acc);
+  if (acc.length) out.push({ path: 'orient<code>', flavour: 'prose', text: acc.join('\n') });
+  return out;
+}
+
+const ENT = { lt: '<', gt: '>', amp: '&', quot: '"', nbsp: ' ', hellip: '…', apos: "'", '#39': "'" };
+const unhtml = (s) => s
+  .replace(/<[^>]*>/g, '')
+  .replace(/&(#?\w+);/g, (m, e) => (e in ENT ? ENT[e] : m));
+
+/* ------------------------------------------------------------------ scanning */
+
+/* Blank comments and string literals, keeping every offset so line numbers in
+   the report still point at the right place. */
+function strip(src) {
+  const a = src.split('');
+  const blank = (i, j) => { for (; i < j; i++) if (a[i] !== '\n') a[i] = ' '; };
+  for (let i = 0; i < src.length; i++) {
+    if (src[i] === '/' && src[i + 1] === '-') {           // /- … -/, nested
+      let d = 1, j = i + 2;
+      while (j < src.length && d) {
+        if (src[j] === '/' && src[j + 1] === '-') { d++; j += 2; }
+        else if (src[j] === '-' && src[j + 1] === '/') { d--; j += 2; }
+        else j++;
+      }
+      blank(i, j); i = j - 1;
+    } else if (src[i] === '-' && src[i + 1] === '-') {    // -- to end of line
+      let j = src.indexOf('\n', i); if (j < 0) j = src.length;
+      blank(i, j); i = j - 1;
+    } else if (src[i] === '"') {                          // "…"
+      let j = i + 1;
+      while (j < src.length && src[j] !== '"') j += src[j] === '\\' ? 2 : 1;
+      blank(i, Math.min(j + 1, src.length)); i = j;
+    }
+  }
+  return a.join('');
+}
+
+const IDS = 'A-Za-z_\\u0370-\\u03FF\\u00C0-\\u024F';
+const IDC = IDS + "0-9'\\u2080-\\u209C\\u271D";
+const ID_RE = new RegExp(`[${IDS}][${IDC}]*(?:\\.[${IDS}0-9][${IDC}]*)*`, 'g');
+/* what a tactic may sit immediately after */
+const TACTIC_AFTER = /(^|\n|;|·|\||>|\(|\{|=>|\bby|\bthen|\belse|\bdo)$/;
+
+function tokenise(text) {
+  const out = [];
+  for (const m of text.matchAll(ID_RE)) {
+    const before = text.slice(0, m.index).replace(/[ \t]+$/, '');
+    out.push({
+      name: m[0], at: m.index,
+      dotted: m[0].includes('.'),
+      afterDot: before.endsWith('.'),
+      tactic: TACTIC_AFTER.test(before)
+    });
+  }
+  return out;
+}
+
+const lineOf = (text, at) => text.slice(0, at).split('\n').length;
+
+/* Names a file declares or binds, which are therefore not citations. */
+const BINDERS = [
+  /\b(?:theorem|lemma|def|abbrev|instance|structure|inductive|opaque|axiom)\s+([^\s({[:]+)/g,
+  /^[ \t]*\|\s*([^\n=]*?)(?:=>|$)/gm,
+  /\bhave\s+([A-Za-z_][^\s:=]*)/g,
+  /\bintro\s+([^\n]*)/g, /\brintro\s+([^\n]*)/g,
+  /\bobtain\s+([^\n]*?):=/g,
+  /\brcases\b[^\n]*?\bwith\b([^\n]*)/g,
+  /\bfun\s+([^\n=]*)=>/g,
+  /\bcase\s+([^\n=]*?)(?:=>|$)/gm,
+  /\bnext\s+([^\n=]*)=>/g,
+  /\brename_i\s+([^\n]*)/g,
+  /\bgeneralizing\s+([^\n]*)/g,
+  /\bwith\s*\|\s*([^\n=]*)=>/g,
+  /[(){]\s*([^():{}\n]+?)\s*:[^=]/g,            // binder groups (a b : T), {a : T}
+  /^[ \t]+([A-Za-z_][A-Za-z0-9_']*)\s*:(?!=)/gm, // structure / inductive fields
+  /^[ \t]+([A-Za-z_][A-Za-z0-9_']*)\s*:=/gm,     // `where` instance fields
+  /[∀∃]\s*([^,\n]*),/g,
+  /\blet\s+([A-Za-z_][^\s:=]*)/g
+];
+function localNames(texts) {
+  const s = new Set();
+  for (const t of texts) for (const re of BINDERS) {
+    for (const m of t.matchAll(re)) for (const w of (m[1] || '').matchAll(ID_RE)) s.add(w[0]);
+  }
+  return s;
+}
+
+/* is `name` a plausible citation of a declaration, as opposed to a bound
+   variable or a piece of Lean grammar? */
+const citationish = (n) =>
+  (n.includes('_') || /^[A-Z][A-Za-z0-9]*[a-z]/.test(n) || n.includes('.')) &&
+  !/^_/.test(n);
+
+/* a snake_case name close enough to a real one to be a typo rather than a
+   library name we have never heard of */
+function nearMiss(name, universe) {
+  const head = name.split('_').slice(0, 2).join('_');
+  for (const other of universe) {
+    if (other === name) continue;
+    if (other.startsWith(head) || name.startsWith(other.split('_').slice(0, 2).join('_'))) {
+      if (Math.abs(other.length - name.length) <= 8) return other;
+    }
+  }
+  return null;
+}
+
+/* -------------------------------------------------------------------- checks */
+
+export function run(opts = {}) {
+  const contentDir = opts.contentDir || path.join(SITE, 'content');
+  const L = loadLedger(opts.ledger || path.join(HERE, 'ledger.json'));
+  const lean = opts.leanUniverse || leanUniverse();
+  const strictNames = !!opts.strictNames;
+  const only = opts.only;
+
+  let files = fs.readdirSync(contentDir).filter(f => f.endsWith('.js')).sort();
+  if (only) files = files.filter(f => f.includes(only));
+
+  /* content file -> ledger unit. Identity for Edition 2; the test supplies a
+     mapping for Edition 1, whose chapters are not ledger units. */
+  const unitOf = (f) => {
+    const base = f.replace(/\.js$/, '');
+    if (opts.map && base in opts.map) return opts.map[base];
+    if (opts.map && !opts.mapPartial) return null;
+    return L.index.has(base) ? base : null;
+  };
+
+  const findings = [];
+  const notes = [];
+  const idx = (u) => (L.index.has(u) ? L.index.get(u) : -1);
+  const fenceAt = idx(L.fence.unit);
+  const maxFrag = lean.last ? idx(lean.last) : -1;
+
+  if (lean.mode === 'fallback') {
+    notes.push('site/lean/e2/ is empty — the existence check is running against lean/corpus.lean ' +
+      'and lean/edition2/*.lean, which have no unit order. Citation-order errors are reported as ' +
+      'warnings; rerun once the fragments exist.');
+  } else if (maxFrag >= 0 && maxFrag < L.order.length - 3) {
+    notes.push(`site/lean/e2/ has ${lean.frags.length} fragment(s), the last being ${lean.last}. ` +
+      'Existence is only checked for names the ledger places at or before that point.');
+  }
+
+  for (const { file, chapter, error } of chaptersOf(contentDir, files)) {
+    const base = file.replace(/\.js$/, '');
+    if (error) { findings.push({ file: base, path: '-', severity: 'error', rule: 'load', msg: `does not run: ${error}` }); continue; }
+    const unit = unitOf(file);
+    if (unit === null) { notes.push(`${base}: no ledger unit — skipped`); continue; }
+    const here = idx(unit);
+
+    const scraps = harvest(chapter).map(s => ({ ...s, clean: strip(s.text) }));
+    const declared = localNames(scraps.filter(s => s.flavour !== 'display').map(s => s.clean));
+    for (const b of chapter.blocks || []) if (b.t === 'ex' && b.name) declared.add(b.name);
+
+    /* one row per (file, rule, item): the first site, plus a count. A report
+       that lists ⊢ a hundred and sixty times is a report nobody reads. */
+    const seenHere = new Map();
+    const report = (s, at, o) => {
+      const key = `${o.rule}|${o.entryKind || ''}|${o.name}`;
+      const hit = seenHere.get(key);
+      if (hit) { hit.count++; if (hit.also.length < 3) hit.also.push(`${s.path}:${lineOf(s.text, at)}`); return; }
+      const f = {
+        file: base, unit, path: s.path, flavour: s.flavour,
+        line: lineOf(s.text, at), count: 1, also: [], ...o
+      };
+      seenHere.set(key, f);
+      findings.push(f);
+    };
+
+    for (const s of scraps) {
+      /* --- shape rows (regexes) --- */
+      if (s.flavour !== 'prose') for (const e of L.shapes) {
+        e.rx.lastIndex = 0;
+        let m, seen = 0;
+        while ((m = e.rx.exec(s.clean)) && seen < 4) {
+          seen++;
+          orderCheck(e, s, m.index, 're');
+          if (e.rx.lastIndex === m.index) e.rx.lastIndex++;
+        }
+      }
+
+      /* --- name rows --- */
+      const toks = tokenise(s.clean);
+      const firstSeen = new Set();
+      for (const t of toks) {
+        if (t.afterDot) continue;
+        const rows = L.byName.get(t.name);
+        if (rows) {
+          for (const e of rows) {
+            if (e.kind === 'tactic' && !t.tactic && s.flavour !== 'prose') continue;
+            if (e.kind === 'internal' && declared.has(t.name)) continue;
+            const key = e.kind + ' ' + e.name;
+            if (firstSeen.has(key)) continue;
+            firstSeen.add(key);
+            orderCheck(e, s, t.at, 'name');
+            if (e.kind === 'internal') existenceCheck(e, s, t);
+          }
+          continue;
+        }
+        /* --- coverage: a citation with no ledger row --- */
+        if (s.flavour === 'display' || s.flavour === 'schematic') continue;
+        if (!citationish(t.name) || CORE.has(t.name) || declared.has(t.name)) continue;
+        /* in prose only a near-miss of a real lemma is worth saying anything about */
+        if (s.flavour === 'prose' && (lean.decls.has(t.name) || !/^[a-z][A-Za-z0-9']*(_[A-Za-z0-9']+)+$/.test(t.name))) continue;
+        if (t.dotted && !/^[A-Z]/.test(t.name)) continue;      // dot notation on a term
+        if (t.dotted && CORE.has(t.name.split('.')[0])) continue;
+        const key = 'unknown ' + t.name;
+        if (firstSeen.has(key)) continue;
+        firstSeen.add(key);
+        const known = lean.decls.has(t.name);
+        if (known) {
+          report(s, t.at, {
+            severity: 'warn', rule: 'coverage', name: t.name,
+            msg: `declared in the Lean but has no ledger row — add one to §E or it will drift`
+          });
+        } else {
+          const miss = /^[a-z][A-Za-z0-9']*(_[A-Za-z0-9']+)+$/.test(t.name)
+            ? nearMiss(t.name, lean.decls.keys()) : null;
+          report(s, t.at, {
+            severity: miss || strictNames ? 'error' : 'warn',
+            rule: miss ? 'existence' : 'coverage', name: t.name,
+            msg: miss
+              ? `cited but declared nowhere in the verified Lean — did you mean \`${miss}\`?`
+              : `not in the ledger and not declared in the verified Lean (Lean core? then add it to CORE)`
+          });
+        }
+      }
+    }
+
+    function orderCheck(e, s, at, via) {
+      if (e.banned) {
+        return report(s, at, { severity: 'error', rule: 'banned', name: e.name, via, entryKind: e.kind, msg: e.banned });
+      }
+      const there = idx(e.unit);
+      if (there < 0) return;
+      if (there > here) {
+        return report(s, at, {
+          severity: 'error', rule: 'order', name: e.name, via, entryKind: e.kind,
+          introducedIn: e.unit,
+          msg: `${e.kind} \`${e.name}\` is introduced in ${e.unit}, used here in ${unit}`
+        });
+      }
+      if (e.fenced && here > fenceAt) {
+        return report(s, at, {
+          severity: 'error', rule: 'fence', name: e.name, via, entryKind: e.kind, introducedIn: e.unit,
+          msg: `\`${e.name}\` comes from ${e.unit}, which §E.6 declares optional — no later unit may rely on it`
+        });
+      }
+    }
+
+    function existenceCheck(e, s, t) {
+      if (declared.has(t.name)) return;
+      const where = lean.decls.get(t.name);
+      if (lean.mode === 'fallback') {
+        if (!lean.decls.has(t.name)) report(s, t.at, {
+          severity: 'warn', rule: 'existence', name: t.name,
+          msg: 'no such declaration in lean/corpus.lean or lean/edition2/*.lean (degraded check: site/lean/e2/ is empty)'
+        });
+        return;
+      }
+      if (where === undefined) {
+        if (idx(e.unit) <= maxFrag) report(s, t.at, {
+          severity: 'error', rule: 'existence', name: t.name,
+          msg: `cited, but no fragment in site/lean/e2/ declares it`
+        });
+        return;
+      }
+      if (idx(where) > here) report(s, t.at, {
+        severity: 'error', rule: 'existence', name: t.name, introducedIn: where,
+        msg: `declared in the Lean only at ${where}, cited here in ${unit}`
+      });
+    }
+  }
+
+  return { findings, notes, lean: { mode: lean.mode, fragments: lean.frags.length }, files: files.length, ledger: L.entries.length };
+}
+
+/* --------------------------------------------------------------------- cli */
+
+const C = { r: '\x1b[31m', y: '\x1b[33m', d: '\x1b[2m', b: '\x1b[1m', x: '\x1b[0m' };
+
+export function report(res, json) {
+  if (json) { console.log(JSON.stringify(res, null, 1)); return res.findings.some(f => f.severity === 'error') ? 1 : 0; }
+  const errs = res.findings.filter(f => f.severity === 'error');
+  const warns = res.findings.filter(f => f.severity === 'warn');
+  console.log(`\nledger: ${res.ledger} rows · ${res.files} file(s) · lean universe: ${res.lean.mode} (${res.lean.fragments} fragments)\n`);
+  for (const n of res.notes) console.log(`  ${C.d}${n}${C.x}`);
+  if (res.notes.length) console.log('');
+
+  let file = null;
+  for (const f of res.findings) {
+    if (f.file !== file) { file = f.file; console.log(`${C.b}${file}${C.x}`); }
+    const mark = f.severity === 'error' ? `${C.r}✗${C.x}` : `${C.y}!${C.x}`;
+    const at = `${f.path}${f.line ? ':' + f.line : ''}`;
+    const more = f.count > 1 ? `${C.d} (+${f.count - 1} more)${C.x}` : '';
+    console.log(`  ${mark} ${C.d}${(f.flavour || '').padEnd(9)}${C.x} ${at}${more}`);
+    console.log(`      ${f.name ? '`' + f.name + '` — ' : ''}${f.msg}`);
+  }
+  const by = {};
+  for (const f of res.findings) by[f.rule] = (by[f.rule] || 0) + 1;
+  console.log(`\n${errs.length} error(s), ${warns.length} warning(s)  ${C.d}${JSON.stringify(by)}${C.x}\n`);
+  return errs.length ? 1 : 0;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const args = process.argv.slice(2);
+  const only = args.filter(a => !a.startsWith('--'))[0];
+  process.exit(report(run({ only, strictNames: args.includes('--strict-names') }), args.includes('--json')));
+}

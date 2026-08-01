@@ -1,0 +1,2813 @@
+{
+ "source": "site/COURSE-PLAN.md §E (and the per-unit Corpus / New-Lean-needed lists in §D)",
+ "generated": "by hand from the plan; edit this file, not a generator",
+ "order": [
+  "00-aliasing",
+  "01-goalstate",
+  "02-terms",
+  "03-compute",
+  "04-funext",
+  "05-update",
+  "06-errors",
+  "07-heap",
+  "08-heap-laws",
+  "09-footprint",
+  "10-disjoint",
+  "11-union",
+  "12-pcm",
+  "13-splits",
+  "14-assertions",
+  "15-pointsto",
+  "16-star",
+  "17-star-algebra",
+  "18-star-assoc",
+  "19-pure",
+  "20-compare",
+  "21-language",
+  "22-exec",
+  "23-induction",
+  "24-interpreter",
+  "25-hoare",
+  "26-small-footprint",
+  "27-locality",
+  "28-local-heap",
+  "29-local-compose",
+  "30-frame",
+  "31-aliasing-closed",
+  "32-symbolic",
+  "33-swap",
+  "34-wp",
+  "35-listrep",
+  "36-lseg",
+  "37-wand",
+  "38-partial",
+  "39-invariant",
+  "40-variant",
+  "41-beyond",
+  "42-tactics",
+  "43-ref"
+ ],
+ "fence": {
+  "unit": "24-interpreter",
+  "notes": "§E.6: unit 21 (24-interpreter) is optional. No file after it may use anything marked fenced:true."
+ },
+ "entries": [
+  {
+   "kind": "tactic",
+   "name": "intro",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "tactic",
+   "name": "simp",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "tactic",
+   "name": "trace_state",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "tactic",
+   "name": "sorry",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "tactic",
+   "name": "simp … at h",
+   "unit": "00-aliasing",
+   "re": "\\bsimp\\b[^\\n]*?\\bat\\b",
+   "flags": "",
+   "notes": "same unit as simp; row kept so the §tactics index can list it separately"
+  },
+  {
+   "kind": "tactic",
+   "name": "exact",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "tactic",
+   "name": "obtain",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "tactic",
+   "name": "rcases",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "tactic",
+   "name": "constructor",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "tactic",
+   "name": "left",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "tactic",
+   "name": "right",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "syntax",
+   "name": "· (focus dot)",
+   "unit": "02-terms",
+   "re": "·",
+   "flags": "",
+   "notes": "also Lean's section anonymous-function dot, which the course never uses"
+  },
+  {
+   "kind": "tactic",
+   "name": "rw",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "tactic",
+   "name": "unfold",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "tactic",
+   "name": "show",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "tactic",
+   "name": "have",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "tactic",
+   "name": "simp only",
+   "unit": "03-compute",
+   "re": "\\bsimp\\s+only\\b",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "rw [← h]",
+   "unit": "03-compute",
+   "re": "\\brw\\b[^\\n]*←",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "rw … at h",
+   "unit": "03-compute",
+   "re": "\\brw\\s*\\[[^\\]]*\\]\\s*at\\b",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "cases",
+   "unit": "03-compute",
+   "notes": "§E splits this row three ways — `cases h : e with` (unit 02), `cases h` as inversion (unit 19), `cases h with | ctor a b` (unit 19). The tokeniser cannot tell them apart reliably, so the token is booked at its EARLIEST introduction (unit 02) and the two later forms get their own shape rows below. A bare `cases h` inversion used before unit 19 is therefore NOT caught. Known blind spot."
+  },
+  {
+   "kind": "tactic",
+   "name": "cases h : e with (saved equation)",
+   "unit": "03-compute",
+   "re": "\\bcases\\s+[A-Za-z_][^\\n]*?:\\s*[^\\n]*?\\bwith\\b",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "funext",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "tactic",
+   "name": "by_cases",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "syntax",
+   "name": "case pos / case neg",
+   "unit": "04-funext",
+   "re": "\\bcase\\s+(pos|neg)\\b",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "<;>",
+   "unit": "04-funext",
+   "re": "<;>",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "; (two tactics on one line)",
+   "unit": "04-funext",
+   "re": "(?<![<;]);(?![;>])",
+   "flags": "",
+   "notes": "excludes `<;>` and the `;;` command separator"
+  },
+  {
+   "kind": "tactic",
+   "name": "subst",
+   "unit": "10-disjoint",
+   "notes": "collides with `subst`, the assertion transformer defined in unit 22 (25-hoare). Booked at the earlier of the two, so a use of the transformer before 25-hoare is not caught."
+  },
+  {
+   "kind": "tactic",
+   "name": "<;> · (bullet under a combinator)",
+   "unit": "10-disjoint",
+   "re": "<;>\\s*·",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "rwa",
+   "unit": "11-union"
+  },
+  {
+   "kind": "tactic",
+   "name": "refine",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "syntax",
+   "name": "?_ (named hole)",
+   "unit": "12-pcm",
+   "re": "\\?_",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "rename_i",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "tactic",
+   "name": "cases … with | ctor",
+   "unit": "22-exec",
+   "re": "\\bcases\\s+(?![^\\n]*?:)[^\\n]*?\\bwith\\b",
+   "flags": "",
+   "notes": "the constructor-pattern form, distinguished from the saved-equation form by the absence of a `:`"
+  },
+  {
+   "kind": "tactic",
+   "name": "induction",
+   "unit": "23-induction"
+  },
+  {
+   "kind": "tactic",
+   "name": "induction … generalizing",
+   "unit": "23-induction",
+   "re": "\\bgeneralizing\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "▸",
+   "unit": "23-induction",
+   "re": "▸",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "simp only [f] at h ⊢",
+   "unit": "24-interpreter",
+   "re": "\\bsimp\\s+only\\b[^\\n]*\\bat\\b[^\\n]*⊢",
+   "flags": "",
+   "fenced": true
+  },
+  {
+   "kind": "tactic",
+   "name": "simpa",
+   "unit": "24-interpreter",
+   "fenced": true
+  },
+  {
+   "kind": "tactic",
+   "name": "induction hle with | refl | step",
+   "unit": "24-interpreter",
+   "re": "\\bwith\\b\\s*\\n?\\s*\\|\\s*refl\\b",
+   "flags": "",
+   "fenced": true
+  },
+  {
+   "kind": "tactic",
+   "name": "simp?",
+   "unit": "06-errors",
+   "re": "\\bsimp\\?",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "exact?",
+   "unit": "06-errors",
+   "re": "\\bexact\\?",
+   "flags": ""
+  },
+  {
+   "kind": "tactic",
+   "name": "set",
+   "unit": null,
+   "banned": "does not exist in this course (§E.1: \"must never be used\")"
+  },
+  {
+   "kind": "tactic",
+   "name": "omega",
+   "unit": null,
+   "banned": "does not exist in this course (§E.1: \"must never be used\")"
+  },
+  {
+   "kind": "tactic",
+   "name": "linarith",
+   "unit": null,
+   "banned": "does not exist in this course (§E.1: \"must never be used\")"
+  },
+  {
+   "kind": "tactic",
+   "name": "ring",
+   "unit": null,
+   "banned": "does not exist in this course (§E.1: \"must never be used\")"
+  },
+  {
+   "kind": "tactic",
+   "name": "simp_arith",
+   "unit": null,
+   "banned": "does not exist in this course (§E.1: \"must never be used\")"
+  },
+  {
+   "kind": "tactic",
+   "name": "aesop",
+   "unit": null,
+   "banned": "does not exist in this course (§E.1: \"must never be used\")"
+  },
+  {
+   "kind": "library",
+   "name": "Function.funext_iff",
+   "unit": null,
+   "banned": "§E.1: banned; use `funext` / `congrFun`"
+  },
+  {
+   "kind": "keyword",
+   "name": "theorem",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "keyword",
+   "name": "def",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "keyword",
+   "name": "example",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "keyword",
+   "name": "abbrev",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "keyword",
+   "name": "Prop",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "keyword",
+   "name": "Nat",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "keyword",
+   "name": "Option",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "keyword",
+   "name": "some",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "keyword",
+   "name": "none",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "syntax",
+   "name": ":= by",
+   "unit": "00-aliasing",
+   "re": ":=\\s*by\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "explicit binder (x : T)",
+   "unit": "00-aliasing",
+   "re": "\\([A-Za-z_][^():\\n]*:\\s*[^)]*\\)",
+   "flags": "",
+   "notes": "also matches a type ascription; same unit, so harmless"
+  },
+  {
+   "kind": "syntax",
+   "name": "if _ then _ else _",
+   "unit": "00-aliasing",
+   "re": "\\bif\\b[^\\n]*\\bthen\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "¬",
+   "unit": "00-aliasing",
+   "re": "¬",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "≠",
+   "unit": "00-aliasing",
+   "re": "≠",
+   "flags": ""
+  },
+  {
+   "kind": "command",
+   "name": "#check",
+   "unit": "00-aliasing",
+   "re": "#check\\b",
+   "flags": ""
+  },
+  {
+   "kind": "command",
+   "name": "#eval",
+   "unit": "00-aliasing",
+   "re": "#eval\\b",
+   "flags": ""
+  },
+  {
+   "kind": "command",
+   "name": "#print",
+   "unit": "03-compute",
+   "re": "#print\\b(?!\\s+axioms)",
+   "flags": ""
+  },
+  {
+   "kind": "command",
+   "name": "#print axioms",
+   "unit": "04-funext",
+   "re": "#print\\s+axioms\\b",
+   "flags": ""
+  },
+  {
+   "kind": "note",
+   "name": "Unicode abbreviations (\\to \\star \\mapsto \\vdash \\wand)",
+   "unit": "00-aliasing",
+   "check": false
+  },
+  {
+   "kind": "syntax",
+   "name": "fun x => e",
+   "unit": "00-aliasing",
+   "re": "\\bfun\\b[^\\n]*=>",
+   "flags": "",
+   "notes": "§E.2 books this at unit 01, but §D gives unit 00 `def aliasedAfter : Heap := fun x => if …` as its own new Lean. The plan contradicts itself; booked at 00, where the reader demonstrably meets it. NEEDS A HUMAN DECISION."
+  },
+  {
+   "kind": "syntax",
+   "name": "→",
+   "unit": "00-aliasing",
+   "re": "→",
+   "flags": "",
+   "notes": "§E.2 books `→` (right-associativity) at unit 01, but unit 00's five `abbrev`s are `Loc → Option Val`. Booked at 00 as a type former; the right-associativity *lesson* is still unit 01. NEEDS A HUMAN DECISION."
+  },
+  {
+   "kind": "syntax",
+   "name": "∀",
+   "unit": "02-terms",
+   "re": "∀",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "∃",
+   "unit": "02-terms",
+   "re": "∃",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "∧",
+   "unit": "00-aliasing",
+   "re": "∧",
+   "flags": "",
+   "notes": "§E.2 books it at unit 01, but unit 00's refutation is `¬ (… ∧ …)`. Booked at 00. NEEDS A HUMAN DECISION."
+  },
+  {
+   "kind": "syntax",
+   "name": "∨",
+   "unit": "02-terms",
+   "re": "∨",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "↔",
+   "unit": "02-terms",
+   "re": "↔",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "⟨…⟩ (as an `intro` pattern)",
+   "unit": "00-aliasing",
+   "re": "⟨",
+   "flags": "",
+   "notes": "§E.2 books `⟨…⟩` at unit 01, but unit 00 hands the reader `intro ⟨h3, _⟩`. Split in two: the bare bracket is booked at 00, its flattening (three or more slots) at 01. NEEDS A HUMAN DECISION."
+  },
+  {
+   "kind": "syntax",
+   "name": "⟨…⟩ flattening (3+ slots)",
+   "unit": "02-terms",
+   "re": "⟨[^⟨⟩\\n]*,[^⟨⟩\\n]*,",
+   "flags": "",
+   "notes": "the part §E calls \"the single most important piece of syntax in the course\""
+  },
+  {
+   "kind": "syntax",
+   "name": ".1 / .2 projection",
+   "unit": "02-terms",
+   "re": "(?<![A-Za-z0-9_'])\\.[12]\\b",
+   "flags": ""
+  },
+  {
+   "kind": "library",
+   "name": "Or.inl",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "library",
+   "name": "Or.inr",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "library",
+   "name": "Or.symm",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "library",
+   "name": "Iff",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "library",
+   "name": "Eq.symm",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "library",
+   "name": "Eq.trans",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "library",
+   "name": "Iff.intro",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "syntax",
+   "name": ".mp / .mpr",
+   "unit": "02-terms",
+   "re": "(?<![A-Za-z0-9_'])\\.mpr?\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": ".symm (dot notation)",
+   "unit": "02-terms",
+   "re": "(?<![A-Za-z0-9_'])\\.symm\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "implicit binder {x : T}",
+   "unit": "02-terms",
+   "re": "\\{\\s*[A-Za-z_][^{}\\n]*:\\s*[^{}\\n]*\\}",
+   "flags": "",
+   "notes": "also matches a structure-instance literal `{store := σ, heap := h}`; that form is unit 18 (21-language), later, so the earlier booking is the safe one"
+  },
+  {
+   "kind": "syntax",
+   "name": "@f (explicit-argument form)",
+   "unit": "02-terms",
+   "re": "(?<![A-Za-z0-9_'])@[A-Za-z_]",
+   "flags": ""
+  },
+  {
+   "kind": "keyword",
+   "name": "rfl",
+   "unit": "02-terms",
+   "notes": "§E.1 books `rfl` as a term at unit 01 and as a tactic at unit 02. One token, booked at the earlier."
+  },
+  {
+   "kind": "keyword",
+   "name": "inductive",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "keyword",
+   "name": "Decidable",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "keyword",
+   "name": "instance",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "syntax",
+   "name": "leading-dot name resolution (.ctor)",
+   "unit": "03-compute",
+   "re": "(?<![A-Za-z0-9_'.\\]⟩)])\\.[a-z][A-Za-z0-9_']*",
+   "flags": "",
+   "notes": "excludes `.1`/`.2` and dotted names; §E.2 books it at unit 02 (pattern-matching `def`) and again at unit 18 for `.ctor` on `Cmd` — earlier booking used"
+  },
+  {
+   "kind": "library",
+   "name": "Option.some.inj",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "library",
+   "name": "congrArg",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "library",
+   "name": "congrFun",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "library",
+   "name": "if_pos",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "library",
+   "name": "if_neg",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "library",
+   "name": "Ne",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "library",
+   "name": "Ne.symm",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "syntax",
+   "name": "✝ (inaccessible name)",
+   "unit": "04-funext",
+   "re": "✝",
+   "flags": "",
+   "notes": "first sighting unit 03; named properly at unit 19 (22-exec)"
+  },
+  {
+   "kind": "keyword",
+   "name": "namespace",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "keyword",
+   "name": "end",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "syntax",
+   "name": "match … with",
+   "unit": "11-union",
+   "re": "\\bmatch\\b[^\\n]*\\bwith\\b",
+   "flags": ""
+  },
+  {
+   "kind": "keyword",
+   "name": "structure",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "keyword",
+   "name": "where",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "syntax",
+   "name": "infix:40 and precedence numbers",
+   "unit": "14-assertions",
+   "re": "\\binfix[lr]?:\\d+",
+   "flags": "",
+   "notes": "§E.2 books each fixity separately (12, 13, 14, 18, 34); this row catches the general form at its first appearance"
+  },
+  {
+   "kind": "keyword",
+   "name": "Sort",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "syntax",
+   "name": "infix:60 (↦)",
+   "unit": "15-pointsto",
+   "re": "\\binfix:60\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "infixr:55 (∗)",
+   "unit": "16-star",
+   "re": "\\binfixr:55\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "by … in a term-mode slot",
+   "unit": "17-star-algebra",
+   "re": ",\\s*by\\b",
+   "flags": "",
+   "notes": "the `⟨_, by …⟩` shape; a comma followed by `by` is the cheap detector"
+  },
+  {
+   "kind": "syntax",
+   "name": "deriving Repr",
+   "unit": "21-language",
+   "re": "\\bderiving\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "infixr:60 (;;)",
+   "unit": "21-language",
+   "re": "\\binfixr:60\\b",
+   "flags": ""
+  },
+  {
+   "kind": "keyword",
+   "name": "Bool",
+   "unit": "21-language",
+   "notes": "`decide` as a TACTIC on a non-trivial proposition is banned by §E.1; as the `Bool`-valued function it is introduced at unit 18. Not distinguishable here."
+  },
+  {
+   "kind": "keyword",
+   "name": "decide",
+   "unit": "21-language",
+   "notes": "`decide` as a TACTIC on a non-trivial proposition is banned by §E.1; as the `Bool`-valued function it is introduced at unit 18. Not distinguishable here."
+  },
+  {
+   "kind": "syntax",
+   "name": "== (Bool equality)",
+   "unit": "21-language",
+   "re": "==",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "structure instance ⟨σ, h⟩ / eta",
+   "unit": "21-language",
+   "re": "\\bState\\.mk\\b|\\{\\s*store\\s*:=",
+   "flags": ""
+  },
+  {
+   "kind": "keyword",
+   "name": "termination_by",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "syntax",
+   "name": "inductive … : … → Prop (indices)",
+   "unit": "22-exec",
+   "re": "\\binductive\\b[^\\n]*:[^\\n]*→\\s*Prop",
+   "flags": ""
+  },
+  {
+   "kind": "keyword",
+   "name": "List",
+   "unit": "23-induction"
+  },
+  {
+   "kind": "syntax",
+   "name": ":: (list cons)",
+   "unit": "23-induction",
+   "re": "::",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "[] (nil)",
+   "unit": "23-induction",
+   "re": "\\[\\s*\\]",
+   "flags": ""
+  },
+  {
+   "kind": "library",
+   "name": "max",
+   "unit": "24-interpreter",
+   "fenced": true
+  },
+  {
+   "kind": "library",
+   "name": "Nat.le_max_left",
+   "unit": "24-interpreter",
+   "fenced": true
+  },
+  {
+   "kind": "library",
+   "name": "Nat.le_max_right",
+   "unit": "24-interpreter",
+   "fenced": true
+  },
+  {
+   "kind": "syntax",
+   "name": "named argument (Q := …)",
+   "unit": "25-hoare",
+   "re": "\\(\\s*[A-Za-z_][A-Za-z0-9_']*\\s*:=\\s",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": ".trans (dot notation)",
+   "unit": "28-local-heap",
+   "re": "(?<![A-Za-z0-9_'])\\.trans\\b",
+   "flags": ""
+  },
+  {
+   "kind": "syntax",
+   "name": "infixr:54 (-∗)",
+   "unit": "37-wand",
+   "re": "\\binfixr:54\\b",
+   "flags": ""
+  },
+  {
+   "kind": "library",
+   "name": "Iff.rfl",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "command",
+   "name": "set_option",
+   "unit": "06-errors",
+   "re": "\\bset_option\\b",
+   "flags": ""
+  },
+  {
+   "kind": "notation",
+   "name": "⊢ (entailment, infix)",
+   "unit": "14-assertions",
+   "re": "[^\\s]\\s*⊢",
+   "flags": "",
+   "notes": "matched only when something precedes it on the line, so the goal turnstile of a `state` block is not mistaken for the entailment of unit 12. §E does not distinguish them; this is our decision. Also the goal turnstile in every `state` block; state blocks are checked, so a pre-unit-12 goal display legitimately containing ⊢ will be flagged. Known false-positive class."
+  },
+  {
+   "kind": "notation",
+   "name": "⊣⊢",
+   "unit": "14-assertions",
+   "re": "⊣⊢",
+   "flags": ""
+  },
+  {
+   "kind": "notation",
+   "name": "↦",
+   "unit": "15-pointsto",
+   "re": "↦",
+   "flags": ""
+  },
+  {
+   "kind": "notation",
+   "name": "∗",
+   "unit": "16-star",
+   "re": "∗",
+   "flags": ""
+  },
+  {
+   "kind": "notation",
+   "name": ";;",
+   "unit": "21-language",
+   "re": ";;",
+   "flags": ""
+  },
+  {
+   "kind": "notation",
+   "name": "-∗",
+   "unit": "37-wand",
+   "re": "-∗",
+   "flags": ""
+  },
+  {
+   "kind": "internal",
+   "name": "Loc",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "internal",
+   "name": "Val",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "internal",
+   "name": "Heap",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "internal",
+   "name": "Var",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "internal",
+   "name": "Store",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "internal",
+   "name": "aliasedAfter",
+   "unit": "00-aliasing"
+  },
+  {
+   "kind": "internal",
+   "name": "implication_example",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "exists_example",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "mp",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "comp",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "and_comm'",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "or_comm'",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "exists_three",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "exists_mono",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "two_add_two",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "nested_pack",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "nested_unpack",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "and_comm_tac",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "or_comm_tac",
+   "unit": "02-terms"
+  },
+  {
+   "kind": "internal",
+   "name": "defined",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "internal",
+   "name": "double_unfold",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "internal",
+   "name": "rw_demo",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "internal",
+   "name": "calc_demo",
+   "unit": "03-compute"
+  },
+  {
+   "kind": "internal",
+   "name": "function_extensionality",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "internal",
+   "name": "funext_drill",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "internal",
+   "name": "if_drill",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "internal",
+   "name": "by_cases_drill",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "internal",
+   "name": "twice",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "internal",
+   "name": "twice_succ",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "internal",
+   "name": "apply_eq",
+   "unit": "04-funext"
+  },
+  {
+   "kind": "internal",
+   "name": "update",
+   "unit": "05-update"
+  },
+  {
+   "kind": "internal",
+   "name": "update_same",
+   "unit": "05-update"
+  },
+  {
+   "kind": "internal",
+   "name": "update_other",
+   "unit": "05-update"
+  },
+  {
+   "kind": "internal",
+   "name": "update_shadow",
+   "unit": "05-update"
+  },
+  {
+   "kind": "internal",
+   "name": "update_comm",
+   "unit": "05-update"
+  },
+  {
+   "kind": "internal",
+   "name": "update_idem",
+   "unit": "05-update"
+  },
+  {
+   "kind": "internal",
+   "name": "Heap.empty",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "Heap.singleton",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "Heap.write",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "Heap.erase",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "singleton_same",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "singleton_other",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "write_same",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "write_other",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "erase_same",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "erase_other",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "PHeap",
+   "unit": "07-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "write_shadow",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "erase_write_same",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "write_comm",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "write_singleton",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "erase_singleton",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "heap_ext",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "erase_erase",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "write_erase_same",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "erase_write_comm",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "erase_comm",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "write_empty",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "write_of_eq",
+   "unit": "08-heap-laws"
+  },
+  {
+   "kind": "internal",
+   "name": "ptsAtLeast",
+   "unit": "09-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "ptsExactly",
+   "unit": "09-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "twoCells",
+   "unit": "09-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "Heap.disjoint",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "Heap.union",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "Heap.splits",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "disjoint_symm",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "disjoint_empty_left",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "disjoint_empty_right",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "singleton_disjoint",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "singleton_disjoint_iff",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "self_disjoint_iff_empty",
+   "unit": "10-disjoint"
+  },
+  {
+   "kind": "internal",
+   "name": "union_of_none",
+   "unit": "11-union"
+  },
+  {
+   "kind": "internal",
+   "name": "union_of_some",
+   "unit": "11-union"
+  },
+  {
+   "kind": "internal",
+   "name": "union_eq_none",
+   "unit": "11-union"
+  },
+  {
+   "kind": "internal",
+   "name": "union_empty_left",
+   "unit": "11-union"
+  },
+  {
+   "kind": "internal",
+   "name": "union_empty_right",
+   "unit": "11-union"
+  },
+  {
+   "kind": "internal",
+   "name": "union_self",
+   "unit": "11-union"
+  },
+  {
+   "kind": "internal",
+   "name": "union_assoc",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "internal",
+   "name": "union_comm",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "internal",
+   "name": "disjoint_union_left",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "internal",
+   "name": "disjoint_union_right",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "internal",
+   "name": "PCM",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "internal",
+   "name": "heapPCM",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "internal",
+   "name": "union_cancel_left",
+   "unit": "12-pcm"
+  },
+  {
+   "kind": "internal",
+   "name": "splits_empty_left",
+   "unit": "13-splits"
+  },
+  {
+   "kind": "internal",
+   "name": "splits_comm",
+   "unit": "13-splits"
+  },
+  {
+   "kind": "internal",
+   "name": "splits_assoc",
+   "unit": "13-splits"
+  },
+  {
+   "kind": "internal",
+   "name": "splits_empty_right",
+   "unit": "13-splits"
+  },
+  {
+   "kind": "internal",
+   "name": "union_not_comm",
+   "unit": "13-splits"
+  },
+  {
+   "kind": "internal",
+   "name": "Assertion",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "Entails",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "AssertionEquiv",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "aTrue",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "aFalse",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "aAnd",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "aOr",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "aExists",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "fact",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "entails_refl",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "entails_trans",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "and_left",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "and_right",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "and_intro",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "or_left",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "or_right",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "or_elim",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "equiv_refl",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "equiv_symm",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "equiv_trans",
+   "unit": "14-assertions"
+  },
+  {
+   "kind": "internal",
+   "name": "emp",
+   "unit": "15-pointsto"
+  },
+  {
+   "kind": "internal",
+   "name": "pointsTo",
+   "unit": "15-pointsto"
+  },
+  {
+   "kind": "internal",
+   "name": "pointsTo_value_unique",
+   "unit": "15-pointsto"
+  },
+  {
+   "kind": "internal",
+   "name": "pointsTo_not_emp",
+   "unit": "15-pointsto"
+  },
+  {
+   "kind": "internal",
+   "name": "star",
+   "unit": "16-star"
+  },
+  {
+   "kind": "internal",
+   "name": "star_intro",
+   "unit": "16-star"
+  },
+  {
+   "kind": "internal",
+   "name": "star_same_loc_absurd",
+   "unit": "16-star"
+  },
+  {
+   "kind": "internal",
+   "name": "no_star_weakening",
+   "unit": "16-star"
+  },
+  {
+   "kind": "internal",
+   "name": "starNoDisj",
+   "unit": "16-star"
+  },
+  {
+   "kind": "internal",
+   "name": "starNoDisj_dup",
+   "unit": "16-star"
+  },
+  {
+   "kind": "internal",
+   "name": "no_star_duplication",
+   "unit": "16-star"
+  },
+  {
+   "kind": "internal",
+   "name": "star_pointsTo_same_false",
+   "unit": "16-star"
+  },
+  {
+   "kind": "internal",
+   "name": "star_emp_left",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_emp_right",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_emp_left_intro",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_emp_right_intro",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_comm",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_mono",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_mono_left",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_mono_right",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_or_left",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_exists_left",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_emp_left_iff",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_emp_right_iff",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_comm_iff",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_congr",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_or_left_conv",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "aForall",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_forall_left",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_forall_right_fails",
+   "unit": "17-star-algebra"
+  },
+  {
+   "kind": "internal",
+   "name": "star_not_weakening",
+   "unit": "17-star-algebra",
+   "notes": "§D puts it in unit 14 (16-star); moved to 15 (17-star-algebra) because its proof cites star_emp_left_intro, which is 17-star-algebra's m4-2. Agreed with the fragment author."
+  },
+  {
+   "kind": "internal",
+   "name": "star_assoc_left",
+   "unit": "18-star-assoc"
+  },
+  {
+   "kind": "internal",
+   "name": "star_assoc_right",
+   "unit": "18-star-assoc"
+  },
+  {
+   "kind": "internal",
+   "name": "star_assoc_iff",
+   "unit": "18-star-assoc"
+  },
+  {
+   "kind": "internal",
+   "name": "pure",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "two_cells_distinct",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "star_swap_middle",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "star_rotate_left",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "star_rotate_right",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "star_pure_left",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "star_pure_right",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "star_or_right",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "star_exists_right",
+   "unit": "19-pure"
+  },
+  {
+   "kind": "internal",
+   "name": "Atom",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "Atom.eval",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "Store.set",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "State",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "BExpr",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "BExpr.eval",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "Cmd",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "storeSet_same",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "storeSet_other",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "Atom.size",
+   "unit": "21-language"
+  },
+  {
+   "kind": "internal",
+   "name": "Exec",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "internal",
+   "name": "exec_skip_inv",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "internal",
+   "name": "exec_load_stuck",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "internal",
+   "name": "exec_assign_inv",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "internal",
+   "name": "exec_load_inv",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "internal",
+   "name": "exec_skip_seq_inv",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "internal",
+   "name": "runBad",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "internal",
+   "name": "load_stuck",
+   "unit": "22-exec"
+  },
+  {
+   "kind": "internal",
+   "name": "exec_deterministic",
+   "unit": "23-induction"
+  },
+  {
+   "kind": "internal",
+   "name": "allZeros",
+   "unit": "23-induction"
+  },
+  {
+   "kind": "internal",
+   "name": "allZeros_length",
+   "unit": "23-induction"
+  },
+  {
+   "kind": "internal",
+   "name": "append_nil",
+   "unit": "23-induction"
+  },
+  {
+   "kind": "internal",
+   "name": "exec_id",
+   "unit": "23-induction"
+  },
+  {
+   "kind": "internal",
+   "name": "run",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "run_sound",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "run_mono",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "run_le",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "run_complete",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "run_example",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "runIf",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "spin",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "spin_diverges",
+   "unit": "24-interpreter"
+  },
+  {
+   "kind": "internal",
+   "name": "Hoare",
+   "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "PartialHoare",
+   "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_consequence",
+   "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_skip",
+   "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_seq",
+   "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_assign",
+   "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "assign_constant",
+   "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "assign_twice",
+   "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_load",
+   "unit": "26-small-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_write",
+   "unit": "26-small-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_free",
+   "unit": "26-small-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "clearCell",
+   "unit": "26-small-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "clearCell_spec",
+   "unit": "26-small-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "readAndFree",
+   "unit": "26-small-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "readAndFree_spec",
+   "unit": "26-small-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "writeTwice_spec",
+   "unit": "26-small-footprint"
+  },
+  {
+   "kind": "internal",
+   "name": "HeapLocal",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "Preserves",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "HeapOnly",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "preserves_of_heapOnly",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "heapOnly_pointsTo",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "heapOnly_emp",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "heapOnly_star",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_skip",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_assign",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_load",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "not_heapOnly_pure",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "frame_needs_preserves",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "HeapLocalWeak",
+   "unit": "27-locality"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_write",
+   "unit": "28-local-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_free",
+   "unit": "28-local-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "write_union_no_disjointness",
+   "unit": "28-local-heap"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_seq",
+   "unit": "29-local-compose"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_ite",
+   "unit": "29-local-compose"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_loop_aux",
+   "unit": "29-local-compose"
+  },
+  {
+   "kind": "internal",
+   "name": "heapLocal_loop",
+   "unit": "29-local-compose"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_frame",
+   "unit": "30-frame"
+  },
+  {
+   "kind": "internal",
+   "name": "write_with_frame",
+   "unit": "30-frame"
+  },
+  {
+   "kind": "internal",
+   "name": "free_with_frame",
+   "unit": "30-frame"
+  },
+  {
+   "kind": "internal",
+   "name": "classical_conjunction_rule_is_false",
+   "unit": "31-aliasing-closed"
+  },
+  {
+   "kind": "internal",
+   "name": "separated_write_ok",
+   "unit": "31-aliasing-closed"
+  },
+  {
+   "kind": "internal",
+   "name": "StoreStable",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "storeStable_write",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "storeStable_free",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "preserves_of_storeStable",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_write_val",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "pure_star_regroup",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "copyCell",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "copyCell_spec",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "exec_seq_assoc",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "moveCell",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "moveCell_spec",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_load_and",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "and_fact_star",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "and_fact_star_intro",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "readAndFree_framed",
+   "unit": "32-symbolic"
+  },
+  {
+   "kind": "internal",
+   "name": "preserves_load_fact",
+   "unit": "33-swap"
+  },
+  {
+   "kind": "internal",
+   "name": "swap",
+   "unit": "33-swap"
+  },
+  {
+   "kind": "internal",
+   "name": "swap_heap",
+   "unit": "33-swap"
+  },
+  {
+   "kind": "internal",
+   "name": "swap_spec",
+   "unit": "33-swap"
+  },
+  {
+   "kind": "internal",
+   "name": "wp",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_iff_entails_wp",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_skip",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_assign",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_seq",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_mono",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "heap_eq_singleton",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_free_emp",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_write",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_sound",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_weakest",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_frame",
+   "unit": "34-wp"
+  },
+  {
+   "kind": "internal",
+   "name": "node",
+   "unit": "35-listrep"
+  },
+  {
+   "kind": "internal",
+   "name": "listRep",
+   "unit": "35-listrep"
+  },
+  {
+   "kind": "internal",
+   "name": "listRep_nil",
+   "unit": "35-listrep"
+  },
+  {
+   "kind": "internal",
+   "name": "listRep_cons_unfold",
+   "unit": "35-listrep"
+  },
+  {
+   "kind": "internal",
+   "name": "listRep_cons_fold",
+   "unit": "35-listrep"
+  },
+  {
+   "kind": "internal",
+   "name": "node_cells_distinct",
+   "unit": "35-listrep"
+  },
+  {
+   "kind": "internal",
+   "name": "concrete_list",
+   "unit": "35-listrep"
+  },
+  {
+   "kind": "internal",
+   "name": "listRep_cons_ne_zero",
+   "unit": "35-listrep"
+  },
+  {
+   "kind": "internal",
+   "name": "lseg",
+   "unit": "36-lseg"
+  },
+  {
+   "kind": "internal",
+   "name": "aExists_mono",
+   "unit": "36-lseg"
+  },
+  {
+   "kind": "internal",
+   "name": "lseg_append",
+   "unit": "36-lseg"
+  },
+  {
+   "kind": "internal",
+   "name": "lseg_listRep",
+   "unit": "36-lseg"
+  },
+  {
+   "kind": "internal",
+   "name": "lseg_nil_iff",
+   "unit": "36-lseg"
+  },
+  {
+   "kind": "internal",
+   "name": "listRep_null",
+   "unit": "36-lseg"
+  },
+  {
+   "kind": "internal",
+   "name": "wand",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "wand_intro",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "wand_elim",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "star_wand_adjunction",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "wand_mono",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "wand_unit",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "wand_curry",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "wand_uncurry",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "hole_intro",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "hole_elim",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "emp_wand_elim",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "emp_wand_intro",
+   "unit": "37-wand"
+  },
+  {
+   "kind": "internal",
+   "name": "partial_of_total",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "bTrue",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "bFalse",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "partialHoare_skip",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "partialHoare_seq",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "partialHoare_consequence",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "partialHoare_ite",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_ite",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "wp_ite",
+   "unit": "38-partial"
+  },
+  {
+   "kind": "internal",
+   "name": "loop_invariant",
+   "unit": "39-invariant"
+  },
+  {
+   "kind": "internal",
+   "name": "partialHoare_while",
+   "unit": "39-invariant"
+  },
+  {
+   "kind": "internal",
+   "name": "countdown_keeps_cell",
+   "unit": "39-invariant"
+  },
+  {
+   "kind": "internal",
+   "name": "counterGuard",
+   "unit": "39-invariant",
+   "notes": "§D puts the def in unit 37 (40-variant); moved to 36 (39-invariant) because 39-invariant's countdown_keeps_cell cites it. countdown_spec stays at 40-variant. Agreed with the fragment author."
+  },
+  {
+   "kind": "internal",
+   "name": "countdown",
+   "unit": "39-invariant",
+   "notes": "§D puts the def in unit 37 (40-variant); moved to 36 (39-invariant) because 39-invariant's countdown_keeps_cell cites it. countdown_spec stays at 40-variant. Agreed with the fragment author."
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_while_variant",
+   "unit": "40-variant"
+  },
+  {
+   "kind": "internal",
+   "name": "countdown_spec",
+   "unit": "40-variant"
+  },
+  {
+   "kind": "internal",
+   "name": "drainBody",
+   "unit": "40-variant"
+  },
+  {
+   "kind": "internal",
+   "name": "drain",
+   "unit": "40-variant"
+  },
+  {
+   "kind": "internal",
+   "name": "drainInv",
+   "unit": "40-variant"
+  },
+  {
+   "kind": "internal",
+   "name": "drain_step",
+   "unit": "40-variant"
+  },
+  {
+   "kind": "internal",
+   "name": "drain_stop",
+   "unit": "40-variant"
+  },
+  {
+   "kind": "internal",
+   "name": "drain_spec",
+   "unit": "40-variant"
+  },
+  {
+   "kind": "internal",
+   "name": "pcmStar",
+   "unit": "41-beyond"
+  },
+  {
+   "kind": "internal",
+   "name": "pcmStar_comm",
+   "unit": "41-beyond"
+  },
+  {
+   "kind": "internal",
+   "name": "pcmStar_unit_left",
+   "unit": "41-beyond"
+  },
+  {
+   "kind": "internal",
+   "name": "alloc",
+   "unit": "41-beyond"
+  },
+  {
+   "kind": "internal",
+   "name": "hoare_alloc",
+   "unit": "41-beyond"
+  },
+  {
+   "kind": "concept",
+   "name": "aliasing",
+   "unit": "00-aliasing",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "memory as a function; partial function via Option",
+   "unit": "00-aliasing",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "ownership versus truth",
+   "unit": "00-aliasing",
+   "check": false,
+   "notes": "named at 00, decided at 15-pointsto"
+  },
+  {
+   "kind": "concept",
+   "name": "unproved versus false",
+   "unit": "00-aliasing",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "propositions-as-types; proofs-as-terms",
+   "unit": "02-terms",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "definitional versus propositional equality",
+   "unit": "03-compute",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "decidability",
+   "unit": "03-compute",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "function extensionality as a rule",
+   "unit": "04-funext",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "locality of an update (the baby frame rule)",
+   "unit": "05-update",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "the interface discipline (never unfold again)",
+   "unit": "07-heap",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "deallocation; domain of a heap",
+   "unit": "07-heap",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "disjoint operations commute",
+   "unit": "08-heap-laws",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "footprint; exact versus inexact ownership",
+   "unit": "09-footprint",
+   "check": false,
+   "notes": "three-stage: posed 07, decided 13, justified 23"
+  },
+  {
+   "kind": "concept",
+   "name": "disjointness of resources",
+   "unit": "10-disjoint",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "separation implies non-aliasing",
+   "unit": "10-disjoint",
+   "check": false,
+   "notes": "heaps at 08, assertions at 17"
+  },
+  {
+   "kind": "concept",
+   "name": "left-biased total union; the register shift",
+   "unit": "11-union",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "monoid; commutative monoid; partial commutative monoid",
+   "unit": "12-pcm",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "cancellativity",
+   "unit": "12-pcm",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "the splitting relation; associativity of a partial operation",
+   "unit": "13-splits",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "assertion as a predicate on states; entailment; preorder",
+   "unit": "14-assertions",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "pointwise lifting of a logic; fact",
+   "unit": "14-assertions",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "exact ownership; the first-person reading of an assertion",
+   "unit": "15-pointsto",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "separating conjunction",
+   "unit": "16-star",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "weakening, contraction, substructural logic",
+   "unit": "16-star",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "monotonicity and congruence",
+   "unit": "17-star-algebra",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "the commutative monoid of assertions",
+   "unit": "18-star-assoc",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "pure — the ∗-compatible embedding; normalisation",
+   "unit": "19-pure",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "abstract syntax as an inductive type; the store is not a resource",
+   "unit": "21-language",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "inductively defined relations; derivations",
+   "unit": "22-exec",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "big-step semantics; stuck versus diverging; inversion",
+   "unit": "22-exec",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "structural induction; the induction hypothesis; generalisation",
+   "unit": "23-induction",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "determinism",
+   "unit": "23-induction",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "fuel; soundness and completeness of an implementation",
+   "unit": "24-interpreter",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "Hoare triple; safety as an existential; variance",
+   "unit": "25-hoare",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "total versus partial correctness",
+   "unit": "25-hoare",
+   "check": false,
+   "notes": "named at 22, they differ at 35"
+  },
+  {
+   "kind": "concept",
+   "name": "shallow embedding; semantic substitution",
+   "unit": "25-hoare",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "small-footprint specification",
+   "unit": "26-small-footprint",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "locality; the commuting square",
+   "unit": "27-locality",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "non-interference on the store; semantic vs syntactic side conditions",
+   "unit": "27-locality",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "compositional locality",
+   "unit": "29-local-compose",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "the frame rule as a theorem",
+   "unit": "30-frame",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "the classical rule refuted; the separating rule proved",
+   "unit": "31-aliasing-closed",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "symbolic execution; store-stability; a rule's shape as a design choice",
+   "unit": "32-symbolic",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "predicate transformers; weakest precondition",
+   "unit": "34-wp",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "angelic versus demonic wp; weakest versus merely sufficient",
+   "unit": "34-wp",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "recursive predicates; shape + ownership in one definition",
+   "unit": "35-listrep",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "least fixed point",
+   "unit": "35-listrep",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "list segments; traversal invariants",
+   "unit": "36-lseg",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "adjunction, from currying; contravariance",
+   "unit": "37-wand",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "BI algebra",
+   "unit": "37-wand",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "loop invariant",
+   "unit": "39-invariant",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "loop variant; well-founded descent as a decreasing Nat",
+   "unit": "40-variant",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "locality is losable; allocation",
+   "unit": "41-beyond",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "generalisation to arbitrary PCMs",
+   "unit": "41-beyond",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "ghost state; concurrency",
+   "unit": "41-beyond",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "truncated Nat subtraction",
+   "unit": "21-language",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "fuel-indexed recursion; equation lemmas",
+   "unit": "24-interpreter",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "structure eta",
+   "unit": "21-language",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "the constant-command / index-equation induction idiom",
+   "unit": "29-local-compose",
+   "check": false
+  },
+  {
+   "kind": "concept",
+   "name": "recursive def returning an Assertion",
+   "unit": "35-listrep",
+   "check": false
+  }
+ ]
+}
