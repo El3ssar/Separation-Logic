@@ -275,6 +275,22 @@ grep -oE "<code>(comp|mp|defined|double|twice|update|fact|emp|star|pure|run|spin
 Every hit is either a real citation — fine — or English that must lose its tags.
 `00-aliasing` returns zero.
 
+**Two cases where the tags are right and the tool now knows it.** Not everything
+that looks like a collision is one, and you should not be dropping tags off
+correct code:
+
+- **A bare `<code>left</code>` or `<code>right</code>`** is almost always naming
+  an `And`/`Or` field, not citing the tactic — `00-aliasing` glosses the
+  daggered `right✝` that way. Those two rows are marked `english: true` in
+  `ledger.json`, and a prose span that is *just* the bare word is exempt. In
+  Lean text the tactic-position test still catches the real thing.
+- **A quoted Lean error message** — `<code>failed to synthesize instance of type
+  class …</code>` — is Lean talking, not you citing. Lines that came out of a
+  span matching a diagnostic stem are exempt from `keyword` and `command` rows.
+  `06-errors` exists to print twelve of these and would otherwise be unwritable.
+  Note the limit: only grammar is exempted. A **lemma name** inside `simp?`
+  output is still a citation, and so is `∗`.
+
 ---
 
 ## 8. `calc` is in the Lean but not in the ledger
@@ -424,11 +440,69 @@ its §D heading, *not* the file prefix. `31-aliasing-closed.js` carries
 `num: '28'`. Support pages carry `§`, per §C.
 
 **The badge is content identity. It agrees with the filename for `00-aliasing`
-and never again.** `01-goalstate` is a support page, so it takes `§` rather than
-a number, and from `02-terms` — which is unit **01** — the two numberings are
-apart for the rest of the course. Copying the file prefix into `num` is therefore
-correct exactly once, on the first page anyone writes, which is the worst
-possible place for a rule to look true.
+and never again.** Do not derive it — **§14 has the whole 44-row table; copy your
+row.** `lint.mjs` fails your file if `num` disagrees with it.
 
 (Edition 1 set `num` to the module name, `'M0'` — the badge has always been
 content identity rather than file position.)
+
+---
+
+## 14. The badge table — copy your row
+
+`num` is the **unit** number from the unit's §D heading. It is not the file
+prefix, and it is not something to work out. Find your file, copy the value.
+
+| file | `num` | | file | `num` |
+|---|---|---|---|---|
+| `00-aliasing` | `'00'` | | `22-exec` | `'19'` |
+| `01-goalstate` | **§** | | `23-induction` | `'20'` |
+| `02-terms` | `'01'` | | `24-interpreter` | `'21'` |
+| `03-compute` | `'02'` | | `25-hoare` | `'22'` |
+| `04-funext` | `'03'` | | `26-small-footprint` | `'23'` |
+| `05-update` | `'04'` | | `27-locality` | `'24'` |
+| `06-errors` | **§** | | `28-local-heap` | `'25'` |
+| `07-heap` | `'05'` | | `29-local-compose` | `'26'` |
+| `08-heap-laws` | `'06'` | | `30-frame` | `'27'` |
+| `09-footprint` | `'07'` | | `31-aliasing-closed` | `'28'` |
+| `10-disjoint` | `'08'` | | `32-symbolic` | `'29'` |
+| `11-union` | `'09'` | | `33-swap` | `'30'` |
+| `12-pcm` | `'10'` | | `34-wp` | `'31'` |
+| `13-splits` | `'11'` | | `35-listrep` | `'32'` |
+| `14-assertions` | `'12'` | | `36-lseg` | `'33'` |
+| `15-pointsto` | `'13'` | | `37-wand` | `'34'` |
+| `16-star` | `'14'` | | `38-partial` | `'35'` |
+| `17-star-algebra` | `'15'` | | `39-invariant` | `'36'` |
+| `18-star-assoc` | `'16'` | | `40-variant` | `'37'` |
+| `19-pure` | `'17'` | | `41-beyond` | `'38'` |
+| `20-compare` | **§** | | `42-tactics` | **§** |
+| `21-language` | `'18'` | | `43-ref` | **§** |
+
+**Why they diverge.** The five support pages take a file slot but carry `§`
+rather than a number, so every teaching unit after one of them sits at a file
+prefix ahead of its unit number. `01-goalstate` is the first, which is why
+`02-terms` is unit **01**. The gap widens to two after `06-errors`, to three
+after `20-compare`, and stays there.
+
+**`00-aliasing` is the only file whose prefix equals its badge.** That is the
+trap: the rule looks true on the first page anyone writes, and is false on every
+page after it. `05-update` is unit **04**; `21-language` is unit **18**;
+`41-beyond` is unit **38**.
+
+**It is checked, not merely documented.** `tools/e2/lint.mjs` derives this table
+from `ledger.json`'s `order` plus the support-page set and fails your file if
+`num` disagrees, so a wrong guess is reported the moment you run the linter
+rather than at integration. The table above is generated from the same two
+inputs, so the two cannot drift apart.
+
+**Why it matters more than it looks.** A wrong `num` is the one error in this
+project that is invisible to its author, ships to the reader, and appears on
+every page of the unit — the sidebar would skip 01 and 06 and read as broken.
+Nothing in `COURSE-PLAN.md` would catch it: the plan gives every unit a `file`
+and a `phase` and never once mentions `num`.
+
+**This table is the bridge between the two vocabularies of §13.** The reader sees
+the left column's `num`; you and your reviewer speak in file ids. When your page
+prose says "Unit 28 proves it" and your summary says `31-aliasing-closed`, this
+is the table that says those are the same thing.
+

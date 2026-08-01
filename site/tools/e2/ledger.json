@@ -103,12 +103,16 @@
   {
    "kind": "tactic",
    "name": "left",
-   "unit": "02-terms"
+   "unit": "02-terms",
+   "english": true,
+   "notes": "ordinary English word, and the name of an `And`/`Or` field. A prose <code> span that is just the bare word is naming one of those, not citing the tactic, so such spans are exempt. In Lean text the tactic-position test does the work."
   },
   {
    "kind": "tactic",
    "name": "right",
-   "unit": "02-terms"
+   "unit": "02-terms",
+   "english": true,
+   "notes": "ordinary English word, and the name of an `And`/`Or` field. A prose <code> span that is just the bare word is naming one of those, not citing the tactic, so such spans are exempt. In Lean text the tactic-position test does the work."
   },
   {
    "kind": "syntax",

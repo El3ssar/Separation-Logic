@@ -41,8 +41,8 @@ const err = (f, m) => { console.error(`  \x1b[31m✗\x1b[0m ${f}: ${m}`); errors
 const warn = (f, m) => { if (!QUIET) console.error(`  \x1b[33m!\x1b[0m ${f}: ${m}`); warnings++; };
 
 /* ---- the sidebar badge ----
-   `num` is the UNIT number, not the file prefix. They coincide for the first six
-   files and then never again, because the five support pages take a file slot
+   `num` is the UNIT number, not the file prefix. They coincide for exactly one
+   file, `00-aliasing`, and never again, because the five support pages take a slot
    and a '§' badge rather than a number. An author who copies the file prefix
    into `num` ships a sidebar that skips 01 and 06 and reads as broken, and
    nothing else would catch it: the plan gives every unit a `file` and a `phase`

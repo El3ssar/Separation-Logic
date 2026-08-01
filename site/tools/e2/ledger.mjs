@@ -86,6 +86,12 @@
  *   h. DELIBERATE EXHIBITS. A chapter that shows a banned tactic failing, or
  *      prints a `sorry`, is using the thing on purpose. `ledgerAllow: [...]`
  *      on the chapter object waives named items in every block of that chapter.
+ *   j. QUOTED LEAN DIAGNOSTICS. A `<code>` span holding a real error message —
+ *      "failed to synthesize instance of type class …" — contains keywords the
+ *      author is not citing. `06-errors` exists to print twelve of them. Lines
+ *      of prose that came out of a span matching DIAGNOSTIC below are exempt
+ *      from `keyword` and `command` rows, and from those only: a lemma name in
+ *      `simp?` output is still a citation, and so is `∗`.
  *   i. `simp?` output quoted verbatim in a chapter cites Lean core simp lemmas
  *      (`ne_eq`, `Option.some.injEq`, `decide_eq_true_eq`, …). Those are not in
  *      the ledger and cannot be; CORE below lists the ones the course actually
@@ -250,16 +256,42 @@ function harvest(ch) {
     if (node && typeof node === 'object')
       for (const k of Object.keys(node)) if (!PLAIN.has(k)) spans(node[k], p, acc);
   };
-  (ch.blocks || []).forEach((b, i) => {
+  const prose = (node, path) => {
     const acc = [];
-    spans(b, '', acc);
-    if (acc.length) out.push({ path: `blocks[${i}]<code>`, flavour: 'prose', text: acc.join('\n') });
-  });
-  const acc = [];
-  spans(ch.orient || {}, '', acc);
-  if (acc.length) out.push({ path: 'orient<code>', flavour: 'prose', text: acc.join('\n') });
+    spans(node, '', acc);
+    if (!acc.length) return;
+    /* Which lines of the joined text came out of a quoted Lean diagnostic.
+       `06-errors` exists to print twelve of them, and every one is full of
+       words like `instance` and `structure` that are Lean talking, not the
+       author citing. See false-positive class (j). */
+    const diag = new Set(), bare = new Set();
+    let line = 1;
+    for (const span of acc) {
+      const n = span.split('\n').length;
+      if (DIAGNOSTIC.test(span)) for (let k = 0; k < n; k++) diag.add(line + k);
+      /* a span that is one bare word, with no arguments and no punctuation:
+         `<code>right</code>` is naming a thing, not invoking a tactic */
+      if (n === 1 && /^[A-Za-z_][A-Za-z0-9_']*$/.test(span.trim())) bare.add(line);
+      line += n;
+    }
+    out.push({ path, flavour: 'prose', text: acc.join('\n'), diag, bare });
+  };
+  (ch.blocks || []).forEach((b, i) => prose(b, `blocks[${i}]<code>`));
+  prose(ch.orient || {}, 'orient<code>');
   return out;
 }
+
+/* The opening words of a Lean 4 message. Deliberately anchored on stems that do
+   not occur in ordinary prose about Lean. */
+const DIAGNOSTIC = new RegExp([
+  'failed to synthesize', 'type mismatch', 'unknown identifier', 'unknown constant',
+  'unsolved goals', 'has already been declared', 'function expected',
+  'numerals are polymorphic', 'motive is not type correct', 'fail to show termination',
+  "declaration uses 'sorry'", 'invalid field notation', 'maximum recursion depth',
+  'deterministic timeout', 'simp made no progress', 'unexpected token',
+  'could not synthesize', 'ambiguous, possible interpretations',
+  'error:', 'warning:'
+].join('|'), 'i');
 
 const ENT = { lt: '<', gt: '>', amp: '&', quot: '"', nbsp: ' ', hellip: '…', apos: "'", '#39': "'" };
 const unhtml = (s) => s
@@ -472,6 +504,12 @@ export function run(opts = {}) {
         if (rows) {
           for (const e of rows) {
             if (e.kind === 'tactic' && !t.tactic && s.flavour !== 'prose') continue;
+            /* grammar quoted inside a Lean error message is Lean talking */
+            if (s.diag && (e.kind === 'keyword' || e.kind === 'command') &&
+                s.diag.has(lineOf(s.text, t.at))) continue;
+            /* a row flagged `english` is a word before it is a tactic; alone in
+               a prose span it is naming something, not citing the tactic */
+            if (s.bare && e.english && s.bare.has(lineOf(s.text, t.at))) continue;
             if (e.kind === 'internal' && declared.has(t.name)) continue;
             const key = e.kind + ' ' + e.name;
             if (firstSeen.has(key)) continue;
