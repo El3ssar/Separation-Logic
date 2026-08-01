@@ -1098,3 +1098,46 @@ I marked fifteen rows on the first attempt and the check drowned: `False` at
 the page teaches propositions-as-types) are *correct* despite the Lean not
 touching them until `14-assertions` and `12-pcm`. Fifteen markers removed, one
 kept. A check that reports correct decisions as defects gets switched off.
+
+---
+
+## 27. "The ledger is green" does not mean "introduced before used"
+
+It means **introduced in this unit or earlier**. The ledger books names at *unit*
+granularity, so a name introduced anywhere in your file is available everywhere
+in your file — including in blocks that come before the one that introduces it.
+`ledger.mjs` cannot see intra-unit order and never will.
+
+**The instance that made this concrete.** `03-compute` block 38 was fixed to read
+
+```
+example (v : Val) (h : some v = none) : 2 + 2 = 5 := absurd h (some_ne_none v)
+```
+
+with the caption *"the refutation is `some_ne_none` — **the theorem you proved a
+moment ago**, handed over as a value."* Block **39** is exercise x08, whose
+`goal` is `theorem some_ne_none (v : Val) : some v ≠ none := by sorry`. Those are
+the only two blocks in the file that mention the name. So the reader meets the
+theorem as a spent value one block *before* being asked to prove it, and the
+caption points forward while claiming to point back. The ledger reported nothing,
+correctly: `some_ne_none` is introduced in `03-compute`, and block 38 is in
+`03-compute`.
+
+**The tell is the tense.** A caption that says *"you proved a moment ago"*, *"as
+you saw above"*, or *"the theorem from the last exercise"* is making a claim
+about reading order that no tool checks. When you write one, look up and confirm
+the block it refers to is actually behind you.
+
+**Do not fix an instance of this by adding a ledger row.** The name genuinely is
+introduced in that unit, so the row would be *correct* and the page would still
+be wrong. Fix the page: reorder the blocks, or put the caption in the tense that
+matches where the proof actually is.
+
+**Why there is no check for it, deliberately.** An intra-unit pass would have to
+model an `ex` block's `goal` as a **debt** and its `sol` as a **discharge**,
+while a `code` block is an immediate discharge — and be right about that for
+every block type in `AUTHORING.md`. The rule it would enforce is one a human
+reading the page in order catches for free, and a wrong model of it would either
+cry wolf on every worked example or go quiet exactly where it mattered. The
+scope is unit granularity on purpose. This entry exists so that "green" is not
+read downstream as more than it says.

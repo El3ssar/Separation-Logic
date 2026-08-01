@@ -104,6 +104,28 @@
  * This is the same family of error as the exemption rule above: narrow the
  * evidence, then trust the result.
  *
+ * WHAT A GREEN RUN DOES NOT MEAN. The ledger books names at UNIT granularity:
+ * a name introduced anywhere in unit N is available everywhere in unit N. So
+ * "the ledger is green" means *introduced in this unit or earlier* — it does
+ * NOT mean *introduced before used* in reading order. A name used in block 38
+ * and proved by the exercise in block 39 of the same file is clean here, and
+ * always will be. It happened: `03-compute` block 38 spent `some_ne_none` as a
+ * value, captioned "the theorem you proved a moment ago", one block before x08
+ * asked the reader to prove it — the caption pointed forward while claiming to
+ * point back, and this tool reported nothing.
+ *
+ * That scope is deliberate, not an oversight. An intra-unit check would have to
+ * know that an `ex` block's `goal` is a DEBT and its `sol` a DISCHARGE, while a
+ * `code` block is an immediate discharge, and then be right about it for every
+ * block type; the rule it would enforce is one a human reading the page in
+ * order catches for free. Do not add a ledger row to "fix" an instance of this
+ * — the name genuinely is introduced in that unit, so the row would be correct
+ * and the page would still be wrong. Fix the page: reorder the blocks, or put
+ * the caption in the tense that matches where the proof actually is. The tell
+ * is a caption whose tense points backwards past a block that has not happened.
+ * Raised by `10-disjoint`'s author, who enumerated the blocks rather than
+ * grepping them.
+ *
  * KNOWN FALSE-POSITIVE CLASSES — read these before you switch the tool off:
  *
  *   a. `cases`. §E books three different forms of it in three different units

@@ -207,7 +207,7 @@ registerChapter({
     {t:'p', h:'"Conclude anything at all" is itself a term. <code>absurd h hn</code> takes a proof <code>h : P</code> and a proof <code>hn : ¬ P</code>, and has whatever type the goal has. Nothing about that is arbitrary. <code>¬ P</code> is <code>P → False</code>, so <code>hn h</code> is an inhabitant of <code>False</code> — and <code>False</code> is declared the way <code>Nat</code> and <code>Option</code> are, by listing its constructors, of which it has none. A type with no constructors has no values, so a context that hands you one is a context that could never have arisen — and there is nothing a goal can demand of a situation that does not occur.'},
 
     {t:'code', tag:'illustration',
-     cap:'Injectivity backwards, with no <code>Option</code> lemma in sight; then a false hypothesis closing a goal that has nothing to do with it. <code>absurd</code> wants the claim and its refutation, and the refutation is <code>some_ne_none</code> — the theorem you proved a moment ago, handed over as a value.',
+     cap:'Injectivity backwards, with no <code>Option</code> lemma in sight; then a false hypothesis closing a goal that has nothing to do with it. <code>absurd</code> wants the claim and its refutation. The refutation is distinctness — the fact stated two paragraphs up — carried here as a value under the name <code>some_ne_none</code>, which is the theorem you prove in the exercise directly below.',
      src:'example (v w : Val) (h : v = w) : some v = some w := congrArg some h\n\nexample (v : Val) (h : some v = none) : 2 + 2 = 5 := absurd h (some_ne_none v)'},
 
     {t:'ex',
