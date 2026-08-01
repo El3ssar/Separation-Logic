@@ -1141,3 +1141,12 @@ reading the page in order catches for free, and a wrong model of it would either
 cry wolf on every worked example or go quiet exactly where it mattered. The
 scope is unit granularity on purpose. This entry exists so that "green" is not
 read downstream as more than it says.
+
+**Closed.** The caption now reads *"the refutation is distinctness — the fact
+stated two paragraphs up — carried here as a value under the name
+`some_ne_none`, which is the theorem you prove in the exercise directly below."*
+Reworded rather than reordered, because the block above it explains `absurd` and
+this is its exhibit; the two belong together. It is also the better sentence,
+since it says *why* spending the name is legitimate instead of asserting a
+history the reader does not have. Read this section as a solved case study, not
+an open defect — what carries forward is the tell, not the instance.
