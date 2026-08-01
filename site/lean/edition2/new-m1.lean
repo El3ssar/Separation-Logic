@@ -41,7 +41,11 @@ theorem write_of_eq {h : Heap} {l : Loc} {v : Val} (hl : h l = some v) :
     Heap.write h l v = h := by
   funext x
   by_cases hx : x = l
-  · subst hx; rw [write_same]; exact hl.symm
+  -- `rw [hx]` rather than `subst hx`: this lemma is taught in unit 06, and
+  -- `subst` is not introduced until unit 08. Compiling is not the same as
+  -- being teachable at this point in the course.
+  · rw [hx, write_same]
+    exact hl.symm
   · rw [write_other h l x v hx]
 
 

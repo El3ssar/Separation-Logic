@@ -26,6 +26,13 @@ theorem write_comm (h : Heap) (l₁ l₂ : Loc) (v₁ v₂ : Val) (hne : l₁ �
     · rw [if_pos hx₂, if_neg hx₁, if_pos hx₂]
     · rw [if_neg hx₂, if_neg hx₁, if_neg hx₁, if_neg hx₂]
 
+/- the counterexample shown beside write_comm, when the disequality is dropped -/
+example : ¬ ∀ (h : Heap) (l₁ l₂ : Loc) (v₁ v₂ : Val),
+    Heap.write (Heap.write h l₁ v₁) l₂ v₂ = Heap.write (Heap.write h l₂ v₂) l₁ v₁ := by
+  intro hc
+  have hbad := congrFun (hc Heap.empty 0 0 1 2) 0
+  simp [Heap.write] at hbad
+
 /- ex m1-8 write_singleton / erase_singleton -/
 theorem write_singleton (l : Loc) (v w : Val) :
     Heap.write (Heap.singleton l v) l w = Heap.singleton l w := by
@@ -47,10 +54,11 @@ theorem write_of_eq {h : Heap} {l : Loc} {v : Val} (hl : h l = some v) :
     Heap.write h l v = h := by
   funext x
   by_cases hx : x = l
-  · subst hx; rw [write_same]; exact hl.symm
+  · rw [hx, write_same]
+    exact hl.symm
   · rw [write_other h l x v hx]
 
-/- ex x15 erase_write_comm -/
+/- ex x15 erase_write_comm, and the refutation of the unconditional claim -/
 theorem erase_write_comm (h : Heap) (l l' : Loc) (v : Val) (hne : l ≠ l') :
     Heap.erase (Heap.write h l v) l' = Heap.write (Heap.erase h l') l v := by
   funext x
@@ -61,6 +69,12 @@ theorem erase_write_comm (h : Heap) (l l' : Loc) (v : Val) (hne : l ≠ l') :
   · by_cases hxl : x = l
     · rw [if_neg hx, if_pos hxl, if_pos hxl]
     · rw [if_neg hx, if_neg hxl, if_neg hxl, if_neg hx]
+
+example : ¬ ∀ (h : Heap) (l l' : Loc) (v : Val),
+    Heap.erase (Heap.write h l v) l' = Heap.write (Heap.erase h l') l v := by
+  intro hc
+  have hbad := congrFun (hc Heap.empty 0 0 7) 0
+  simp [Heap.erase, Heap.write] at hbad
 
 theorem write_erase_same (h : Heap) (l : Loc) (v : Val) :
     Heap.write (Heap.erase h l) l v = Heap.write h l v := by
