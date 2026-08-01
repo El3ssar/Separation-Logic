@@ -154,3 +154,24 @@ theorem run_complete {c : Cmd} {s s' : State} (h : Exec c s s') :
       simp only [run, hb]
       rw [run_le (Nat.le_max_left n₁ n₂) h₁]
       exact run_le (Nat.le_max_right n₁ n₂) h₂
+
+def spin : Cmd := .loop (.not (.equals (.const 0) (.const 1))) .skip
+
+theorem run_spin_none : ∀ (n : Nat) (s : State), run n spin s = none := by
+  intro n
+  induction n with
+  | zero => intro s; rfl
+  | succ n ih =>
+      intro s
+      show (match run n Cmd.skip s with
+            | some s' => run n spin s'
+            | none    => none) = none
+      cases n with
+      | zero   => rfl
+      | succ m => exact ih s
+
+theorem spin_diverges (s s' : State) : ¬ Exec spin s s' := by
+  intro hex
+  obtain ⟨n, hn⟩ := run_complete hex
+  rw [run_spin_none n s] at hn
+  exact absurd hn (by simp)

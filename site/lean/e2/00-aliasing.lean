@@ -8,6 +8,12 @@ abbrev Store := Var → Val
 
 def aliasedAfter : Heap := fun x => if x = 4 then some 5 else none
 
+/- ex x01 write a heap, prove a lookup -/
+def twoAllocated : Heap := fun x => if x = 4 then some 5 else if x = 9 then some 2 else none
+
+example : twoAllocated 7 = none := by
+  simp [twoAllocated]
+
 /- ex x02 aliasedAfter — the aliased postcondition is unsatisfiable -/
 example : ¬ (aliasedAfter 4 = some 3 ∧ aliasedAfter 4 = some 5) := by
   intro ⟨h3, _⟩

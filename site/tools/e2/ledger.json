@@ -272,7 +272,7 @@
    "unit": "24-interpreter",
    "re": "\\bsimp\\s+only\\b[^\\n]*\\bat\\b[^\\n]*⊢",
    "flags": "",
-   "fenced": true
+   "notes": "§E.1 books this variant at unit 21, the optional unit, but §E.6 names only four fenced items and this is not one of them — and says explicitly that `simp only` is not fenced. Left UNFENCED. NEEDS A HUMAN DECISION."
   },
   {
    "kind": "tactic",
@@ -665,10 +665,17 @@
   {
    "kind": "syntax",
    "name": "✝ (inaccessible name)",
-   "unit": "04-funext",
+   "unit": "00-aliasing",
    "re": "✝",
    "flags": "",
-   "notes": "first sighting unit 03; named properly at unit 19 (22-exec)"
+   "notes": "DECIDED (editor): §E.2 books `✝` at unit 03 (04-funext) as a \"first sighting\", but §D.0 mandates that x02 is scaffolded with `intro ⟨h3, _⟩`, and the goal Lean really prints after it carries a `right✝`. PEDAGOGY §10 forbids inventing a goal state, so the dagger is unavoidable on page one. Split like `⟨…⟩`: it APPEARS at 00-aliasing, deliberately unexplained — that is the exhibit, not a violation — and is EXPLAINED at 04-funext, then named properly at 22-exec. 00-aliasing owes the reader one clause saying the name is not theirs to type."
+  },
+  {
+   "kind": "concept",
+   "name": "inaccessible names, explained",
+   "unit": "04-funext",
+   "check": false,
+   "notes": "the other half of the `✝` split: §E.2 books the EXPLANATION at unit 03 (04-funext) and the proper naming at unit 19 (22-exec). Not mechanically detectable — the glyph is the same one — so this row is a record, not a check. 04-funext must actually do it."
   },
   {
    "kind": "keyword",
@@ -690,12 +697,14 @@
   {
    "kind": "keyword",
    "name": "structure",
-   "unit": "12-pcm"
+   "unit": "07-heap",
+   "notes": "DECIDED (editor, ERRATA §2): §E.2 books the keyword at unit 10 (12-pcm), but §D unit 05 displays the `PHeap` dependent-pair exhibit, which IS a `structure … where`. The ledger is corrected to 07-heap: the reader MEETS the keyword there, in a rejected alternative they only have to read, and BUILDS one at 12-pcm, which still owns the concept. In the compiled corpus the first real `structure` is `PCM` in 12-pcm.lean."
   },
   {
    "kind": "keyword",
    "name": "where",
-   "unit": "12-pcm"
+   "unit": "07-heap",
+   "notes": "DECIDED (editor, ERRATA §2): §E.2 books the keyword at unit 10 (12-pcm), but §D unit 05 displays the `PHeap` dependent-pair exhibit, which IS a `structure … where`. The ledger is corrected to 07-heap: the reader MEETS the keyword there, in a rejected alternative they only have to read, and BUILDS one at 12-pcm, which still owns the concept. In the compiled corpus the first real `structure` is `PCM` in 12-pcm.lean. (`where` also carries §E.2's instance syntax, whose row is unit 10; booked with its keyword.)"
   },
   {
    "kind": "syntax",
@@ -850,17 +859,15 @@
   {
    "kind": "command",
    "name": "set_option",
-   "unit": "06-errors",
-   "re": "\\bset_option\\b",
-   "flags": ""
+   "unit": "06-errors"
   },
   {
    "kind": "notation",
    "name": "⊢ (entailment, infix)",
    "unit": "14-assertions",
-   "re": "[^\\s]\\s*⊢",
+   "re": "[^\\s][ \\t]*⊢",
    "flags": "",
-   "notes": "matched only when something precedes it on the line, so the goal turnstile of a `state` block is not mistaken for the entailment of unit 12. §E does not distinguish them; this is our decision. Also the goal turnstile in every `state` block; state blocks are checked, so a pre-unit-12 goal display legitimately containing ⊢ will be flagged. Known false-positive class."
+   "notes": "matched only when something precedes it on the same line, so the goal turnstile that opens a line in a state block is not mistaken for the entailment of unit 12. §E.5 does not distinguish the two uses of the glyph; this split is our decision."
   },
   {
    "kind": "notation",
@@ -929,6 +936,12 @@
   },
   {
    "kind": "internal",
+   "name": "twoAllocated",
+   "unit": "00-aliasing",
+   "notes": "not named in §D; declared in fragment 00-aliasing for exercise x01 (\"a heap in which cells 4 and 9 are allocated and nothing else is\"). Row added from --audit."
+  },
+  {
+   "kind": "internal",
    "name": "implication_example",
    "unit": "02-terms"
   },
@@ -975,12 +988,16 @@
   {
    "kind": "internal",
    "name": "nested_pack",
-   "unit": "02-terms"
+   "unit": "02-terms",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x06"
   },
   {
    "kind": "internal",
    "name": "nested_unpack",
-   "unit": "02-terms"
+   "unit": "02-terms",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x06"
   },
   {
    "kind": "internal",
@@ -995,12 +1012,16 @@
   {
    "kind": "internal",
    "name": "defined",
-   "unit": "03-compute"
+   "unit": "03-compute",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x09"
   },
   {
    "kind": "internal",
-   "name": "double_unfold",
-   "unit": "03-compute"
+   "name": "double",
+   "unit": "03-compute",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x07. §D Unit 02 writes \"(`double_unfold`-flavoured drills)\", but no such declaration exists anywhere in content/ or lean/ — \"-flavoured\" was carrying the whole claim. What x07 needs is def double n := n + n, so the row is renamed. §F's ✔ on x07 is wrong."
   },
   {
    "kind": "internal",
@@ -1020,17 +1041,23 @@
   {
    "kind": "internal",
    "name": "funext_drill",
-   "unit": "04-funext"
+   "unit": "04-funext",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x10"
   },
   {
    "kind": "internal",
    "name": "if_drill",
-   "unit": "04-funext"
+   "unit": "04-funext",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x11"
   },
   {
    "kind": "internal",
    "name": "by_cases_drill",
-   "unit": "04-funext"
+   "unit": "04-funext",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x12"
   },
   {
    "kind": "internal",
@@ -1130,7 +1157,9 @@
   {
    "kind": "internal",
    "name": "PHeap",
-   "unit": "07-heap"
+   "unit": "07-heap",
+   "status": "display",
+   "notes": "the second half is a `def`-instead-of-`abbrev` sketch whose point is the real \"failed to synthesize instance … Decidable (x = l)\" error"
   },
   {
    "kind": "internal",
@@ -1340,7 +1369,9 @@
   {
    "kind": "internal",
    "name": "union_not_comm",
-   "unit": "13-splits"
+   "unit": "13-splits",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x26"
   },
   {
    "kind": "internal",
@@ -1574,29 +1605,37 @@
   },
   {
    "kind": "internal",
-   "name": "star_or_left_conv",
-   "unit": "17-star-algebra"
-  },
-  {
-   "kind": "internal",
    "name": "aForall",
-   "unit": "17-star-algebra"
+   "unit": "17-star-algebra",
+   "status": "migrate",
+   "notes": "real, in content/05-m4.js"
   },
   {
    "kind": "internal",
    "name": "star_forall_left",
-   "unit": "17-star-algebra"
+   "unit": "17-star-algebra",
+   "status": "migrate",
+   "notes": "real, in content/05-m4.js"
   },
   {
    "kind": "internal",
    "name": "star_forall_right_fails",
-   "unit": "17-star-algebra"
+   "unit": "17-star-algebra",
+   "status": "migrate",
+   "notes": "real, in content/05-m4.js; depends on Pcx"
   },
   {
    "kind": "internal",
    "name": "star_not_weakening",
    "unit": "17-star-algebra",
    "notes": "§D puts it in unit 14 (16-star); moved to 15 (17-star-algebra) because its proof cites star_emp_left_intro, which is 17-star-algebra's m4-2. Agreed with the fragment author."
+  },
+  {
+   "kind": "internal",
+   "name": "Pcx",
+   "unit": "17-star-algebra",
+   "status": "migrate",
+   "notes": "the Bool-indexed family star_forall_right_fails is built on; real, in content/05-m4.js"
   },
   {
    "kind": "internal",
@@ -1741,12 +1780,9 @@
   {
    "kind": "internal",
    "name": "runBad",
-   "unit": "22-exec"
-  },
-  {
-   "kind": "internal",
-   "name": "load_stuck",
-   "unit": "22-exec"
+   "unit": "22-exec",
+   "status": "display",
+   "notes": "deliberately fails with `fail to show termination`; the error is the exhibit"
   },
   {
    "kind": "internal",
@@ -1801,22 +1837,37 @@
   {
    "kind": "internal",
    "name": "run_example",
-   "unit": "24-interpreter"
+   "unit": "24-interpreter",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x47"
   },
   {
    "kind": "internal",
    "name": "runIf",
-   "unit": "24-interpreter"
+   "unit": "24-interpreter",
+   "status": "todo",
+   "notes": "NOT a migration — no `def runIf` exists in content/, lean/ or the fragments. Edition 1 quotes a goal state from a declaration that is not in the repo, so that goal state is unverifiable. The author of 24-interpreter either (a) writes the variant interpreter — the `ite` case spelled with `if` instead of `match`, about fifteen lines — compiles it, and RE-DERIVES the goal, in which case the re-derived goal wins over Edition 1's quoted one if they differ; or (b) drops the comparison and says so in their summary. It is an optional lab unit, so it is their call. What they may not do is quote a goal state nobody can reproduce."
   },
   {
    "kind": "internal",
    "name": "spin",
-   "unit": "24-interpreter"
+   "unit": "24-interpreter",
+   "status": "migrate",
+   "notes": "real, in content/06-m5.js"
   },
   {
    "kind": "internal",
    "name": "spin_diverges",
-   "unit": "24-interpreter"
+   "unit": "24-interpreter",
+   "status": "migrate",
+   "notes": "real, in content/06-m5.js; depends on run_spin_none"
+  },
+  {
+   "kind": "internal",
+   "name": "run_spin_none",
+   "unit": "24-interpreter",
+   "status": "migrate",
+   "notes": "real, in content/06-m5.js; spin_diverges needs it"
   },
   {
    "kind": "internal",
@@ -1827,6 +1878,12 @@
    "kind": "internal",
    "name": "PartialHoare",
    "unit": "25-hoare"
+  },
+  {
+   "kind": "internal",
+   "name": "subst",
+   "unit": "25-hoare",
+   "check": false
   },
   {
    "kind": "internal",
@@ -1896,7 +1953,9 @@
   {
    "kind": "internal",
    "name": "writeTwice_spec",
-   "unit": "26-small-footprint"
+   "unit": "26-small-footprint",
+   "status": "todo",
+   "notes": "§D ⧗, exercise x48"
   },
   {
    "kind": "internal",
@@ -1961,7 +2020,9 @@
   {
    "kind": "internal",
    "name": "HeapLocalWeak",
-   "unit": "27-locality"
+   "unit": "27-locality",
+   "status": "migrate",
+   "notes": "plain def, no sorry, compiles against 27-locality; lives in content/09-m8.js. The stranded frame proof that CONSUMES it is an anonymous `example` with a `sorry`, so it has no ledger row and can never live in a fragment — verify.sh refuses a sorry. §D calls it the unit's central exhibit; it has to be checked out of band."
   },
   {
    "kind": "internal",
@@ -2096,7 +2157,9 @@
   {
    "kind": "internal",
    "name": "readAndFree_framed",
-   "unit": "32-symbolic"
+   "unit": "32-symbolic",
+   "status": "migrate",
+   "notes": "the complete sorry-free version is in content/10-m9.js and compiles against 32-symbolic. content/09-m8.js also holds a copy with a deliberate sorry in the Preserves slot — a different block, and a display-only exhibit."
   },
   {
    "kind": "internal",
@@ -2438,12 +2501,16 @@
   {
    "kind": "internal",
    "name": "alloc",
-   "unit": "41-beyond"
+   "unit": "41-beyond",
+   "status": "display",
+   "notes": "§D tags it `sketch`. Adding an `alloc` constructor to `Cmd` would invalidate every `Exec` proof in the corpus — a project, not a fragment."
   },
   {
    "kind": "internal",
    "name": "hoare_alloc",
-   "unit": "41-beyond"
+   "unit": "41-beyond",
+   "status": "display",
+   "notes": "as `alloc`: §D says the allocation semantics is deliberately not built"
   },
   {
    "kind": "concept",
@@ -2808,6 +2875,29 @@
    "name": "recursive def returning an Assertion",
    "unit": "35-listrep",
    "check": false
+  },
+  {
+   "kind": "internal",
+   "name": "load_stuck",
+   "unit": "22-exec",
+   "renamedTo": "exec_load_stuck",
+   "status": "renamed",
+   "notes": "the same fact under its Edition-1 name; the fragment carries it as `exec_load_stuck` (exercise x43)"
+  },
+  {
+   "kind": "internal",
+   "name": "star_or_left_conv",
+   "unit": "17-star-algebra",
+   "renamedTo": "star_or_right",
+   "status": "renamed",
+   "notes": "textually identical to `star_or_right` (new-m4, exercise x38) under its Edition-1 name"
+  },
+  {
+   "kind": "keyword",
+   "name": "calc",
+   "unit": "02-terms",
+   "notes": "NOT IN §E. `calc_demo` in lean/edition2/new-overview.lean uses `calc` and sits in fragment 02-terms, so the row is booked there. ERRATA §8: 02-terms' author either introduces `calc` properly or drops the declaration — this row may need revisiting either way."
   }
- ]
+ ],
+ "note": "COURSE-PLAN §E numbers UNITS 00-38; §C and §D number FILES 00-43, because five support pages are interleaved (01-goalstate, 06-errors, 20-compare, 42-tactics, 43-ref). Every \"unit\" field below is a FILE id, translated from §E's unit number: unit 00 = 00-aliasing, 01 = 02-terms, 04 = 05-update, 05 = 07-heap, 08 = 10-disjoint, 12 = 14-assertions, 18 = 21-language, 22 = 25-hoare, 24 = 27-locality, 32 = 35-listrep, 38 = 41-beyond. \"order\" is the file order and is what every check compares against."
 }

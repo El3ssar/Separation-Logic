@@ -14,6 +14,16 @@ theorem preserves_of_storeStable {c : Cmd} (h : StoreStable c) (R : Assertion) :
   intro s s' hex hFrame hr
   rw [h s s' hex]; exact hr
 
+/- ex x58 readAndFree_framed -/
+theorem readAndFree_framed (x : Var) (l : Loc) (v : Val) :
+    Hoare (l ↦ v) (readAndFree x l) (pure (fun σ => σ x = v)) :=
+  hoare_seq
+    (hoare_consequence (entails_refl _) (hoare_load x l v) (star_comm _ _))
+    (hoare_consequence (entails_refl _)
+      (hoare_frame (hoare_free l v) (heapLocal_free l)
+        (preserves_of_storeStable (storeStable_free l) _))
+      (star_emp_left _))
+
 theorem hoare_write_val (l : Loc) (e : Atom) (old v : Val) :
     Hoare (aAnd (fact (fun σ => e.eval σ = v)) (l ↦ old)) (.write l e) (l ↦ v) := by
   intro σ h hpre

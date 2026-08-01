@@ -1,5 +1,14 @@
 /- ===== Unit 24 · `locality` · What "local" has to mean ===== -/
 
+def HeapLocalWeak (c : Cmd) : Prop :=
+  ∀ σ h hFrame s',
+    Heap.disjoint h hFrame →
+    Exec c ⟨σ, h⟩ s' →
+    ∃ r : State,
+      Exec c ⟨σ, Heap.union h hFrame⟩ r ∧
+      r.store = s'.store ∧
+      r.heap = Heap.union s'.heap hFrame
+
 def HeapLocal (c : Cmd) : Prop :=
   ∀ σ h hFrame s',
     Heap.disjoint h hFrame →

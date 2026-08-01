@@ -49,6 +49,38 @@ theorem star_exists_left {α : Sort u} (P : α → Assertion) (Q : Assertion) :
   intro σ h ⟨h₁, h₂, hd, hu, ⟨x, hp⟩, hq⟩
   exact ⟨x, h₁, h₂, hd, hu, hp, hq⟩
 
+def aForall {α : Sort u} (P : α → Assertion) : Assertion := fun σ h => ∀ x, P x σ h
+
+theorem star_forall_left {α : Sort u} (P : α → Assertion) (Q : Assertion) :
+    aForall P ∗ Q ⊢ aForall (fun x => P x ∗ Q) := by
+  intro σ h ⟨h₁, h₂, hd, hu, hp, hq⟩ x
+  exact ⟨h₁, h₂, hd, hu, hp x, hq⟩
+
+def Pcx : Bool → Assertion
+  | false => (0 ↦ 4)
+  | true  => (1 ↦ 7)
+
+theorem star_forall_right_fails :
+    ¬ (aForall (fun x => Pcx x ∗ aTrue) ⊢ aForall Pcx ∗ aTrue) := by
+  intro hcontra
+  have hlhs : aForall (fun x => Pcx x ∗ aTrue) (fun _ => 0)
+      (Heap.union (Heap.singleton 0 4) (Heap.singleton 1 7)) := by
+    intro x
+    cases x with
+    | false =>
+        exact ⟨Heap.singleton 0 4, Heap.singleton 1 7,
+          singleton_disjoint 4 7 (by simp), rfl, rfl, trivial⟩
+    | true =>
+        refine ⟨Heap.singleton 1 7, Heap.singleton 0 4,
+          singleton_disjoint 7 4 (by simp), ?_, rfl, trivial⟩
+        exact union_comm (singleton_disjoint 4 7 (by simp))
+  obtain ⟨h₁, h₂, _, _, hall, _⟩ := hcontra _ _ hlhs
+  have e0 : h₁ = Heap.singleton 0 4 := hall false
+  have e1 : h₁ = Heap.singleton 1 7 := hall true
+  have : Heap.singleton 0 4 0 = Heap.singleton 1 7 0 := by rw [← e0, ← e1]
+  rw [singleton_same, singleton_other 1 0 7 (by simp)] at this
+  exact absurd this (by simp)
+
 /- ex x36 star_emp_left_iff / star_emp_right_iff / star_comm_iff / star_congr -/
 theorem star_emp_left_iff (P : Assertion) : emp ∗ P ⊣⊢ P :=
   ⟨star_emp_left P, star_emp_left_intro P⟩

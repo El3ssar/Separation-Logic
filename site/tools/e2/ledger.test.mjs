@@ -39,8 +39,25 @@ const MAP = {
   '16-ref': '43-ref'
 };
 
+/* The other end of the range: each chapter pinned to the FIRST Edition-2 unit
+   whose material it opens. `--strict` runs this instead, to show how much of
+   the signal is mapping-dependent — the honest question to ask of any tool
+   whose answer depends on a table someone wrote by hand. */
+const STRICT = {
+  '00-overview': '00-aliasing', '01-m0': '02-terms', '02-m1': '07-heap',
+  '03-m2': '10-disjoint', '04-m3': '14-assertions', '05-m4': '16-star',
+  '06-m5': '21-language', '07-m6': '25-hoare', '08-m7': '26-small-footprint',
+  '09-m8': '27-locality', '10-m9': '32-symbolic', '11-m10': '35-listrep',
+  '12-m11': '37-wand', '13-m12': '34-wp', '14-m13': '38-partial',
+  '15-m14': '41-beyond', '16-ref': '43-ref'
+};
+
 const args = process.argv.slice(2);
-const res = run({ map: MAP, only: args.filter(a => !a.startsWith('--'))[0] });
+const res = run({
+  map: args.includes('--strict') ? STRICT : MAP,
+  noProse: args.includes('--no-prose'),
+  only: args.filter(a => !a.startsWith('--'))[0]
+});
 
 if (args.includes('--top')) {
   const tally = new Map();

@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /* The ledger check: nothing may be used before it has been introduced.
  *
- *   node site/tools/e2/ledger.mjs               check every content/*.js
- *   node site/tools/e2/ledger.mjs 16-star       check one file
- *   node site/tools/e2/ledger.mjs --json        machine-readable
+ *   node site/tools/e2/ledger.mjs                  check every content/*.js
+ *   node site/tools/e2/ledger.mjs 16-star          check one file
+ *   node site/tools/e2/ledger.mjs --json           machine-readable
+ *   node site/tools/e2/ledger.mjs --audit          is the ledger still true?
+ *   node site/tools/e2/ledger.mjs --no-prose       Lean blocks only
  *   node site/tools/e2/ledger.mjs --strict-names   promote unknown-name warnings
+ *   node site/tools/e2/ledger.test.mjs             run it over Edition 1
  *
  * WHY THIS EXISTS. Edition 1's second chapter expects the reader to parse
  *
@@ -30,12 +33,18 @@
  *   3. COVERAGE. A name that looks like a citation but has no ledger row is a
  *               warning: either a plan gap or a typo, and both are worth seeing.
  *
- * WHAT IT READS. Only Lean text, never prose: code.src, txt.src, state.src,
+ * WHAT IT READS. Every scrap of Lean in a chapter: code.src, txt.src, state.src,
  * anat.src and anat.parts[].m, ex.goal, ex.sol, ex.walk[].tac, trace.start,
  * trace.steps[].tac and .state, cmp.left/right.src, and everything nested inside
- * detail.blocks[], ex.deep[] and steps.items[].h. Comments and string literals
- * are blanked first. A name DECLARED in a file is not a use of it, and neither
- * are the binders of that file's own proofs.
+ * detail.blocks[], ex.deep[] and steps.items[].h. Plus the <code> spans of the
+ * prose, because §E's rule is about mentioning, not only about compiling — see
+ * false-positive class (g). Comments and string literals are blanked first. A
+ * name DECLARED in a file is not a use of it, and neither are the binders of
+ * that file's own proofs.
+ *
+ * The fourth check, `--audit`, points the other way: it compares every
+ * `internal` ledger row against site/lean/e2/, so that when the Lean moves the
+ * ledger is told about it. §H.8 of the plan is titled "The ledger drifts".
  *
  * KNOWN FALSE-POSITIVE CLASSES — read these before you switch the tool off:
  *
@@ -61,7 +70,23 @@
  *   f. Binder collection over-approximates: every `| ident` at the start of a
  *      line is treated as a constructor/pattern binder, which also swallows
  *      `rcases … with a | b`. Over-collecting only makes the tool quieter.
- *   g. `simp?` output quoted verbatim in a chapter cites Lean core simp lemmas
+ *   g. PROSE FORWARD REFERENCES. §E's rule is that an item below your row "does
+ *      not exist yet and must not be mentioned", so the `<code>` spans of the
+ *      prose are checked too — that is where Edition 1 cites the nonexistent
+ *      `self_disjoint_empty`. But a roadmap paragraph ("Unit 28 proves this")
+ *      is a legitimate mention, and it is the single largest false-positive
+ *      class. A chapter that means it declares
+ *
+ *          registerChapter({ …, ledgerForward: ['wp', 'lseg'], … })
+ *
+ *      and those names pass in prose only. `--no-prose` turns the pass off.
+ *      The same hatch covers prose that names a lemma in order to say it does
+ *      NOT exist — Edition 1's `union_eq_none` walk says "there is no
+ *      `union_eq_some`", and the tool cannot hear the negation.
+ *   h. DELIBERATE EXHIBITS. A chapter that shows a banned tactic failing, or
+ *      prints a `sorry`, is using the thing on purpose. `ledgerAllow: [...]`
+ *      on the chapter object waives named items in every block of that chapter.
+ *   i. `simp?` output quoted verbatim in a chapter cites Lean core simp lemmas
  *      (`ne_eq`, `Option.some.injEq`, `decide_eq_true_eq`, …). Those are not in
  *      the ledger and cannot be; CORE below lists the ones the course actually
  *      quotes, and anything else lands in the unknown-name WARNING bucket, not
@@ -320,22 +345,27 @@ function localNames(texts) {
 }
 
 /* is `name` a plausible citation of a declaration, as opposed to a bound
-   variable or a piece of Lean grammar? */
+   variable, a word out of a quoted error message, or an inaccessible name Lean
+   invented (`refine_1`, `x_1`, `u_1`)? */
 const citationish = (n) =>
-  (n.includes('_') || /^[A-Z][A-Za-z0-9]*[a-z]/.test(n) || n.includes('.')) &&
-  !/^_/.test(n);
+  !/^_/.test(n) && !/_\d+$/.test(n) &&
+  (n.includes('.') || n.includes('_') || /^[A-Z][A-Za-z0-9]*[a-z][A-Za-z0-9]*[A-Z]/.test(n));
 
-/* a snake_case name close enough to a real one to be a typo rather than a
-   library name we have never heard of */
+/* a name close enough to a real one to be a typo rather than a library name we
+   have never heard of. Longest shared prefix wins, and it has to be a real
+   prefix — four characters and a whole underscore-segment. */
 function nearMiss(name, universe) {
-  const head = name.split('_').slice(0, 2).join('_');
+  let best = null, bestLen = 0;
+  const seg = (s, n) => s.split('_').slice(0, n).join('_');
   for (const other of universe) {
-    if (other === name) continue;
-    if (other.startsWith(head) || name.startsWith(other.split('_').slice(0, 2).join('_'))) {
-      if (Math.abs(other.length - name.length) <= 8) return other;
-    }
+    if (other === name || other.includes('.')) continue;
+    let i = 0;
+    while (i < name.length && i < other.length && name[i] === other[i]) i++;
+    if (i < 4 || i <= bestLen) continue;
+    if (!(name.startsWith(seg(other, 2)) || other.startsWith(seg(name, 2)))) continue;
+    best = other; bestLen = i;
   }
-  return null;
+  return best;
 }
 
 /* -------------------------------------------------------------------- checks */
@@ -361,6 +391,7 @@ export function run(opts = {}) {
 
   const findings = [];
   const notes = [];
+  let checked = 0;
   const idx = (u) => (L.index.has(u) ? L.index.get(u) : -1);
   const fenceAt = idx(L.fence.unit);
   const maxFrag = lean.last ? idx(lean.last) : -1;
@@ -380,8 +411,22 @@ export function run(opts = {}) {
     const unit = unitOf(file);
     if (unit === null) { notes.push(`${base}: no ledger unit — skipped`); continue; }
     const here = idx(unit);
+    checked++;
 
-    const scraps = harvest(chapter).map(s => ({ ...s, clean: strip(s.text) }));
+    let scraps = harvest(chapter).map(s => ({ ...s, clean: strip(s.text) }));
+    if (opts.noProse) scraps = scraps.filter(s => s.flavour !== 'prose');
+    /* Two escape hatches, both declared on the chapter object, both by name so
+       that a reviewer can see exactly what was waived.
+         ledgerForward — prose only: a roadmap ("Unit 28 proves this"), or a
+                         name mentioned in order to say it does NOT exist
+                         ("there is no `union_eq_some`").
+         ledgerAllow   — everywhere: a deliberate exhibit, such as showing
+                         `omega` failing on `Loc`, or displaying a `sorry`. */
+    const forward = new Set(chapter.ledgerForward || []);
+    const allow = new Set(chapter.ledgerAllow || []);
+    /* A waiver that no longer suppresses anything is a waiver that has rotted —
+       a renamed ledger row, or an exhibit that was edited out. Say so. */
+    const waived = new Set();
     const declared = localNames(scraps.filter(s => s.flavour !== 'display').map(s => s.clean));
     for (const b of chapter.blocks || []) if (b.t === 'ex' && b.name) declared.add(b.name);
 
@@ -417,7 +462,13 @@ export function run(opts = {}) {
       const firstSeen = new Set();
       for (const t of toks) {
         if (t.afterDot) continue;
-        const rows = L.byName.get(t.name);
+        /* `Exec.seq` is a constructor of `Exec`: the ledger books the type, and
+           a constructor is not a separate thing to introduce. */
+        let rows = L.byName.get(t.name);
+        if (!rows && t.dotted) {
+          const parent = L.byName.get(t.name.split('.')[0]);
+          if (parent && parent.some(e => e.kind === 'internal')) rows = parent.filter(e => e.kind === 'internal');
+        }
         if (rows) {
           for (const e of rows) {
             if (e.kind === 'tactic' && !t.tactic && s.flavour !== 'prose') continue;
@@ -433,6 +484,8 @@ export function run(opts = {}) {
         /* --- coverage: a citation with no ledger row --- */
         if (s.flavour === 'display' || s.flavour === 'schematic') continue;
         if (!citationish(t.name) || CORE.has(t.name) || declared.has(t.name)) continue;
+        if (allow.has(t.name)) { waived.add(t.name); continue; }
+        if (s.flavour === 'prose' && forward.has(t.name)) { waived.add(t.name); continue; }
         /* in prose only a near-miss of a real lemma is worth saying anything about */
         if (s.flavour === 'prose' && (lean.decls.has(t.name) || !/^[a-z][A-Za-z0-9']*(_[A-Za-z0-9']+)+$/.test(t.name))) continue;
         if (t.dotted && !/^[A-Z]/.test(t.name)) continue;      // dot notation on a term
@@ -460,12 +513,33 @@ export function run(opts = {}) {
       }
     }
 
+    for (const [n, field] of [...[...allow].map(n => [n, 'ledgerAllow']), ...[...forward].map(n => [n, 'ledgerForward'])]) {
+      if (waived.has(n)) continue;
+      findings.push({
+        file: base, unit, path: field, flavour: '', line: 0, count: 1, also: [],
+        severity: 'warn', rule: 'waiver', name: n,
+        msg: `${field} lists it, but nothing in this chapter would have fired on it — stale waiver, or a ledger row that has been renamed`
+      });
+    }
+
     function orderCheck(e, s, at, via) {
+      if (allow.has(e.name)) { waived.add(e.name); return; }
+      /* An Edition-1 name for something the fragments carry under an Edition-2
+         name. Worth its own row: "does not exist" would send the author
+         hunting for a lemma that is sitting right there. */
+      if (e.renamedTo) {
+        return report(s, at, {
+          severity: 'error', rule: 'renamed', name: e.name, via, entryKind: e.kind,
+          introducedIn: e.unit,
+          msg: `renamed: cite \`${e.renamedTo}\` instead${e.notes ? ' — ' + e.notes : ''}`
+        });
+      }
       if (e.banned) {
         return report(s, at, { severity: 'error', rule: 'banned', name: e.name, via, entryKind: e.kind, msg: e.banned });
       }
       const there = idx(e.unit);
       if (there < 0) return;
+      if (s.flavour === 'prose' && forward.has(e.name)) { waived.add(e.name); return; }
       if (there > here) {
         return report(s, at, {
           severity: 'error', rule: 'order', name: e.name, via, entryKind: e.kind,
@@ -482,30 +556,77 @@ export function run(opts = {}) {
     }
 
     function existenceCheck(e, s, t) {
-      if (declared.has(t.name)) return;
-      const where = lean.decls.get(t.name);
+      const name = e.name;                       // the ledger's name, not the constructor's
+      if (declared.has(name) || e.renamedTo) return;
+      if (allow.has(name)) { waived.add(name); return; }
+      if (s.flavour === 'prose' && forward.has(name)) { waived.add(name); return; }
+      /* an order error already said this, in the ledger's words */
+      if (seenHere.has(`order|internal|${name}`)) return;
+      const where = lean.decls.get(name);
       if (lean.mode === 'fallback') {
-        if (!lean.decls.has(t.name)) report(s, t.at, {
-          severity: 'warn', rule: 'existence', name: t.name,
+        if (!lean.decls.has(name)) report(s, t.at, {
+          severity: 'warn', rule: 'existence', name,
           msg: 'no such declaration in lean/corpus.lean or lean/edition2/*.lean (degraded check: site/lean/e2/ is empty)'
         });
         return;
       }
       if (where === undefined) {
-        if (idx(e.unit) <= maxFrag) report(s, t.at, {
-          severity: 'error', rule: 'existence', name: t.name,
-          msg: `cited, but no fragment in site/lean/e2/ declares it`
+        if (idx(e.unit) > maxFrag) return;         // the fragments do not reach here yet
+        /* Some rows are known not to be in a fragment, and why. §D's exhibits
+           cannot compile, its ⧗ items are unwritten, and a handful of real
+           lemmas are still sitting in Edition-1 content awaiting migration. */
+        if (e.status === 'display') return;
+        const soft = { migrate: 'not in a fragment yet — the Lean is real but still lives in Edition-1 content', todo: '§D marks this ⧗: nobody has written it yet' };
+        report(s, t.at, {
+          severity: e.status in soft ? 'warn' : 'error', rule: 'existence', name,
+          msg: e.status in soft ? soft[e.status] : 'cited, but no fragment in site/lean/e2/ declares it'
         });
         return;
       }
       if (idx(where) > here) report(s, t.at, {
-        severity: 'error', rule: 'existence', name: t.name, introducedIn: where,
+        severity: 'error', rule: 'existence', name, introducedIn: where,
         msg: `declared in the Lean only at ${where}, cited here in ${unit}`
       });
     }
   }
 
-  return { findings, notes, lean: { mode: lean.mode, fragments: lean.frags.length }, files: files.length, ledger: L.entries.length };
+  if (!checked) notes.push('NOTHING WAS CHECKED: no content file matched a ledger unit. ' +
+    'Edition-2 chapters are named after the ledger (site/content/16-star.js ↔ 16-star); until they ' +
+    'exist, run site/tools/e2/ledger.test.mjs, which maps Edition 1 onto the ledger.');
+
+  return { findings, notes, lean: { mode: lean.mode, fragments: lean.frags.length }, checked, files: files.length, ledger: L.entries.length };
+}
+
+/* ------------------------------------------------------------------- audit */
+
+/* Is the ledger itself still true? Compares every `internal` row against the
+   Lean fragments it claims to come from. Run it after either side moves. */
+export function audit(opts = {}) {
+  const L = loadLedger(opts.ledger || path.join(HERE, 'ledger.json'));
+  const lean = leanUniverse();
+  const out = [];
+  if (lean.mode !== 'e2') return { mode: lean.mode, rows: [], note: 'site/lean/e2/ is empty — nothing to audit against' };
+  const inLedger = new Set(L.entries.filter(e => e.kind === 'internal').map(e => e.name));
+  /* `Heap.write` in the ledger covers `def write` inside `namespace Heap` */
+  for (const n of [...inLedger]) if (n.includes('.')) inLedger.add(n.split('.').pop());
+  for (const e of L.entries) if (e.check === false) inLedger.add(e.name);
+  for (const e of L.entries) {
+    if (e.kind !== 'internal') continue;
+    const where = lean.decls.get(e.name);
+    if (where === undefined) out.push({
+      name: e.name, ledger: e.unit, lean: null, status: e.status || 'unexplained',
+      ...(e.renamedTo ? { renamedTo: e.renamedTo } : {}),
+      msg: e.status
+        ? `no fragment declares it (${e.status}): ${e.notes || ''}`
+        : 'in the ledger, declared in no fragment, and no reason recorded'
+    });
+    else if (where !== e.unit) out.push({ name: e.name, ledger: e.unit, lean: where, msg: `ledger says ${e.unit}, the Lean says ${where}` });
+  }
+  for (const [name, where] of lean.decls) {
+    if (name.includes('.') || inLedger.has(name) || CORE.has(name)) continue;
+    out.push({ name, ledger: null, lean: where, msg: `declared in ${where}, no ledger row` });
+  }
+  return { mode: lean.mode, rows: out };
 }
 
 /* --------------------------------------------------------------------- cli */
@@ -516,7 +637,7 @@ export function report(res, json) {
   if (json) { console.log(JSON.stringify(res, null, 1)); return res.findings.some(f => f.severity === 'error') ? 1 : 0; }
   const errs = res.findings.filter(f => f.severity === 'error');
   const warns = res.findings.filter(f => f.severity === 'warn');
-  console.log(`\nledger: ${res.ledger} rows · ${res.files} file(s) · lean universe: ${res.lean.mode} (${res.lean.fragments} fragments)\n`);
+  console.log(`\nledger: ${res.ledger} rows · ${res.checked}/${res.files} file(s) checked · lean universe: ${res.lean.mode} (${res.lean.fragments} fragments)\n`);
   for (const n of res.notes) console.log(`  ${C.d}${n}${C.x}`);
   if (res.notes.length) console.log('');
 
@@ -538,5 +659,17 @@ export function report(res, json) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const only = args.filter(a => !a.startsWith('--'))[0];
-  process.exit(report(run({ only, strictNames: args.includes('--strict-names') }), args.includes('--json')));
+  if (args.includes('--audit')) {
+    const a = audit();
+    if (args.includes('--json')) { console.log(JSON.stringify(a, null, 1)); process.exit(0); }
+    console.log(`\nledger vs site/lean/e2 (${a.mode})\n`);
+    for (const r of a.rows) console.log(`  ${C.y}!${C.x} ${r.name.padEnd(34)} ${r.msg}`);
+    console.log(`\n${a.rows.length} disagreement(s)\n`);
+    process.exit(0);
+  }
+  process.exit(report(run({
+    only,
+    strictNames: args.includes('--strict-names'),
+    noProse: args.includes('--no-prose')
+  }), args.includes('--json')));
 }
