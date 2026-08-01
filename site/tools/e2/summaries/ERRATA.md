@@ -777,3 +777,88 @@ every name rowed. Two rounds got there — nine rows from the first pass, then
 seven more when `03-compute`'s fragment landed (`double_unfold`, `double_three`,
 `double_zero_left`, `some_inj`, `some_ne_none`, `some_ne_none'`,
 `defined_of_ne_none`), plus `double` and `defined` losing their `⧗`.
+
+---
+
+## 20. Prove your exercises against the reader's own context
+
+There is now one more check, and it is the only one that tests what the reader
+actually experiences: that someone who types the solution you show gets a green
+tick.
+
+```
+node site/tools/e2/gen-contexts.mjs --prove
+```
+
+For every exercise it splices `lean/e2/*` — cut immediately before that
+exercise's own `/- ex … -/` marker, exactly as the browser cuts it — in front of
+the `sol` your page displays, and runs Lean over the result. About half a second
+per exercise.
+
+`verify.sh` does **not** cover this. It compiles the corpus with every solution
+already in place, so it cannot see a cut in the wrong position. The two failure
+directions this catches:
+
+- **cut too late** — the exercise's own answer is inside its context, so Lean
+  says `has already been declared` instead of checking the reader's proof. The
+  reader cannot pass, and the message does not tell them why.
+- **cut too early** — a lemma your page told them to use is not in scope, so
+  their correct proof is rejected with an unknown identifier.
+
+It also catches a solution that quietly stopped compiling because a unit before
+yours changed something underneath it, which nothing else you run will notice.
+
+**If your exercise's solution has no `/- ex <id> <name> -/` marker in the Lean,
+the tool says so and refuses to write.** Add the marker on its own line
+immediately above the declaration that answers the exercise, in your unit's
+fragment. The marker is the cut point: it is what tells the browser how much of
+the course to put in front of the reader.
+
+Run it after you add or change any exercise. It is cheap, and it is the check
+that stands between a reader and an hour lost to an error message about a
+theorem they never wrote.
+
+---
+
+## 21. Where the `/- ex … -/` marker goes: before the ANSWER, not before the setup
+
+The marker is the cut point. Everything above it is what the reader has;
+everything below it is what they are being asked to produce. So it goes
+immediately before **the first declaration that is part of their answer** — and
+not before a definition the unit is handing them to work with.
+
+Two exercises in `03-compute` had it wrong and `--prove` caught both:
+
+```lean
+/- ex x09 defined -/                 ← WRONG: cuts `defined` out of the context
+def defined (h : Heap) (l : Loc) : Prop := ∃ v, h l = some v
+
+theorem defined_of_ne_none … : defined h l := by …
+```
+
+The page hands the reader `defined` and asks them to prove
+`defined_of_ne_none`. With the marker above the `def`, their context stops
+before it, so the statement they are shown mentions a name that does not exist
+yet, and Lean answers `Function expected at defined` — an error about the
+exercise's own setup, which no reader will diagnose. The marker belongs between
+the `def` and the `theorem`.
+
+**The discriminator is whether the `def` is in your `sol`.** If the reader writes
+it, it is part of the answer and the marker goes above it. If you hand it to
+them, it is setup and the marker goes below it. `x01` is the opposite case and
+is correct: writing the heap *is* the exercise, so the marker sits above its
+`def`.
+
+Five markers elsewhere in the corpus sit above a definition and have not been
+checked, because their units are not written yet — `x23 heapPCM`, `x41
+Atom.size`, `m7-4 clearCell_spec`, `m7-5 readAndFree_spec`. If one is yours,
+decide it deliberately, and then let the tool confirm it:
+
+```
+node site/tools/e2/gen-contexts.mjs --prove
+```
+
+Nothing else finds this. `verify.sh` compiles the corpus with every solution
+already in place, so a cut in the wrong position is invisible to it. Only
+splicing the context the way the browser splices it, and running the reader's own
+answer through Lean, tells you what the reader will actually see.
