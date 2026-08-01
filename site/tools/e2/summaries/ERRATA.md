@@ -4,9 +4,13 @@ This file is not a unit summary. It is the running list of defects found in
 `COURSE-PLAN.md` after it was written, and the decisions taken on them. Where it
 contradicts the plan, **this file wins**. Append to it if you find another.
 
+Sections are cited as `§N` throughout this project, so the headings carry the
+same spelling — `grep -n '§27'` finds §27. Cite them that way in your summary
+and the next author can find what you referred to.
+
 ---
 
-## 0. If you add Lean, run `verify.sh` WITH NO ARGUMENT
+## §0. If you add Lean, run `verify.sh` WITH NO ARGUMENT
 
 `site/tools/e2/verify.sh <NN>` builds fragments `00..NN` only. A new declaration
 in an early unit that collides with a name in a *later* unit is therefore
@@ -65,7 +69,7 @@ for why the timing decides whether the gap gets fixed or waived.
 
 ---
 
-## 1. `site/tools/e2/ledger.mjs` now exists — run it
+## §1. `site/tools/e2/ledger.mjs` now exists — run it
 
 It was still being built when the first units were commissioned. It is finished
 and it works. Run it on your unit before you report:
@@ -110,7 +114,7 @@ blocks, which are scanned as if they were Lean; `#check` output. Class (a)–(i)
 
 ---
 
-## 2. `structure … where` is met at `07-heap`, not `12-pcm`
+## §2. `structure … where` is met at `07-heap`, not `12-pcm`
 
 §E.2 books the keyword at unit 10 (`12-pcm`). But §D unit 05 (`07-heap`) displays
 the `PHeap` dependent-pair exhibit, which *is* a `structure … where`.
@@ -123,7 +127,7 @@ keyword as brand new.
 
 ---
 
-## 3. Four constructs are needed by unit 00 but booked at unit 01
+## §3. Four constructs are needed by unit 00 but booked at unit 01
 
 `fun x => e`, `→`, `∧` and the anonymous constructor `⟨…⟩` are booked at
 `02-terms` by §E.2, but `00-aliasing`'s own Lean requires all four
@@ -135,7 +139,7 @@ keyword as brand new.
 
 ---
 
-## 4. `⊢` is two different things
+## §4. `⊢` is two different things
 
 The goal turnstile in a Lean goal display (from `00-aliasing`, since every goal
 state shows one) and the entailment notation `P ⊢ Q` (`14-assertions`). §E.5
@@ -144,7 +148,7 @@ turnstile in a goal display as notation needing introduction.
 
 ---
 
-## 5. Ledgered names that no Lean fragment declares — triaged
+## §5. Ledgered names that no Lean fragment declares — triaged
 
 They have been checked one by one, against Edition-1 `content/*.js` and by
 compiling each against its intended prelude. **Every one now carries a `status`
@@ -230,7 +234,7 @@ todo`, and `03-compute` writes `def double n := n + n`.
 
 ---
 
-## 6. Two declarations moved, for dependency reasons
+## §6. Two declarations moved, for dependency reasons
 
 Found while building the verified corpus; the fragments already reflect this.
 
@@ -245,7 +249,7 @@ Found while building the verified corpus; the fragments already reflect this.
 
 ---
 
-## 7. Token collisions the checker cannot separate
+## §7. Token collisions the checker cannot separate
 
 Do not be surprised by these, and do not "introduce" a thing twice:
 
@@ -342,7 +346,7 @@ correct code:
 
 ---
 
-## 8. `calc` is in the Lean but not in the ledger
+## §8. `calc` is in the Lean but not in the ledger
 
 `calc_demo` in `lean/edition2/new-overview.lean` uses `calc`, which has no row in
 §E. It sits in fragment `02-terms`. Either `02-terms` introduces `calc` properly
@@ -356,7 +360,7 @@ the row moves to wherever `calc` is first taught, or comes out.
 
 ---
 
-## 9. `site/content/` still holds the seventeen Edition-1 files
+## §9. `site/content/` still holds the seventeen Edition-1 files
 
 `00-overview.js`, `01-m0.js` … `16-ref.js`. They are the old course, kept on this
 branch until integration. Do not edit them, do not read them for guidance on how
@@ -365,7 +369,7 @@ output. `render-check.js` renders them alongside yours; that is expected.
 
 ---
 
-## 10. Forward references: the legitimate kind and the defect
+## §10. Forward references: the legitimate kind and the defect
 
 This is the distinction the whole edition turns on, so it is written down once,
 here, rather than rediscovered per unit.
@@ -423,7 +427,7 @@ The `✝` in the goal display is **no longer an error** and needs no waiver — 
 
 ---
 
-## 11. `✝` appears at `00-aliasing` and is explained at `01-goalstate`
+## §11. `✝` appears at `00-aliasing` and is explained at `01-goalstate`
 
 > **Superseded in part by §15.** This section originally put the explanation at
 > `04-funext`. `01-goalstate` has since taken it, and the ledger's `concept` row
@@ -445,7 +449,7 @@ type; it already has one.
 
 ---
 
-## 12. `runIf` is not a migration. Nobody can reproduce its goal state
+## §12. `runIf` is not a migration. Nobody can reproduce its goal state
 
 Previously listed as `migrate`. It is not: **no `def runIf` exists anywhere** —
 not in `content/`, not in `lean/`, not in the fragments. Edition 1 quotes a goal
@@ -466,7 +470,7 @@ What is not available is quoting a goal state nobody can reproduce.
 
 ---
 
-## 13. §E numbers units; §D numbers files. They are three apart, twice
+## §13. §E numbers units; §D numbers files. They are three apart, twice
 
 §E's "introduced" column is a **unit** number, 00–38. Every file id in §D is a
 **file** number, 00–43, because five support pages are interleaved
@@ -503,7 +507,7 @@ content identity rather than file position.)
 
 ---
 
-## 14. The badge table — copy your row
+## §14. The badge table — copy your row
 
 `num` is the **unit** number from the unit's §D heading. It is not the file
 prefix, and it is not something to work out. Find your file, copy the value.
@@ -564,7 +568,7 @@ is the table that says those are the same thing.
 
 ---
 
-## 15. `✝` is explained on `01-goalstate`, not at `04-funext`
+## §15. `✝` is explained on `01-goalstate`, not at `04-funext`
 
 §11 above ruled that the dagger *appears* at `00-aliasing` and is *explained* at
 `04-funext`. That ruling was taken with only those two units in view. §D's entry
@@ -589,7 +593,7 @@ says only that the repair *there* is to go back and supply a name.
 
 ---
 
-## 16. The Check panel silently swallowed every `trace_state`
+## §16. The Check panel silently swallowed every `trace_state`
 
 `assets/editor.js` filtered information messages with `m.severity === 'info'`.
 Lean's own word, confirmed against the WASM build's JSON output, is
@@ -608,7 +612,7 @@ columns 1-based (`at.column + 1`) where the CLI and `check.sh` print them
 `line 2, col 9` in the workbook.
 ---
 
-## 17. Two ledger rows found wrong by `02-terms` — BOTH APPLIED
+## §17. Two ledger rows found wrong by `02-terms` — BOTH APPLIED
 
 Both were found by writing the unit. Both have since been verified against the
 fragments and **applied to `ledger.json`**; this entry is the record of why.
@@ -658,7 +662,7 @@ warning.
 
 ---
 
-## 18. The block budgets were set too low. They are shape, not a cap — and the summit is protected
+## §18. The block budgets were set too low. They are shape, not a cap — and the summit is protected
 
 Three units in, every one has landed at or near §C's 40-block ceiling: `00-aliasing`
 40 against a budget of ~26, `01-goalstate` 37 against ~14, `02-terms` 40 against
@@ -704,7 +708,7 @@ the front.
 
 ---
 
-## 19. Nine rows added by sweeping the fragments — including `absurd`
+## §19. Nine rows added by sweeping the fragments — including `absurd`
 
 `02-terms` noticed that `Or.elim` had no ledger row: corpus `or_comm'` is
 `fun h => h.elim Or.inr Or.inl`, the reader's first and only `∨`-elimination,
@@ -791,7 +795,7 @@ seven more when `03-compute`'s fragment landed (`double_unfold`, `double_three`,
 
 ---
 
-## 20. Prove your exercises against the reader's own context
+## §20. Prove your exercises against the reader's own context
 
 There is now one more check, and it is the only one that tests what the reader
 actually experiences: that someone who types the solution you show gets a green
@@ -831,7 +835,7 @@ theorem they never wrote.
 
 ---
 
-## 21. Where the `/- ex … -/` marker goes: before the ANSWER, not before the setup
+## §21. Where the `/- ex … -/` marker goes: before the ANSWER, not before the setup
 
 The marker is the cut point. Everything above it is what the reader has;
 everything below it is what they are being asked to produce. So it goes
@@ -876,7 +880,7 @@ answer through Lean, tells you what the reader will actually see.
 
 ---
 
-## 22. A design [G] exercise cannot hide its statement without a placeholder `goal`
+## §22. A design [G] exercise cannot hide its statement without a placeholder `goal`
 
 Found writing `05-update`'s `x13`, the course's first **[G]** exercise, and it
 will recur at every later one (`x29`, `x30`, and the rest of the `G` column
@@ -925,7 +929,7 @@ real counts and makes the difference the lesson.
 
 ---
 
-## 23. Unit 04's payoff lands in TWO units, not one — 05 for the lookups, 06 for the equations
+## §23. Unit 04's payoff lands in TWO units, not one — 05 for the lookups, 06 for the equations
 
 Found reviewing `05-update`. §D Unit 04 says the lab exists "so that when
 `Heap.write` arrives in Unit 05 the reader recognises every proof". That is half
@@ -964,7 +968,7 @@ left for `21-language`'s author to collect.
 
 ---
 
-## 24. `verify.sh` proves declaration order, not tactic order — and five rows moved because of it
+## §24. `verify.sh` proves declaration order, not tactic order — and five rows moved because of it
 
 The finding, relayed from a session that has since ended: **`write_of_eq` in
 fragment `08-heap-laws` (unit 06) was written with `subst`, which §E.1 books at
@@ -1013,7 +1017,7 @@ into the new corpus. It is now legal from `11-union`, where the proof needs it.
 
 ---
 
-## 25. `cases` — the plan contradicts its own ledger
+## §25. `cases` — the plan contradicts its own ledger
 
 Two legal uses had no row: `cases x with | false | true` on a `Bool` *value*
 (`17-star-algebra`), and `cases h` on `h : some v = none`, a *constructor
@@ -1048,7 +1052,7 @@ now stale and the checker says so. Delete it.
 
 ---
 
-## 26. Term-mode `by` in an ARGUMENT, not just a tuple slot — and a row I booked wrong
+## §26. Term-mode `by` in an ARGUMENT, not just a tuple slot — and a row I booked wrong
 
 Two findings from `10-disjoint`'s author, both verified, both mine to own.
 
@@ -1101,7 +1105,7 @@ kept. A check that reports correct decisions as defects gets switched off.
 
 ---
 
-## 27. "The ledger is green" does not mean "introduced before used"
+## §27. "The ledger is green" does not mean "introduced before used"
 
 It means **introduced in this unit or earlier**. The ledger books names at *unit*
 granularity, so a name introduced anywhere in your file is available everywhere
