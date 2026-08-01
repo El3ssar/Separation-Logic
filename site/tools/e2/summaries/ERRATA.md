@@ -157,6 +157,15 @@ not**. Citing one that has not landed is a warning, not an error.
 `runIf` was on this list and has been removed: it is not a migration and never
 was. See §12.
 
+**`status: "illustration"` — real Lean that compiles against its own unit's
+prelude, deliberately kept out of the fragments because it is a teaching exhibit
+rather than course corpus.** Cite it freely; it is order-checked like anything
+else, and the existence check stays quiet. `lookup_of_unallocated`
+(`00-aliasing`, the `anat` block whose `(hx : x ≠ 4)` binder `02-terms` exists to
+explain) is the first. Any `illustration`-tagged block that *declares* a name
+wants a row of this kind — otherwise every unit citing it gets a coverage
+warning.
+
 **`status: "display"` — can never compile, and is not supposed to. The failure
 IS the exhibit.** These do not fire the existence check.
 
@@ -285,11 +294,25 @@ correct code:
   `ledger.json`, and a prose span that is *just* the bare word is exempt. In
   Lean text the tactic-position test still catches the real thing.
 - **A quoted Lean error message** — `<code>failed to synthesize instance of type
-  class …</code>` — is Lean talking, not you citing. Lines that came out of a
-  span matching a diagnostic stem are exempt from `keyword` and `command` rows.
-  `06-errors` exists to print twelve of these and would otherwise be unwritable.
-  Note the limit: only grammar is exempted. A **lemma name** inside `simp?`
-  output is still a citation, and so is `∗`.
+  class …</code>`, or a `state` block holding one — is Lean talking, not you
+  citing. `06-errors` exists to print twelve of these and would otherwise be
+  unwritable. Three details worth knowing:
+  - It covers **`state` blocks as well as prose spans**, because a `state` block
+    holds a quoted error as often as a goal.
+  - It covers the **continuation lines** of a multi-part message. Lean splits
+    one error across `error:` and a following `Note:` or `Hint:` line, and
+    `02-terms` found that the second line was not being recognised. Both are
+    now stems.
+  - It **downgrades, it does not silence.** Grammar inside a diagnostic is not
+    an order error, but a unit displaying a message *about* a construct the
+    reader has not met is still showing them something unreadable, and that is
+    an editorial question worth asking. You get a `diagnostic` **warning**
+    naming the construct and the unit that introduces it. If you have looked and
+    the exhibit is in the right place, `ledgerAllow` it — that is what the
+    waiver means here, and it will not go stale.
+
+  Only grammar is downgraded. A **lemma name** inside `simp?` output is still a
+  citation, and so is `∗`.
 
 ---
 
@@ -374,7 +397,13 @@ The `✝` in the goal display is **no longer an error** and needs no waiver — 
 
 ---
 
-## 11. `✝` appears at `00-aliasing` and is explained at `04-funext`
+## 11. `✝` appears at `00-aliasing` and is explained at `01-goalstate`
+
+> **Superseded in part by §15.** This section originally put the explanation at
+> `04-funext`. `01-goalstate` has since taken it, and the ledger's `concept` row
+> moved with it. The half that still stands is the first: the glyph *appears* at
+> `00-aliasing` and its row is booked there. Read §15 for the rest.
+
 
 §E.2 books the inaccessible-name dagger at unit 03 (`04-funext`) as a "first
 sighting". But §D.0 mandates that x02 is scaffolded with `intro ⟨h3, _⟩`, and the
@@ -506,3 +535,185 @@ the left column's `num`; you and your reviewer speak in file ids. When your page
 prose says "Unit 28 proves it" and your summary says `31-aliasing-closed`, this
 is the table that says those are the same thing.
 
+
+---
+
+## 15. `✝` is explained on `01-goalstate`, not at `04-funext`
+
+§11 above ruled that the dagger *appears* at `00-aliasing` and is *explained* at
+`04-funext`. That ruling was taken with only those two units in view. §D's entry
+for the support page `01-goalstate` mandates, in its own contents list, "`✝`
+daggers and inaccessible names, and the fact that `✝` is not an input
+character" — and `01-goalstate` now carries the full treatment: what the glyph
+means, the `funext _` exhibit that produces one, the real compiler output you get
+from pasting one back in, and a `detail` on the superscripts counting backwards.
+
+**Decision: `01-goalstate` owns the explanation.** It is a permanent reference
+page, linked from every `trace` block, and this is the kind of material a reader
+returns to rather than reads once. §11's ledger row is unaffected — the glyph is
+still booked at `00-aliasing`.
+
+**Author of `04-funext`:** you inherit `✝` as *known*. `funext _` producing an
+inaccessible name needs no paragraph from you; say what `funext` gives you when
+you *do* name it and move on. If your unit is the first place a dagger costs the
+reader something concrete, show that — but do not re-derive what the glyph means.
+The tactic that renames one after the fact (`rename_i`, booked at `22-exec`) is
+still yours to leave alone: `01-goalstate` deliberately does not name it, and
+says only that the repair *there* is to go back and supply a name.
+
+---
+
+## 16. The Check panel silently swallowed every `trace_state`
+
+`assets/editor.js` filtered information messages with `m.severity === 'info'`.
+Lean's own word, confirmed against the WASM build's JSON output, is
+**`information`**. The filter matched nothing, so `trace_state`, `#check` and
+`#eval` output was parsed, counted, and then dropped before rendering — a reader
+following `01-goalstate`'s advice to "drop a `trace_state` in anywhere" would
+have seen a green box and no goal.
+
+Fixed in `assets/editor.js` (`renderResult`): the filter now accepts
+`'information'`. Errors and warnings were never affected.
+
+Two related facts, for anyone writing about the panel: the info box is
+`--card-2`, a plain neutral card, **not blue**; and `lean-runtime.js` reports
+columns 1-based (`at.column + 1`) where the CLI and `check.sh` print them
+0-based, so the same message is `snippet:2:8` on the command line and
+`line 2, col 9` in the workbook.
+---
+
+## 17. Two ledger rows found wrong by `02-terms` — BOTH APPLIED
+
+Both were found by writing the unit. Both have since been verified against the
+fragments and **applied to `ledger.json`**; this entry is the record of why.
+(Numbered 17 because two other sections claimed 15 and 16 in parallel.)
+
+**(a) `;` (two tactics on one line) is needed at `02-terms`, not `04-funext`.**
+§E.1 books it at unit 03. But `or_comm_tac`, verified corpus and the *only*
+`∨`-elimination proof the reader gets, is written
+
+```
+  · right; exact hp
+  · left;  exact hq
+```
+
+in `lean/e2/02-terms.lean:32`. The semicolon is therefore on the page two units
+before its row, exactly as `fun`, `→`, `∧` and `⟨…⟩` were in §3. `02-terms`
+introduces it in one clause where the corpus forces it. §E.1's "first use 04" is
+unaffected.
+
+**Applied: the row is at `02-terms`.** Independently confirmed before moving —
+`02-terms.lean` is the *earliest* fragment in the whole corpus containing a
+one-line semicolon, so no unit before it is affected.
+
+**`02-terms`' author: delete `ledgerAllow: ['; (two tactics on one line)']` from
+`content/02-terms.js`.** The checker already says so — with the row moved, the
+waiver suppresses nothing and `ledger.mjs 02-terms` reports it as a **stale
+waiver**. That is the mechanism working as designed; the unit is otherwise clean.
+
+**`04-funext`'s author: treat the semicolon as already met.** Do not introduce
+it.
+
+**(b) The `calc` row at `02-terms` is stale.** ERRATA §8 gave `02-terms`' author
+the choice of teaching `calc` or dropping `calc_demo` from the fragment. Neither
+was needed in the end (**applied**): **`calc_demo` is no longer in
+`lean/e2/02-terms.lean` at all** — it is at `lean/e2/03-compute.lean:6`, where it sits among the equality
+material it belongs to. `02-terms` does not use `calc`, does not mention it, and
+teaches `.trans` instead as the way to chain two equations. **The row belongs at
+`03-compute`**, whose author owns the declaration and must introduce the syntax.
+
+**(c) Not an error, but know about it.** `ledger.mjs 02-terms` reports one
+warning: `lookup_of_unallocated` — not in the ledger and not declared in the
+verified Lean. That is correct and expected. `00-aliasing` tagged it
+`illustration` and deliberately kept it out of its fragment (see that unit's
+summary), and `02-terms` opens by citing it, because its `(hx : x ≠ 4)` binder
+is the thing this unit exists to explain. Any later unit citing it gets the same
+warning.
+
+---
+
+## 18. The block budgets were set too low. They are shape, not a cap — and the summit is protected
+
+Three units in, every one has landed at or near §C's 40-block ceiling: `00-aliasing`
+40 against a budget of ~26, `01-goalstate` 37 against ~14, `02-terms` 40 against
+~30. That is a trend, so it was checked rather than waved through, and the prose
+was read looking for padding.
+
+**There is no padding.** The extra blocks are things like what `✝` actually is —
+output only, not an input character, so pasting it back does not even reach the
+"unknown identifier" complaint — which is exactly what a reader learning Lean
+needs and exactly what Edition 1 never says. The budgets in §D were written
+before a single unit existed, for an audience the plan then changed. They were
+wrong.
+
+**Ruling: the per-unit block budgets are advisory, and describe SHAPE — how many
+traces, how many asides, roughly how many screens — not a ceiling on explanation.**
+Write what the material needs for a reader who has never seen Lean. If that is
+40 blocks, write 40.
+
+Two things this ruling does **not** license.
+
+**It is not permission to pad.** The test is unchanged and is in PEDAGOGY §4: a
+sentence that would not change what the reader does or believes comes out. Every
+block must serve the unit's one job. "The budget is advisory" is not an answer to
+"what is this paragraph for".
+
+**It does not flatten the course.** §C's range is 16–40 and three consecutive
+units have hit 40, which is what a *target* looks like rather than a range. The
+plan's relative weighting is the part that still binds: the summit units —
+`27-locality` through `31-aliasing-closed`, and `32-symbolic` through `34-wp` —
+carry the hardest material in the course and were given the largest budgets on
+purpose. **An introductory unit that spends a summit-sized budget is borrowing
+from the end of the course, and the end of the course is where the reader is most
+likely to be abandoned.** If you are an early unit at 40 blocks, you are at the
+ceiling and the material had better be there. If you are a summit unit, 40 is
+your *floor* and you should say so in your summary if you needed more.
+
+At the current rate the finished course is roughly 1,700 non-`ex` blocks and
+230,000 words — a full textbook, about seventy per cent larger than the plan
+projected. That is accepted deliberately: the client asked for a course that
+"explains anything not previously mentioned" and "leaves nothing hanging", and
+that is what it costs. What is not accepted is the back half being thinner than
+the front.
+
+---
+
+## 19. Nine rows added by sweeping the fragments — including `absurd`
+
+`02-terms` noticed that `Or.elim` had no ledger row: corpus `or_comm'` is
+`fun h => h.elim Or.inr Or.inl`, the reader's first and only `∨`-elimination,
+and the unit teaches the dot-notation resolution rule on it. **An unrowed name
+is invisible to the checker** — nothing fired, and nothing would ever have
+fired. That is the one failure mode a ledger check cannot report on itself.
+
+So the fragments were swept for every name the verified Lean uses that
+`ledger.json` had no row for. Nine rows added:
+
+| row | unit | why |
+|---|---|---|
+| `Or.elim` | `02-terms` | §E lists `Or.inl`/`Or.inr`/`Or.symm` and not the eliminator |
+| **`absurd`** | `03-compute` | **§E.1 has this row. It was dropped in transcription.** |
+| `False`, `True` | `00-aliasing` | §E.2 books `¬ P` as `P → False` at unit 00, so `False` is met there |
+| `Option.some`, `Option.none` | `00-aliasing` | `some`/`none` were rowed, the qualified spellings were not |
+| `trivial` | `10-disjoint` | closes a `True` goal in `singleton_disjoint`; not in §E at all |
+| `Type` | `02-terms` | §E books `Prop` at 00 and `Sort u` at 12 (`14-assertions`) and never `Type` |
+| `Repr` | `21-language` | §E.2 books `deriving Repr`; the bare name had no row |
+
+**`absurd` is the one that matters.** §E.1 books it at unit 02 with first use at
+unit 08, and it is one of the five constructs in the plan's *own* opening example
+of what Edition 1 got wrong. The row was lost when §E.1 was converted to data.
+Nothing on any page was wrong — every use is after `03-compute` — but the check
+had simply been absent since the ledger was built. If you are relying on this
+tool, that is the kind of hole worth knowing can exist.
+
+**`Type` is booked at `02-terms`, not where it first appears in Lean.** It shows
+up in Lean at `12-pcm` (`structure PCM where Carrier : Type`) but on the page at
+`02-terms`, in the propositions-as-types material. §E's rule is about
+*mentioning*, so the mention wins. `14-assertions` still owns universe
+polymorphism.
+
+**A blind spot this sweep also exposed.** The checker only treats a token as a
+possible citation if it contains `_` or `.`, or is CamelCase. A lowercase name
+with no underscore — `absurd`, `trivial`, `ite` — is invisible unless it already
+has a row. So the sweep cannot be replaced by the checker, and is worth
+re-running whenever a batch of fragments lands.

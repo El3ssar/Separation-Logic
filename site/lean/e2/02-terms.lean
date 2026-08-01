@@ -6,6 +6,10 @@ theorem implication_example (P Q : Prop) :
 
 theorem exists_example : ∃ n : Nat, n = 3 := ⟨3, rfl⟩
 
+theorem exists_three : ∃ n : Nat, n + 1 = 4 := ⟨3, rfl⟩
+
+theorem two_add_two : 2 + 2 = 4 := rfl
+
 theorem mp (P Q : Prop) : P → (P → Q) → Q := fun hp hpq => hpq hp
 
 /- ex x03 comp -/
@@ -28,8 +32,6 @@ theorem or_comm_tac (P Q : Prop) : P ∨ Q → Q ∨ P := by
   · right; exact hp
   · left;  exact hq
 
-theorem exists_three : ∃ n : Nat, n + 1 = 4 := ⟨3, rfl⟩
-
 /- ex x05 exists_mono -/
 theorem exists_mono {P Q : Nat → Prop} (h : ∀ n, P n → Q n) :
     (∃ n, P n) → ∃ n, Q n := by
@@ -37,4 +39,13 @@ theorem exists_mono {P Q : Nat → Prop} (h : ∀ n, P n → Q n) :
   obtain ⟨n, hn⟩ := hp
   exact ⟨n, h n hn⟩
 
-theorem two_add_two : 2 + 2 = 4 := rfl
+/- ex x06 nested_pack / nested_unpack -/
+theorem nested_pack {P Q : Nat → Prop} {a b : Nat} (hp : P a) (hq : Q b) :
+    ∃ x y, x = a ∧ y = b ∧ P x ∧ Q y :=
+  ⟨a, b, rfl, rfl, hp, hq⟩
+
+theorem nested_unpack {P Q : Nat → Prop} (h : ∃ x y, P x ∧ Q y ∧ x = y) :
+    ∃ z, P z ∧ Q z := by
+  obtain ⟨x, y, hpx, hqy, hxy⟩ := h
+  simp [hxy] at hpx
+  exact ⟨y, hpx, hqy⟩

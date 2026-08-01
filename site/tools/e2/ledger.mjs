@@ -290,8 +290,11 @@ const DIAGNOSTIC = new RegExp([
   "declaration uses 'sorry'", 'invalid field notation', 'maximum recursion depth',
   'deterministic timeout', 'simp made no progress', 'unexpected token',
   'could not synthesize', 'ambiguous, possible interpretations',
-  'error:', 'warning:'
-].join('|'), 'i');
+  'error:', 'warning:',
+  /* continuation lines of a multi-part message, anchored so ordinary prose
+     beginning "note" is not swept up */
+  '^\\s*note:', '^\\s*hint:', 'but is expected to have type'
+].join('|'), 'im');
 
 const ENT = { lt: '<', gt: '>', amp: '&', quot: '"', nbsp: ' ', hellip: '…', apos: "'", '#39': "'" };
 const unhtml = (s) => s
@@ -445,7 +448,17 @@ export function run(opts = {}) {
     const here = idx(unit);
     checked++;
 
-    let scraps = harvest(chapter).map(s => ({ ...s, clean: strip(s.text) }));
+    let scraps = harvest(chapter).map(s => {
+      const t = { ...s, clean: strip(s.text) };
+      /* a `state` block usually holds a goal, but sometimes holds a quoted
+         compiler error — `error: … / Note: … inductive type with a single
+         constructor`. Either way it is Lean talking, so grammar in it is not a
+         citation. Prose spans get this per span; a state block is one unit. */
+      if (t.flavour === 'display' && DIAGNOSTIC.test(t.text)) {
+        t.diag = new Set(t.text.split('\n').map((_, i) => i + 1));
+      }
+      return t;
+    });
     if (opts.noProse) scraps = scraps.filter(s => s.flavour !== 'prose');
     /* Two escape hatches, both declared on the chapter object, both by name so
        that a reviewer can see exactly what was waived.
@@ -504,9 +517,22 @@ export function run(opts = {}) {
         if (rows) {
           for (const e of rows) {
             if (e.kind === 'tactic' && !t.tactic && s.flavour !== 'prose') continue;
-            /* grammar quoted inside a Lean error message is Lean talking */
+            /* Grammar quoted inside a Lean message is Lean talking, not the
+               author citing — so it is not an ORDER error. But a unit that
+               displays a diagnostic about a construct the reader has not met is
+               still showing them something they cannot read, which is a real
+               editorial question. Downgraded, never silenced. */
             if (s.diag && (e.kind === 'keyword' || e.kind === 'command') &&
-                s.diag.has(lineOf(s.text, t.at))) continue;
+                s.diag.has(lineOf(s.text, t.at))) {
+              const there = idx(e.unit);
+              if (there > here && !allow.has(e.name)) report(s, t.at, {
+                severity: 'warn', rule: 'diagnostic', name: e.name, entryKind: e.kind,
+                introducedIn: e.unit,
+                msg: `a Lean message displayed here mentions \`${e.name}\`, which ${e.unit} introduces — not a citation, but is this exhibit in the right unit?`
+              });
+              else if (there > here) waived.add(e.name);
+              continue;
+            }
             /* a row flagged `english` is a word before it is a tactic; alone in
                a prose span it is naming something, not citing the tactic */
             if (s.bare && e.english && s.bare.has(lineOf(s.text, t.at))) continue;
@@ -561,11 +587,19 @@ export function run(opts = {}) {
     }
 
     function orderCheck(e, s, at, via) {
-      if (allow.has(e.name)) { waived.add(e.name); return; }
+      /* A waiver only counts as USED once we know the row would have fired.
+         Testing `allow` first would mark every waiver used and defeat the
+         stale-waiver check — which is the whole point of having one. */
+      const waive = () => { waived.add(e.name); return true; };
+      const suppressed = (kind) =>
+        (allow.has(e.name) && waive()) ||
+        (kind === 'order' && s.flavour === 'prose' && forward.has(e.name) && waive());
+
       /* An Edition-1 name for something the fragments carry under an Edition-2
          name. Worth its own row: "does not exist" would send the author
          hunting for a lemma that is sitting right there. */
       if (e.renamedTo) {
+        if (suppressed('renamed')) return;
         return report(s, at, {
           severity: 'error', rule: 'renamed', name: e.name, via, entryKind: e.kind,
           introducedIn: e.unit,
@@ -573,12 +607,13 @@ export function run(opts = {}) {
         });
       }
       if (e.banned) {
+        if (suppressed('banned')) return;
         return report(s, at, { severity: 'error', rule: 'banned', name: e.name, via, entryKind: e.kind, msg: e.banned });
       }
       const there = idx(e.unit);
       if (there < 0) return;
-      if (s.flavour === 'prose' && forward.has(e.name)) { waived.add(e.name); return; }
       if (there > here) {
+        if (suppressed('order')) return;
         return report(s, at, {
           severity: 'error', rule: 'order', name: e.name, via, entryKind: e.kind,
           introducedIn: e.unit,
@@ -586,6 +621,7 @@ export function run(opts = {}) {
         });
       }
       if (e.fenced && here > fenceAt) {
+        if (suppressed('fence')) return;
         return report(s, at, {
           severity: 'error', rule: 'fence', name: e.name, via, entryKind: e.kind, introducedIn: e.unit,
           msg: `\`${e.name}\` comes from ${e.unit}, which §E.6 declares optional — no later unit may rely on it`
@@ -596,8 +632,9 @@ export function run(opts = {}) {
     function existenceCheck(e, s, t) {
       const name = e.name;                       // the ledger's name, not the constructor's
       if (declared.has(name) || e.renamedTo) return;
-      if (allow.has(name)) { waived.add(name); return; }
-      if (s.flavour === 'prose' && forward.has(name)) { waived.add(name); return; }
+      const exempt = () =>
+        (allow.has(name) && (waived.add(name), true)) ||
+        (s.flavour === 'prose' && forward.has(name) && (waived.add(name), true));
       /* an order error already said this, in the ledger's words */
       if (seenHere.has(`order|internal|${name}`)) return;
       const where = lean.decls.get(name);
@@ -613,7 +650,11 @@ export function run(opts = {}) {
         /* Some rows are known not to be in a fragment, and why. §D's exhibits
            cannot compile, its ⧗ items are unwritten, and a handful of real
            lemmas are still sitting in Edition-1 content awaiting migration. */
-        if (e.status === 'display') return;
+        /* `display` can never compile; `illustration` compiles against its own
+           unit's prelude but is deliberately not corpus. Neither belongs in a
+           fragment, so neither is missing from one. */
+        if (e.status === 'display' || e.status === 'illustration') return;
+        if (exempt()) return;
         const soft = { migrate: 'not in a fragment yet — the Lean is real but still lives in Edition-1 content', todo: '§D marks this ⧗: nobody has written it yet' };
         report(s, t.at, {
           severity: e.status in soft ? 'warn' : 'error', rule: 'existence', name,
@@ -621,7 +662,7 @@ export function run(opts = {}) {
         });
         return;
       }
-      if (idx(where) > here) report(s, t.at, {
+      if (idx(where) > here && !exempt()) report(s, t.at, {
         severity: 'error', rule: 'existence', name, introducedIn: where,
         msg: `declared in the Lean only at ${where}, cited here in ${unit}`
       });

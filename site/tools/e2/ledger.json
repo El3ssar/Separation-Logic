@@ -203,10 +203,10 @@
   {
    "kind": "tactic",
    "name": "; (two tactics on one line)",
-   "unit": "04-funext",
+   "unit": "02-terms",
    "re": "(?<![<;]);(?![;>])",
    "flags": "",
-   "notes": "excludes `<;>` and the `;;` command separator"
+   "notes": "DECIDED (02-terms, ERRATA §17a): §E.1 books it at unit 03 (04-funext), but `or_comm_tac` — verified corpus, and the only ∨-elimination proof the reader gets — is written `· right; exact hp` / `· left;  exact hq` in lean/e2/02-terms.lean:32. The semicolon is on the page two units before its row, exactly as `fun`, `→`, `∧` and `⟨…⟩` were in §3. Verified: 02-terms.lean is the earliest fragment containing a one-line semicolon. §E.1's \"first use 04\" is unaffected."
   },
   {
    "kind": "tactic",
@@ -550,6 +550,54 @@
   },
   {
    "kind": "library",
+   "name": "Or.elim",
+   "unit": "02-terms",
+   "notes": "NOT IN §E, which lists Or.inl/Or.inr/Or.symm but not the eliminator. Corpus `or_comm'` is `fun h => h.elim Or.inr Or.inl` (lean/e2/02-terms.lean:20) — the reader's first and only ∨-elimination — and 02-terms teaches the dot-notation resolution rule on it. Found by 02-terms' author; unrowed names are invisible to the checker, so nothing fired."
+  },
+  {
+   "kind": "library",
+   "name": "False",
+   "unit": "00-aliasing",
+   "notes": "NOT IN §E as a name, but §E.2 books `¬ P` as notation for `P → False` at unit 00, so the reader meets it there. `aFalse` at 14-assertions is the first use."
+  },
+  {
+   "kind": "library",
+   "name": "True",
+   "unit": "00-aliasing",
+   "notes": "NOT IN §E. Booked with `False`, its dual; `aTrue` at 14-assertions is the first use. Needs no teaching of its own beyond `False`."
+  },
+  {
+   "kind": "library",
+   "name": "trivial",
+   "unit": "10-disjoint",
+   "notes": "NOT IN §E. The term that closes a `True` goal; first used in 10-disjoint's `singleton_disjoint` tuple. 10-disjoint's author owes it a clause, or should use `.intro` instead."
+  },
+  {
+   "kind": "keyword",
+   "name": "Type",
+   "unit": "02-terms",
+   "notes": "NOT IN §E as such. §E.2 books `Prop` at unit 00 and `Sort u` at unit 12 (14-assertions), but neither covers `Type`. 02-terms is where propositions-as-types is taught and where the word is first needed on the page; 12-pcm is where it first appears in Lean, in `structure PCM where Carrier : Type`. Booked at the earlier — the mention, not the use — per §E's rule that a thing below your row must not be MENTIONED. 14-assertions still owns universe polymorphism."
+  },
+  {
+   "kind": "keyword",
+   "name": "Repr",
+   "unit": "21-language",
+   "notes": "NOT IN §E as a bare name, though §E.2 books `deriving Repr` at unit 18 (21-language). Same unit; the row closes the hole for a citation of `Repr` on its own."
+  },
+  {
+   "kind": "library",
+   "name": "Option.some",
+   "unit": "00-aliasing",
+   "notes": "NOT IN §E as a qualified name, though `some` is booked at unit 00. Rowed so the qualified spelling is checked too."
+  },
+  {
+   "kind": "library",
+   "name": "Option.none",
+   "unit": "00-aliasing",
+   "notes": "NOT IN §E as a qualified name, though `none` is booked at unit 00. Rowed so the qualified spelling is checked too."
+  },
+  {
+   "kind": "library",
    "name": "Or.symm",
    "unit": "02-terms"
   },
@@ -643,6 +691,12 @@
   },
   {
    "kind": "library",
+   "name": "absurd",
+   "unit": "03-compute",
+   "notes": "TRANSCRIPTION MISS, now fixed. §E.1 books `absurd` at unit 02 (03-compute), first use unit 08 — it is one of the five constructs in the plan's own opening example of what Edition 1 got wrong — and the row was omitted when §E.1 was converted to data. Used by the fragments from 09-footprint on, all after 03-compute, so nothing was wrong on the page; the check was simply absent. Found by sweeping the fragments for names the ledger has no row for."
+  },
+  {
+   "kind": "library",
    "name": "congrFun",
    "unit": "04-funext"
   },
@@ -677,9 +731,9 @@
   {
    "kind": "concept",
    "name": "inaccessible names, explained",
-   "unit": "04-funext",
+   "unit": "01-goalstate",
    "check": false,
-   "notes": "the other half of the `✝` split: §E.2 books the EXPLANATION at unit 03 (04-funext) and the proper naming at unit 19 (22-exec). Not mechanically detectable — the glyph is the same one — so this row is a record, not a check. 04-funext must actually do it."
+   "notes": "MOVED (ERRATA §15): §11 booked the explanation at 04-funext with only two units in view. §D's contents list for the support page 01-goalstate mandates \"`✝` daggers and inaccessible names, and the fact that `✝` is not an input character\", and 01-goalstate now carries the full treatment. A permanent reference page is the right owner. The glyph is still booked at 00-aliasing, where it first appears; 04-funext inherits `✝` as known."
   },
   {
    "kind": "keyword",
@@ -946,6 +1000,13 @@
   },
   {
    "kind": "internal",
+   "name": "lookup_of_unallocated",
+   "unit": "00-aliasing",
+   "status": "illustration",
+   "notes": "declared in an `anat` block tagged `illustration` in content/00-aliasing.js, not in a fragment, and that is deliberate — it is a teaching exhibit rather than course corpus. Cited by 02-terms, whose subject is the `(hx : x ≠ 4)` binder it carries. Booked so that citing it is checked for ORDER like anything else while the existence check stays quiet."
+  },
+  {
+   "kind": "internal",
    "name": "implication_example",
    "unit": "02-terms"
   },
@@ -993,15 +1054,13 @@
    "kind": "internal",
    "name": "nested_pack",
    "unit": "02-terms",
-   "status": "todo",
-   "notes": "§D ⧗, exercise x06"
+   "notes": "was §D ⧗ (exercise x06); written and compiled into lean/e2/02-terms.lean by 02-terms' author."
   },
   {
    "kind": "internal",
    "name": "nested_unpack",
    "unit": "02-terms",
-   "status": "todo",
-   "notes": "§D ⧗, exercise x06"
+   "notes": "was §D ⧗ (exercise x06); written and compiled into lean/e2/02-terms.lean by 02-terms' author."
   },
   {
    "kind": "internal",
@@ -2899,8 +2958,8 @@
   {
    "kind": "keyword",
    "name": "calc",
-   "unit": "02-terms",
-   "notes": "NOT IN §E. `calc_demo` in lean/edition2/new-overview.lean uses `calc` and sits in fragment 02-terms, so the row is booked there. ERRATA §8: 02-terms' author either introduces `calc` properly or drops the declaration — this row may need revisiting either way."
+   "unit": "03-compute",
+   "notes": "NOT IN §E. Booked wherever `calc_demo` lives. ERRATA §8 offered 02-terms the choice of teaching `calc` or dropping the declaration; it turned out moot — `calc_demo` is at lean/e2/03-compute.lean:6 and `calc` appears nowhere in 02-terms.lean, which teaches `h1.trans h2` for chaining instead. 03-compute owns the declaration and must introduce the syntax. (ERRATA §17b.)"
   }
  ],
  "note": "COURSE-PLAN §E numbers UNITS 00-38; §C and §D number FILES 00-43, because five support pages are interleaved (01-goalstate, 06-errors, 20-compare, 42-tactics, 43-ref). Every \"unit\" field below is a FILE id, translated from §E's unit number: unit 00 = 00-aliasing, 01 = 02-terms, 04 = 05-update, 05 = 07-heap, 08 = 10-disjoint, 12 = 14-assertions, 18 = 21-language, 22 = 25-hoare, 24 = 27-locality, 32 = 35-listrep, 38 = 41-beyond. \"order\" is the file order and is what every check compares against."
