@@ -84,6 +84,26 @@
  * that caught it is the one to copy — before adding an exemption, run
  * `ledger.test.mjs` before and after and read the difference.
  *
+ * A VERIFICATION NARROWER THAN ITS CLAIM IS NOT A VERIFICATION. Twice while
+ * this tool was built, a ledger row was checked, reported verified, and was
+ * wrong. The row `by … inside a term` was confirmed "the earliest in the
+ * corpus" with a regex anchored to `,\s*by` — which could not see
+ * `absurd h (by simp)`, the same construct one unit earlier. Its note was then
+ * corrected using a `grep` truncated by `head -20`, which cut off the very
+ * fragment that disproved the correction. Both times the output was clean and
+ * the conclusion was confident; both times the error was found by another agent
+ * reading its own ledger row, not by re-checking here.
+ *
+ * The lesson is not "be careful", which is not actionable. It is that the tell
+ * is structural and visible in advance: YOU chose the anchor, YOU chose the
+ * `head`. The evidence was narrowed by a decision you made and then forgot you
+ * had made. So: when a claim is "earliest", "only", "none" or "first", the
+ * search must range over everything the claim quantifies over — drop the
+ * anchor, drop the limit, sort the output, count it, and prefer a check that
+ * enumerates (`--sweep`, `--fragments`) over one you compose at the prompt.
+ * This is the same family of error as the exemption rule above: narrow the
+ * evidence, then trust the result.
+ *
  * KNOWN FALSE-POSITIVE CLASSES — read these before you switch the tool off:
  *
  *   a. `cases`. §E books three different forms of it in three different units

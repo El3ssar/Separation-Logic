@@ -52,9 +52,11 @@ labels, the four heap operations and the six lookup laws, and exact ownership.
 
 ## I changed the Lean fragment — one line
 `singleton_disjoint_iff` ended `exact absurd h (by simp)`. `by` in an argument position is booked at
-**`11-union`**, one unit later, and the ledger regex (`,\s*by\b`) cannot see it. PEDAGOGY §2 quotes
-that exact line as the canonical Edition-1 violation. Now `cases h` (booked at `03-compute`). Same
-statement, same marker, 310 declarations; everything re-run.
+**`11-union`**, one unit later, and the ledger regex was `,\s*by\b` — comma only, so it could not see
+`f x (by tac)`. PEDAGOGY §2 quotes that exact line as the canonical Edition-1 violation. Now
+`cases h` (booked at `03-compute`). Same statement, same marker, 310 declarations; everything re-run.
+The regex has since been widened to `[,(]\s*by\b`, so the fragment pass now enforces what I fixed by
+hand.
 
 ## Deviations from COURSE-PLAN.md
 1. **41 non-`ex` blocks against §D's ~26.** Prose is *under* budget; the excess is 15 compiled `code`
@@ -65,9 +67,11 @@ statement, same marker, 310 declarations; everything re-run.
    as predicates) carries §D objective 1 in depth.
 
 ## Warnings to successors
-- **`ledger.json`'s `trivial` row is stale**: booked here with a note to this author; the only two in
-  the corpus are `17-star-algebra.lean:72,75`. Reported to `ledger-checker`.
-- **The `by`-in-a-term-slot regex misses `f x (by tac)`** — comma only. Green ledger, six units early.
+- **Two `ledger.json` rows were wrong and are now fixed** — read your own rows, not just the summary
+  of them. `trivial` was booked here; its only uses are `17-star-algebra.lean:72,75`, and that unit
+  owes it **one** clause, since everything else in those eight lines is already met. The term-mode
+  `by` row was comma-anchored, blind to `f x (by tac)`; widened to `[,(]\s*by\b`, and both spellings
+  turn out to arrive together at `11-union:18,19`. Neither is a live hazard now; the habit is.
 - **`rw`'s trailing `rfl` will not unfold an ordinary `def`.** `rw [h1]` leaves
   `⊢ none = Heap.empty l` where `exact h1` closes the same goal. In `x19`'s `deep`.
 - **`<;>` followed by `;`** runs the second tactic on the first goal only — two compiled instances.
