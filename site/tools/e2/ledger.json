@@ -351,7 +351,8 @@
   {
    "kind": "keyword",
    "name": "theorem",
-   "unit": "00-aliasing"
+   "unit": "00-aliasing",
+   "notes": " CORE SYNTAX IS TRACKED BY SHAPE, NOT BY NAME. `fun` and `by` have no rows of their own: they are covered by the shape rows `fun x => e` and `:= by`, whose `re` field matches the construct in context. That is deliberate — a bare `by` is not a citation of anything, and a row per keyword would fire on every proof in the course. --sweep knows about `re` rows and will not re-report them. Raised by 02-terms’ author, who observed the asymmetry with this row; recorded here so it is not re-litigated."
   },
   {
    "kind": "keyword",
@@ -1076,15 +1077,55 @@
    "kind": "internal",
    "name": "defined",
    "unit": "03-compute",
-   "status": "todo",
-   "notes": "§D ⧗, exercise x09"
+   "notes": "was §D ⧗ (exercise x09); written and compiled into lean/e2/03-compute.lean."
+  },
+  {
+   "kind": "internal",
+   "name": "double_unfold",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. The equation lemma for `double` — §D named it as though it were the whole of x07. Row added by --sweep."
+  },
+  {
+   "kind": "internal",
+   "name": "double_three",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. `double 3 = 6` by `rfl`: the case that computes. Row added by --sweep."
+  },
+  {
+   "kind": "internal",
+   "name": "double_zero_left",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. The case that needs `rw` rather than `rfl` — the unit’s whole point. Row added by --sweep."
+  },
+  {
+   "kind": "internal",
+   "name": "some_inj",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. Exercise x08: `some` is injective. Row added by --sweep."
+  },
+  {
+   "kind": "internal",
+   "name": "some_ne_none",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. Exercise x08: constructors are distinct. Row added by --sweep."
+  },
+  {
+   "kind": "internal",
+   "name": "some_ne_none'",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. The same fact by a second route; the pair is the exhibit. Row added by --sweep."
+  },
+  {
+   "kind": "internal",
+   "name": "defined_of_ne_none",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. Exercise x09, the `cases hl : h l` proof §D specifies. Row added by --sweep."
   },
   {
    "kind": "internal",
    "name": "double",
    "unit": "03-compute",
-   "status": "todo",
-   "notes": "§D ⧗, exercise x07. §D Unit 02 writes \"(`double_unfold`-flavoured drills)\", but no such declaration exists anywhere in content/ or lean/ — \"-flavoured\" was carrying the whole claim. What x07 needs is def double n := n + n, so the row is renamed. §F's ✔ on x07 is wrong."
+   "notes": "was §D ⧗ (exercise x07); written and compiled into lean/e2/03-compute.lean. §D Unit 02 called it `double_unfold`-flavoured; the def is `double` and `double_unfold` is one of its three theorems."
   },
   {
    "kind": "internal",

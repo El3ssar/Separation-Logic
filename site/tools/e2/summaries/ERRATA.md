@@ -37,6 +37,21 @@ Pick names that are unlikely to collide in the first place: a bare `h`, `demo`,
 `example₁`, `twoCells`, `test` are all names four other authors will also reach
 for. There are 296 declarations in this corpus and every one shares a namespace.
 
+**And run the sweep.** In the same breath, not later:
+
+```
+node site/tools/e2/ledger.mjs --sweep
+```
+
+It lists every name in `site/lean/e2/` that has no row in `ledger.json`. **A
+name you add that nobody rows is a name the ledger cannot police — including
+yours.** An unrowed name does not fail a check; it makes the check silently stop
+covering that name, which is the failure the ledger exists to prevent, one level
+up. The bare `ledger.mjs` run also prints the count on every invocation, pass or
+fail, so it is hard to miss. It should say *every name in the verified Lean has
+a ledger row*. If it does not, add the rows before you write the page — see §19
+for why the timing decides whether the gap gets fixed or waived.
+
 ---
 
 ## 1. `site/tools/e2/ledger.mjs` now exists — run it
@@ -699,12 +714,25 @@ So the fragments were swept for every name the verified Lean uses that
 | `Type` | `02-terms` | §E books `Prop` at 00 and `Sort u` at 12 (`14-assertions`) and never `Type` |
 | `Repr` | `21-language` | §E.2 books `deriving Repr`; the bare name had no row |
 
-**`absurd` is the one that matters.** §E.1 books it at unit 02 with first use at
-unit 08, and it is one of the five constructs in the plan's *own* opening example
-of what Edition 1 got wrong. The row was lost when §E.1 was converted to data.
-Nothing on any page was wrong — every use is after `03-compute` — but the check
-had simply been absent since the ledger was built. If you are relying on this
-tool, that is the kind of hole worth knowing can exist.
+**`absurd` is the one that matters, and it was a process failure, not a plan
+gap.** Say this plainly, because the distinction decides what gets fixed:
+
+> **`COURSE-PLAN.md` §E.1 has the row.** It reads
+> `` | `absurd` | **02** | 08 | ``. The plan did not forget it. **It was
+> dropped in transcription**, when §E.1 was converted into `ledger.json`, and
+> the loss went unnoticed for the entire project up to this point — through the
+> building of all thirty-nine Lean fragments and three finished units.
+
+Nothing on any page was ever wrong: every use of `absurd` falls after
+`03-compute`, so there was nothing to catch. The check was simply absent. But
+`absurd` is one of the five constructs in the plan's *own* opening example of
+what Edition 1 got wrong, so of all the rows to lose in transcription, it was
+the worst one — and it was invisible precisely because the ledger's own coverage
+was the thing that failed.
+
+The fix for a plan gap is to amend the plan. The fix for this is `--sweep`, run
+routinely, because hand transcription of a 500-row table will lose rows and no
+amount of care changes that.
 
 **`Type` is booked at `02-terms`, not where it first appears in Lean.** It shows
 up in Lean at `12-pcm` (`structure PCM where Carrier : Type`) but on the page at
@@ -715,5 +743,37 @@ polymorphism.
 **A blind spot this sweep also exposed.** The checker only treats a token as a
 possible citation if it contains `_` or `.`, or is CamelCase. A lowercase name
 with no underscore — `absurd`, `trivial`, `ite` — is invisible unless it already
-has a row. So the sweep cannot be replaced by the checker, and is worth
-re-running whenever a batch of fragments lands.
+has a row. The sweep therefore cannot be replaced by the checker.
+
+**It is now a mode of the tool, and it runs on every invocation.**
+`node site/tools/e2/ledger.mjs --sweep` lists every unrowed name; the bare run
+prints the count whether or not anything else fails. It is not left to anyone's
+memory, because forty-one units are still to land and a check that runs only
+when someone recalls it stops running.
+
+**When to sweep: when *Lean* lands, not when a page is written.** Adding Lean is
+what introduces names; writing a page only cites them. `02-terms`' author made
+this point and it is the important half — a missing row found *mid-authoring*
+reads as an authoring problem and gets waived, while the same row found by a
+sweep reads as a ledger problem and gets fixed. Same defect, opposite outcome,
+decided purely by when it surfaces. Four of the nine restored rows sit at
+`00-aliasing`: that debt was there from the very first fragment and survived
+three finished units.
+
+**The sweep does not report shape rows, and that was checked rather than
+assumed.** Core syntax is tracked by *shape*, not by name — `fun` and `by` have
+no rows of their own; they are covered by `fun x => e` and `:= by` through the
+`re` field. A sweep matching on names alone would have reported every such
+construct as missing and tempted someone into adding duplicate rows that then
+disagree with the shape rows. Eleven core keywords were probed against the real
+fragments — `fun` (124 uses), `by` (236), `match`, `with`, `if`, `then`, `else`,
+`at`, `where`, `deriving`, `generalizing` — and **every one is either covered by
+a shape row's `re` or has its own row**. The sweep is `re`-aware. The decision
+that core syntax stays shape-tracked is recorded on the `theorem` row in
+`ledger.json`, so the next sweep does not re-litigate it.
+
+**Result of the first full-corpus pass: clean.** All thirty-nine fragments,
+every name rowed. Two rounds got there — nine rows from the first pass, then
+seven more when `03-compute`'s fragment landed (`double_unfold`, `double_three`,
+`double_zero_left`, `some_inj`, `some_ne_none`, `some_ne_none'`,
+`defined_of_ne_none`), plus `double` and `defined` losing their `⧗`.

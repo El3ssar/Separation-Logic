@@ -46,6 +46,27 @@
  * `internal` ledger row against site/lean/e2/, so that when the Lean moves the
  * ledger is told about it. §H.8 of the plan is titled "The ledger drifts".
  *
+ * THE RULE FOR ADDING AN EXEMPTION. Every class below makes the tool quieter,
+ * and quieter is how a check dies. So: an exemption must be paid for by naming
+ * what it stopped reporting. If you cannot name that, you do not yet understand
+ * what you are exempting, and you are not ready to add it.
+ *
+ * The worked example is class (j). Quoting a Lean error message in prose was
+ * firing order errors on the keywords inside it — `instance`, `Decidable` —
+ * which are Lean talking, not the author citing, and `06-errors` exists to
+ * print twelve such messages. Exempting them was obviously right. But paying
+ * the price first — running Edition 1 and listing what went silent — showed the
+ * exemption also killed five real findings, among them `00-overview` displaying
+ * a typeclass-synthesis failure on page one, an exhibit §D had independently
+ * decided must move to `07-heap`. Five true positives for one convenience is a
+ * bad trade and it would have been invisible a week later.
+ *
+ * So the mechanism changed instead of the trade being accepted: class (j)
+ * DOWNGRADES to a `diagnostic` warning rather than silencing. The five findings
+ * are still reported, reclassified, and `06-errors` is still writable. The test
+ * that caught it is the one to copy — before adding an exemption, run
+ * `ledger.test.mjs` before and after and read the difference.
+ *
  * KNOWN FALSE-POSITIVE CLASSES — read these before you switch the tool off:
  *
  *   a. `cases`. §E books three different forms of it in three different units
@@ -356,6 +377,7 @@ const BINDERS = [
   /\b(?:theorem|lemma|def|abbrev|instance|structure|inductive|opaque|axiom)\s+([^\s({[:]+)/g,
   /^[ \t]*\|\s*([^\n=]*?)(?:=>|$)/gm,
   /\bhave\s+([A-Za-z_][^\s:=]*)/g,
+  /\b(?:by_cases|cases)\s+([A-Za-z_][A-Za-z0-9_'\u2080-\u2089]*)\s*:/g,
   /\bintro\s+([^\n]*)/g, /\brintro\s+([^\n]*)/g,
   /\bobtain\s+([^\n]*?):=/g,
   /\brcases\b[^\n]*?\bwith\b([^\n]*)/g,
@@ -673,7 +695,14 @@ export function run(opts = {}) {
     'Edition-2 chapters are named after the ledger (site/content/16-star.js ↔ 16-star); until they ' +
     'exist, run site/tools/e2/ledger.test.mjs, which maps Edition 1 onto the ledger.');
 
-  return { findings, notes, lean: { mode: lean.mode, fragments: lean.frags.length }, checked, files: files.length, ledger: L.entries.length };
+  /* Cheap (79 KB of Lean), so it runs every time. A blind spot nobody is
+     assigned to remember is a blind spot that grows. */
+  const sw = sweep(opts);
+  return {
+    findings, notes, lean: { mode: lean.mode, fragments: lean.frags.length },
+    sweep: { declared: sw.declared.length, used: sw.used.length, names: [...sw.declared, ...sw.used].map(x => x.name).slice(0, 12) },
+    checked, files: files.length, ledger: L.entries.length
+  };
 }
 
 /* ------------------------------------------------------------------- audit */
@@ -708,6 +737,105 @@ export function audit(opts = {}) {
   return { mode: lean.mode, rows: out };
 }
 
+/* --------------------------------------------------------------------- sweep */
+
+/* The check's own blind spot, made routine.
+ *
+ * A name with no ledger row is INVISIBLE: the order check has nothing to
+ * compare, and the coverage warning only fires on tokens that look like
+ * citations — so a lowercase name with no underscore (`absurd`, `trivial`,
+ * `ite`) is silently unpoliced. That is how §E.1's `absurd` row went missing
+ * for the whole project without a single check failing.
+ *
+ * This cannot be fixed by making the checker cleverer, because the evidence it
+ * would need is exactly what is absent. It can only be fixed by reading the
+ * verified Lean and asking, of every name in it, whether the ledger knows.
+ * Forty-one units are still to land fragments, so it runs on every invocation
+ * and prints its count whether or not anything else fails.
+ */
+const LEAN_KW = new Set(`
+theorem lemma def abbrev instance structure inductive example where by fun with at in
+match do let have show from this if then else for open import universe variable section
+namespace end attribute protected private noncomputable partial mutual deriving extends
+termination_by decreasing_by set_option macro notation infix infixl infixr prefix postfix
+class abbrev_def out_param sorry admit calc generalizing using to obtain rcases rintro only
+intro exact simp rfl cases refine induction funext unfold subst rwa simpa apply constructor
+left right rw trivial_ac
+`.trim().split(/\s+/));
+
+export function sweep(opts = {}) {
+  const L = loadLedger(opts.ledger || path.join(HERE, 'ledger.json'));
+  const rows = new Set();
+  for (const e of L.entries) { rows.add(e.name); for (const a of e.aliases || []) rows.add(a); }
+  for (const n of [...rows]) if (n.includes('.')) rows.add(n.split('.').pop());
+  /* Core syntax is tracked by SHAPE, not by name: `fun` and `by` have no rows
+     of their own, they are covered by `fun x => e` and `:= by` via their `re`
+     field. Matching on name alone would report every such construct as missing
+     and tempt someone into adding a duplicate row that then disagrees with the
+     shape row. So a token is covered if a shape row matches the text across it. */
+  const covered = (n) => rows.has(n) ||
+    (n.includes('.') && rows.has(n.split('.')[0]));      // a constructor of a rowed type
+  const coveredByShape = (text, at, len) => {
+    for (const e of L.shapes) {
+      e.rx.lastIndex = 0;
+      let m;
+      while ((m = e.rx.exec(text))) {
+        if (m.index <= at && at + len <= m.index + m[0].length) return true;
+        if (m.index > at + len) break;
+        if (e.rx.lastIndex === m.index) e.rx.lastIndex++;
+      }
+    }
+    return false;
+  };
+
+  const dir = path.join(SITE, 'lean', 'e2');
+  if (!fs.existsSync(dir)) return { mode: 'none', declared: [], used: [] };
+  const frags = fs.readdirSync(dir).filter(f => f.endsWith('.lean')).sort();
+
+  /* everything the fragments declare, and everything they bind */
+  const decls = new Map();
+  const bound = new Set();
+  const texts = [];
+  for (const f of frags) {
+    const unit = f.replace(/\.lean$/, '');
+    const clean = strip(fs.readFileSync(path.join(dir, f), 'utf8'));
+    texts.push({ unit, clean });
+    let ns = [];
+    for (const line of clean.split('\n')) {
+      const o = line.match(/^\s*namespace\s+([A-Za-z_][\w'.]*)/);
+      if (o) { ns.push(o[1]); continue; }
+      if (/^\s*end\b/.test(line)) { ns.pop(); continue; }
+      for (const m of line.matchAll(DECL)) {
+        if (!decls.has(m[2])) decls.set(m[2], unit);
+        if (ns.length && !decls.has(ns.join('.') + '.' + m[2])) decls.set(ns.join('.') + '.' + m[2], unit);
+      }
+    }
+    for (const n of localNames([clean])) bound.add(n);
+  }
+
+  const declared = [], used = [], seen = new Set();
+  for (const [name, unit] of decls) {
+    if (covered(name) || name.includes('.')) continue;   // qualified form follows the short one
+    declared.push({ name, unit });
+  }
+  for (const { unit, clean } of texts) {
+    for (const t of tokenise(clean)) {
+      const n = t.name;
+      if (t.afterDot || seen.has(n)) continue;
+      if (covered(n) || decls.has(n) || bound.has(n) || LEAN_KW.has(n)) continue;
+      /* `s.heap`, `h.elim`, `K.op`: dot notation on a bound term, not a name */
+      if (n.includes('.') && (!/^[A-Z]/.test(n) || bound.has(n.split('.')[0]))) continue;
+      if (n.length < 3 && !/[A-Z]/.test(n)) continue;
+      if (coveredByShape(clean, t.at, n.length)) continue;
+      seen.add(n);
+      used.push({ name: n, unit });
+    }
+  }
+  declared.sort((a, b) => a.name.localeCompare(b.name));
+  used.sort((a, b) => a.name.localeCompare(b.name));
+  return { mode: 'e2', fragments: frags.length, declared, used };
+}
+
 /* --------------------------------------------------------------------- cli */
 
 const C = { r: '\x1b[31m', y: '\x1b[33m', d: '\x1b[2m', b: '\x1b[1m', x: '\x1b[0m' };
@@ -716,7 +844,14 @@ export function report(res, json) {
   if (json) { console.log(JSON.stringify(res, null, 1)); return res.findings.some(f => f.severity === 'error') ? 1 : 0; }
   const errs = res.findings.filter(f => f.severity === 'error');
   const warns = res.findings.filter(f => f.severity === 'warn');
-  console.log(`\nledger: ${res.ledger} rows · ${res.checked}/${res.files} file(s) checked · lean universe: ${res.lean.mode} (${res.lean.fragments} fragments)\n`);
+  console.log(`\nledger: ${res.ledger} rows · ${res.checked}/${res.files} file(s) checked · lean universe: ${res.lean.mode} (${res.lean.fragments} fragments)`);
+  if (res.sweep) {
+    const n = res.sweep.declared + res.sweep.used;
+    console.log(n === 0
+      ? `sweep:  ${C.d}every name in the verified Lean has a ledger row${C.x}`
+      : `sweep:  ${C.y}${n} name(s) in the verified Lean have NO ledger row${C.x} — ${res.sweep.names.join(', ')}${n > 12 ? ' …' : ''}  ${C.d}(node ledger.mjs --sweep)${C.x}`);
+  }
+  console.log('');
   for (const n of res.notes) console.log(`  ${C.d}${n}${C.x}`);
   if (res.notes.length) console.log('');
 
@@ -738,6 +873,18 @@ export function report(res, json) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const only = args.filter(a => !a.startsWith('--'))[0];
+  if (args.includes('--sweep')) {
+    const r = sweep();
+    if (args.includes('--json')) { console.log(JSON.stringify(r, null, 1)); process.exit(0); }
+    console.log(`\nsweep: ${r.fragments} fragment(s) in site/lean/e2\n`);
+    for (const d of r.declared) console.log(`  ${C.r}✗${C.x} ${d.name.padEnd(28)} declared in ${d.unit}, no ledger row`);
+    for (const u of r.used) console.log(`  ${C.y}!${C.x} ${u.name.padEnd(28)} used in ${u.unit}, no ledger row and declared nowhere`);
+    const n = r.declared.length + r.used.length;
+    console.log(n === 0
+      ? `\n  ${C.d}every name in the verified Lean has a row. The ledger can police all of it.${C.x}\n`
+      : `\n${n} name(s) with no ledger row — each is a name the ledger cannot police\n`);
+    process.exit(r.declared.length ? 1 : 0);
+  }
   if (args.includes('--audit')) {
     const a = audit();
     if (args.includes('--json')) { console.log(JSON.stringify(a, null, 1)); process.exit(0); }
