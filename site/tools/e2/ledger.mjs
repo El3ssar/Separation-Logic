@@ -5,6 +5,8 @@
  *   node site/tools/e2/ledger.mjs 16-star          check one file
  *   node site/tools/e2/ledger.mjs --json           machine-readable
  *   node site/tools/e2/ledger.mjs --audit          is the ledger still true?
+ *   node site/tools/e2/ledger.mjs --fragments      order-check the Lean itself
+ *   node site/tools/e2/ledger.mjs --sweep          names the ledger cannot police
  *   node site/tools/e2/ledger.mjs --no-prose       Lean blocks only
  *   node site/tools/e2/ledger.mjs --strict-names   promote unknown-name warnings
  *   node site/tools/e2/ledger.test.mjs             run it over Edition 1
@@ -20,7 +22,17 @@
  * data: every tactic, keyword, syntactic form, library name and course-internal
  * lemma, with the FILE (NN-id) that first introduces it.
  *
- * Three checks, in descending order of how much they matter:
+ * WHAT `verify.sh` DOES NOT PROVE. It builds the fragments in course order, so
+ * it proves DECLARATION ordering: nothing is used before it is defined. It says
+ * nothing about TACTIC ordering. A fragment can compile perfectly and still
+ * teach a tactic three units before the ledger introduces it, and every author
+ * reads a green `verify.sh` as "my ordering is clean". That is how `subst`
+ * reached unit 06 when §E.1 books it at unit 08. Closing that gap is what this
+ * tool is for, and `--fragments` is the half of it that reads the Lean rather
+ * than the pages — necessary because a tactic in a fragment that no page has
+ * quoted yet is invisible to the content pass by construction.
+ *
+ * Five checks, in descending order of how much they matter:
  *
  *   1. ORDER.   An item used in NN-x whose ledger row says MM-y with MM > NN is
  *               an error. This is the rule the whole edition exists to keep.
@@ -32,6 +44,11 @@
  *               so, rather than crashing or lying.
  *   3. COVERAGE. A name that looks like a citation but has no ledger row is a
  *               warning: either a plan gap or a typo, and both are worth seeing.
+ *   4. FRAGMENTS. The order check again, over site/lean/e2/*.lean, each mapped
+ *               to its unit by filename. Runs by default; `--fragments` alone.
+ *   5. SWEEP.   Every name in the verified Lean that has no ledger row at all.
+ *               Runs by default; `--sweep` alone. An unrowed name is invisible
+ *               to checks 1-3, so this is the check that checks the ledger.
  *
  * WHAT IT READS. Every scrap of Lean in a chapter: code.src, txt.src, state.src,
  * anat.src and anat.parts[].m, ex.goal, ex.sol, ex.walk[].tac, trace.start,
@@ -695,9 +712,18 @@ export function run(opts = {}) {
     'Edition-2 chapters are named after the ledger (site/content/16-star.js ↔ 16-star); until they ' +
     'exist, run site/tools/e2/ledger.test.mjs, which maps Edition 1 onto the ledger.');
 
-  /* Cheap (79 KB of Lean), so it runs every time. A blind spot nobody is
+  /* Cheap (79 KB of Lean), so both run every time. A blind spot nobody is
      assigned to remember is a blind spot that grows. */
   const sw = sweep(opts);
+
+  /* The fragments carry tactics no page has quoted yet, and `verify.sh` proves
+     only declaration order, so this is the only thing that reads them for
+     tactic order. Merged into the findings, because a tactic taught three units
+     early is the same defect whether it is on a page or in the Lean. */
+  if (!opts.noFragments) {
+    const fr = checkFragments(opts);
+    for (const f of fr.findings) if (!only || f.unit.includes(only)) findings.push(f);
+  }
   return {
     findings, notes, lean: { mode: lean.mode, fragments: lean.frags.length },
     sweep: { declared: sw.declared.length, used: sw.used.length, names: [...sw.declared, ...sw.used].map(x => x.name).slice(0, 12) },
@@ -836,6 +862,92 @@ export function sweep(opts = {}) {
   return { mode: 'e2', fragments: frags.length, declared, used };
 }
 
+/* ----------------------------------------------------------------- fragments */
+
+/* The order check, run over the verified Lean itself.
+ *
+ * `verify.sh` proves DECLARATION ordering: that the corpus compiles in course
+ * order, so nothing is used before it is defined. It says nothing about TACTIC
+ * ordering — a fragment can compile perfectly and still teach a tactic three
+ * units before the ledger introduces it. Every author reads a green
+ * `verify.sh` as "my ordering is clean". It is not.
+ *
+ * That gap is how `subst` reached `08-heap-laws` (unit 06) when §E.1 books it
+ * at unit 08: it compiled, so nothing complained, and the page checker never
+ * saw it because the fragment existed for hours before the page did. A tactic
+ * in a fragment that no page has quoted yet is invisible to the content pass by
+ * construction.
+ *
+ * So: the same order check, source being the fragment rather than the chapter.
+ * Only ORDER is checked — existence and coverage are the content pass's and
+ * --sweep's business, and a fragment declaring its own names is not a citation.
+ */
+export function checkFragments(opts = {}) {
+  const L = loadLedger(opts.ledger || path.join(HERE, 'ledger.json'));
+  const idx = (u) => (L.index.has(u) ? L.index.get(u) : -1);
+  const fenceAt = idx(L.fence.unit);
+  const dir = path.join(SITE, 'lean', 'e2');
+  if (!fs.existsSync(dir)) return { fragments: 0, findings: [] };
+  const frags = fs.readdirSync(dir).filter(f => f.endsWith('.lean')).sort();
+
+  const findings = [];
+  for (const f of frags) {
+    const unit = f.replace(/\.lean$/, '');
+    const here = idx(unit);
+    if (here < 0) continue;
+    const text = fs.readFileSync(path.join(dir, f), 'utf8');
+    const clean = strip(text);
+    const declared = localNames([clean]);
+    for (const m of clean.matchAll(DECL)) declared.add(m[2]);
+
+    const seen = new Map();
+    const hit = (e, at, via) => {
+      const key = e.kind + '|' + e.name;
+      const g = seen.get(key);
+      if (g) { g.count++; return; }
+      const rec = {
+        file: unit, unit, path: f, flavour: 'fragment', line: lineOf(text, at),
+        count: 1, also: [], severity: 'error', rule: 'order', name: e.name,
+        via, entryKind: e.kind, introducedIn: e.unit,
+        msg: `${e.kind} \`${e.name}\` is introduced in ${e.unit}, used here in ${unit} — the fragment compiles, but the reader has not met it`
+      };
+      seen.set(key, rec);
+      findings.push(rec);
+    };
+    const test = (e, at, via) => {
+      const there = idx(e.unit);
+      if (e.banned) return hit({ ...e, unit: '—' }, at, via);
+      if (there < 0) return;
+      if (there > here) return hit(e, at, via);
+      if (e.fenced && here > fenceAt) return hit(e, at, via);
+    };
+
+    for (const e of L.shapes) {
+      e.rx.lastIndex = 0;
+      let m, n = 0;
+      while ((m = e.rx.exec(clean)) && n < 4) {
+        n++; test(e, m.index, 're');
+        if (e.rx.lastIndex === m.index) e.rx.lastIndex++;
+      }
+    }
+    for (const t of tokenise(clean)) {
+      if (t.afterDot) continue;
+      let rows = L.byName.get(t.name);
+      if (!rows && t.dotted) {
+        const parent = L.byName.get(t.name.split('.')[0]);
+        if (parent && parent.some(e => e.kind === 'internal')) rows = parent.filter(e => e.kind === 'internal');
+      }
+      if (!rows) continue;
+      for (const e of rows) {
+        if (e.kind === 'tactic' && !t.tactic) continue;
+        if (e.kind === 'internal' && declared.has(e.name)) continue;
+        test(e, t.at, 'name');
+      }
+    }
+  }
+  return { fragments: frags.length, findings };
+}
+
 /* --------------------------------------------------------------------- cli */
 
 const C = { r: '\x1b[31m', y: '\x1b[33m', d: '\x1b[2m', b: '\x1b[1m', x: '\x1b[0m' };
@@ -845,12 +957,16 @@ export function report(res, json) {
   const errs = res.findings.filter(f => f.severity === 'error');
   const warns = res.findings.filter(f => f.severity === 'warn');
   console.log(`\nledger: ${res.ledger} rows · ${res.checked}/${res.files} file(s) checked · lean universe: ${res.lean.mode} (${res.lean.fragments} fragments)`);
+  const frag = res.findings.filter(f => f.flavour === 'fragment').length;
   if (res.sweep) {
     const n = res.sweep.declared + res.sweep.used;
     console.log(n === 0
       ? `sweep:  ${C.d}every name in the verified Lean has a ledger row${C.x}`
       : `sweep:  ${C.y}${n} name(s) in the verified Lean have NO ledger row${C.x} — ${res.sweep.names.join(', ')}${n > 12 ? ' …' : ''}  ${C.d}(node ledger.mjs --sweep)${C.x}`);
   }
+  console.log(frag === 0
+    ? `frags:  ${C.d}every tactic in site/lean/e2 is introduced before it is used${C.x}`
+    : `frags:  ${C.y}${frag} order violation(s) inside the verified Lean${C.x}  ${C.d}(node ledger.mjs --fragments)${C.x}`);
   console.log('');
   for (const n of res.notes) console.log(`  ${C.d}${n}${C.x}`);
   if (res.notes.length) console.log('');
@@ -873,6 +989,19 @@ export function report(res, json) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const only = args.filter(a => !a.startsWith('--'))[0];
+  if (args.includes('--fragments')) {
+    const r = checkFragments();
+    if (args.includes('--json')) { console.log(JSON.stringify(r, null, 1)); process.exit(r.findings.length ? 1 : 0); }
+    console.log(`\nfragment order check: ${r.fragments} fragment(s) in site/lean/e2\n`);
+    for (const f of r.findings) {
+      console.log(`  ${C.r}✗${C.x} ${f.path}:${f.line}${f.count > 1 ? C.d + ' (+' + (f.count - 1) + ' more)' + C.x : ''}`);
+      console.log(`      \`${f.name}\` — ${f.msg}`);
+    }
+    console.log(r.findings.length === 0
+      ? `\n  ${C.d}clean. verify.sh proves declaration order; this proves tactic order.${C.x}\n`
+      : `\n${r.findings.length} violation(s) — the Lean compiles, the reading order does not\n`);
+    process.exit(r.findings.length ? 1 : 0);
+  }
   if (args.includes('--sweep')) {
     const r = sweep();
     if (args.includes('--json')) { console.log(JSON.stringify(r, null, 1)); process.exit(0); }

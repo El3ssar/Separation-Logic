@@ -115,8 +115,30 @@ function checkExercise(e, file, where, ctx) {
   if (e.sol && ctx.lean !== null && !norm(ctx.lean).includes(norm(e.sol))) {
     err(file, `${at}: 'sol' does not occur in the verified fragments up to ${ctx.numStr} — compile it with tools/e2/check.sh and add it to lean/e2/${ctx.numStr}-*.lean`);
   }
-  if (e.goal && ctx.lean !== null && !norm(ctx.lean).includes(norm(e.goal).replace(/\s*:=\s*by\s*$/, ''))) {
-    warn(file, `${at}: 'goal' does not occur verbatim in the verified fragments — check it is the real statement`);
+  /* The goal is not checked verbatim. An exercise that sets two theorems at once
+     shows both statements in one block, and the fragment has a blank line, a
+     comment or an intervening declaration between them — so a substring test
+     reports every such exercise and teaches authors to ignore warnings. Check
+     instead that every declaration the goal NAMES is really declared by this
+     point, which is the claim that matters: the reader is being asked to prove
+     something the course actually contains. */
+  if (e.goal && ctx.lean !== null) {
+    const named = [...String(e.goal).matchAll(/^\s*(?:theorem|lemma|def|abbrev|inductive|structure)\s+([A-Za-z_][A-Za-z0-9_.'’]*)/gm)].map(m => m[1]);
+    for (const n of named) {
+      /* Not \b: Lean names may end in a prime, and \b between ' and a space is
+         no boundary at all, so every name like `and_comm'` reported falsely. */
+      const decl = new RegExp(`^\\s*(?:theorem|lemma|def|abbrev|inductive|structure)\\s+${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_.'’])`, 'm');
+      if (!decl.test(ctx.lean)) {
+        warn(file, `${at}: the goal names '${n}', which is not declared in the verified fragments up to ${ctx.numStr}`);
+      }
+    }
+    /* A goal that declares nothing is usually a scaffold — "delete this and
+       write your own statement" — which is a legitimate and valuable kind of
+       exercise. It is only suspicious when there is no solution either, and
+       that case is already an error above. */
+    if (!named.length && !e.sol && !norm(ctx.lean).includes(norm(e.goal).replace(/\s*:=\s*by\s*$/, ''))) {
+      warn(file, `${at}: 'goal' declares nothing and there is no solution to check it against`);
+    }
   }
   if (!e.id) return err(file, `${where}: exercise with no id`);
   if (!e.name) err(file, `${at}: no name`);

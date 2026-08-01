@@ -175,7 +175,10 @@ function mountEditor(root, ex) {
 
     const errs = res.messages.filter(m => m.severity === 'error');
     const warns = res.messages.filter(m => m.severity === 'warning' && m.kind !== 'hasSorry');
-    const infos = res.messages.filter(m => m.severity === 'info');
+    /* Lean's own word is `information`, not `info` — checked against the WASM
+       build's JSON. Matching only `info` silently dropped every `trace_state`,
+       `#check` and `#eval` result on the floor. */
+    const infos = res.messages.filter(m => m.severity === 'information' || m.severity === 'info');
 
     let h = '';
     if (res.proved) {

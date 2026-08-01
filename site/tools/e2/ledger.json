@@ -167,7 +167,7 @@
    "kind": "tactic",
    "name": "cases",
    "unit": "03-compute",
-   "notes": "§E splits this row three ways — `cases h : e with` (unit 02), `cases h` as inversion (unit 19), `cases h with | ctor a b` (unit 19). The tokeniser cannot tell them apart reliably, so the token is booked at its EARLIEST introduction (unit 02) and the two later forms get their own shape rows below. A bare `cases h` inversion used before unit 19 is therefore NOT caught. Known blind spot."
+   "notes": "§E.1 splits this three ways — `cases h : e with` (unit 02), `cases h` as inversion (unit 19), `cases h with | ctor a b` (unit 19) — and the tokeniser cannot tell them apart, so the token is booked at its EARLIEST introduction, 03-compute. A bare `cases h` inversion used before 22-exec is therefore NOT caught. Known blind spot. See also the row `cases on a value or a constructor-equality hypothesis`, which is the §E.1 row the plan is missing."
   },
   {
    "kind": "tactic",
@@ -246,10 +246,17 @@
   {
    "kind": "tactic",
    "name": "cases … with | ctor",
-   "unit": "22-exec",
+   "unit": "03-compute",
    "re": "\\bcases\\s+(?![^\\n]*?:)[^\\n]*?\\bwith\\b",
    "flags": "",
-   "notes": "the constructor-pattern form, distinguished from the saved-equation form by the absence of a `:`"
+   "notes": "DECIDED (editor). §E books this shape at unit 19 (22-exec) as inversion on a derivation, but the same syntax splits a VALUE of an inductive type, which is legal from unit 02 (03-compute) — corpus `star_forall_right_fails` does `cases x with | false | true` on a `Bool` at 17-star-algebra.lean:69. A regex cannot tell a value split from a derivation inversion, so the row is booked at the EARLIEST legal form, as `cases` itself already is. CONSEQUENCE: inversion on a derivation used before 22-exec is NOT caught — 22-exec’s author must check that by eye. See the new row below."
+  },
+  {
+   "kind": "tactic",
+   "name": "cases on a value or a constructor-equality hypothesis",
+   "unit": "03-compute",
+   "check": false,
+   "notes": "MISSING FROM §E.1, added by editorial decision. §E.1 gives `cases` three rows — saved-equation at unit 02, inversion and `with | ctor` at unit 20 — and none of them covers two forms the course actually uses at unit 02: `cases h` where `h : some v = none` (a constructor equality), and `cases x with | false | true` on a value of an inductive type. VERIFIED BEFORE ENCODING: §D unit 02’s exercise x08 prescribes `intro h; cases h` verbatim, so this is the plan contradicting its own ledger, not an author freelancing; and no fragment before 03-compute uses `cases` in any form (02-terms uses `rcases`, which has its own row). Booked at file 03-compute = §E unit 02. Mind the offset: unit 02 is NOT 02-terms. `check: false` because the `cases` token row and the `cases … with | ctor` shape row do the matching; this row exists so the ledger states the rule and §tactics can print it."
   },
   {
    "kind": "tactic",
@@ -749,9 +756,10 @@
   {
    "kind": "syntax",
    "name": "match … with",
-   "unit": "11-union",
+   "unit": "10-disjoint",
    "re": "\\bmatch\\b[^\\n]*\\bwith\\b",
-   "flags": ""
+   "flags": "",
+   "notes": "DECIDED, forced by the verified corpus. §E books this at unit 09 (11-union), but the definition it appears in — `Heap.union`, whose body is a `match h₁ l with` — is displayed at 10-disjoint, because §D states `union` there so that `splits` can mention it. The plan puts the definition one unit ahead of the syntax that writes it. Verified: 10-disjoint.lean:8 is the earliest `match` in the corpus. 11-union still owns \"and why it blocks reduction\". Found by the fragment pass (`ledger.mjs --fragments`), which reads site/lean/e2 rather than the pages. Row moved to 10-disjoint; §E’s later row is where the LESSON belongs, not where the construct is first met."
   },
   {
    "kind": "keyword",
@@ -795,10 +803,10 @@
   {
    "kind": "syntax",
    "name": "by … in a term-mode slot",
-   "unit": "17-star-algebra",
+   "unit": "11-union",
    "re": ",\\s*by\\b",
    "flags": "",
-   "notes": "the `⟨_, by …⟩` shape; a comma followed by `by` is the cheap detector"
+   "notes": "DECIDED, forced by the verified corpus. §E books this at unit 15 (17-star-algebra), but corpus `union_eq_none` is `exact ⟨rfl, by rwa [union_of_none h₂ hl] at h⟩` (11-union.lean:18) and `splits_comm` is `exact ⟨disjoint_symm hd, by rw [he, union_comm hd]⟩` (13-splits.lean:13). Six units before §E introduces it, in the proofs that need it. This is the same construct the Edition-1 audit flagged in `01-m0` and `03-m2`, so the shape predates the edition. Verified: 11-union.lean:18 is the earliest in the corpus. Found by the fragment pass (`ledger.mjs --fragments`), which reads site/lean/e2 rather than the pages. Row moved to 11-union; §E’s later row is where the LESSON belongs, not where the construct is first met."
   },
   {
    "kind": "syntax",
@@ -817,8 +825,8 @@
   {
    "kind": "keyword",
    "name": "Bool",
-   "unit": "21-language",
-   "notes": "`decide` as a TACTIC on a non-trivial proposition is banned by §E.1; as the `Bool`-valued function it is introduced at unit 18. Not distinguishable here."
+   "unit": "17-star-algebra",
+   "notes": "DECIDED, forced by the verified corpus. §E books this at unit 18 (21-language), but §D retains Edition 1’s `star_forall_right_fails` at 17-star-algebra, and its counterexample family is `def Pcx : Bool → Assertion` (17-star-algebra.lean:59). Split like `⟨…⟩` and `✝`: the TYPE is met at 17-star-algebra, and 21-language keeps §E.2’s actual lesson — `Bool` versus `Prop`, `==`, `!`, `decide` — which is a different and later thing. Verified: earliest `Bool` in the corpus. Found by the fragment pass (`ledger.mjs --fragments`), which reads site/lean/e2 rather than the pages. Row moved to 17-star-algebra; §E’s later row is where the LESSON belongs, not where the construct is first met."
   },
   {
    "kind": "keyword",
@@ -2666,6 +2674,24 @@
    "check": false
   },
   {
+   "kind": "library",
+   "name": "propext",
+   "unit": "04-funext",
+   "notes": "NOT IN §E. Reported by `#print axioms double_zero_left` in the four-line audit on 04-funext, and explained there as the price `simp` pays for rewriting propositions. Added by 04-funext's reviewer."
+  },
+  {
+   "kind": "library",
+   "name": "Quot.sound",
+   "unit": "04-funext",
+   "notes": "NOT IN §E. Reported by `#print axioms function_extensionality`, and explained on 04-funext as the axiom quotients rest on — which is why `funext` is a theorem and not free. Added by 04-funext's reviewer."
+  },
+  {
+   "kind": "library",
+   "name": "Classical.choice",
+   "unit": "04-funext",
+   "notes": "NOT IN §E. Reported by `#print axioms` on a `by_cases` split over an opaque `Prop`, inside 04-funext's `detail` on whether `by_cases` needs a decidable condition (it does not; the `if` does). Named, never written. Added by 04-funext's reviewer."
+  },
+  {
    "kind": "concept",
    "name": "locality of an update (the baby frame rule)",
    "unit": "05-update",
@@ -3001,6 +3027,32 @@
    "name": "calc",
    "unit": "03-compute",
    "notes": "NOT IN §E. Booked wherever `calc_demo` lives. ERRATA §8 offered 02-terms the choice of teaching `calc` or dropping the declaration; it turned out moot — `calc_demo` is at lean/e2/03-compute.lean:6 and `calc` appears nowhere in 02-terms.lean, which teaches `h1.trans h2` for chaining instead. 03-compute owns the declaration and must introduce the syntax. (ERRATA §17b.)"
+  },
+  {
+   "kind": "library",
+   "name": "Nat.decEq",
+   "unit": "03-compute",
+   "notes": "NOT IN ledger.json before; §D Unit 02's New Lean list names it. Introduced on 03-compute as the instance that decides `x = 4` in every heap literal, and quoted there as real `#check @Nat.decEq` output. Added by 03-compute's reviewer."
+  },
+  {
+   "kind": "library",
+   "name": "Nat.zero_add",
+   "unit": "03-compute",
+   "notes": "NOT IN §E. The propositional half of x07: `simp` closes `double n = 0 + n + n` with it, x07's hint 3 and walk name it, and 04-funext's x10 relies on the same fact. Introduced on 03-compute. Added by 03-compute's reviewer."
+  },
+  {
+   "kind": "keyword",
+   "name": "open Classical",
+   "unit": "03-compute",
+   "re": "\\bopen\\s+Classical\\b",
+   "flags": "",
+   "notes": "NOT IN §E. Appears only inside 03-compute's `detail` on what decidability costs, as the switch that would make `if` work on any proposition, together with the price Lean charges for it. Added by 03-compute's reviewer."
+  },
+  {
+   "kind": "keyword",
+   "name": "noncomputable",
+   "unit": "03-compute",
+   "notes": "NOT IN §E. Named in the same `detail` as `open Classical`, as the marker that makes a classical `if` legal and keeps it un-runnable. Added by 03-compute's reviewer."
   }
  ],
  "note": "COURSE-PLAN §E numbers UNITS 00-38; §C and §D number FILES 00-43, because five support pages are interleaved (01-goalstate, 06-errors, 20-compare, 42-tactics, 43-ref). Every \"unit\" field below is a FILE id, translated from §E's unit number: unit 00 = 00-aliasing, 01 = 02-terms, 04 = 05-update, 05 = 07-heap, 08 = 10-disjoint, 12 = 14-assertions, 18 = 21-language, 22 = 25-hoare, 24 = 27-locality, 32 = 35-listrep, 38 = 41-beyond. \"order\" is the file order and is what every check compares against."

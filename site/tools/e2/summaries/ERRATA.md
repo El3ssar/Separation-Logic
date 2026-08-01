@@ -37,19 +37,30 @@ Pick names that are unlikely to collide in the first place: a bare `h`, `demo`,
 `example₁`, `twoCells`, `test` are all names four other authors will also reach
 for. There are 296 declarations in this corpus and every one shares a namespace.
 
-**And run the sweep.** In the same breath, not later:
+**`verify.sh` proves DECLARATION order. It says nothing about TACTIC order.**
+A fragment can compile perfectly and still teach a tactic three units before the
+ledger introduces it — which is exactly what happened to `write_of_eq` in
+`08-heap-laws`, written with `subst`, a tactic §E.1 books two units later. It
+compiled, so nothing complained. **Do not read a green `verify.sh` as "my
+ordering is clean".** It is not that check.
+
+**So run the ledger too, in the same breath, not later:**
 
 ```
-node site/tools/e2/ledger.mjs --sweep
+node site/tools/e2/ledger.mjs --sweep       # names the ledger cannot police
+node site/tools/e2/ledger.mjs --fragments   # tactic order inside the Lean
 ```
 
-It lists every name in `site/lean/e2/` that has no row in `ledger.json`. **A
-name you add that nobody rows is a name the ledger cannot police — including
-yours.** An unrowed name does not fail a check; it makes the check silently stop
+`--sweep` lists every name in `site/lean/e2/` that has no row in `ledger.json`.
+**A name you add that nobody rows is a name the ledger cannot police — including
+yours.** `--fragments` runs the order check over the Lean itself rather than the
+pages, which is the only check that will catch a tactic you used in a fragment
+before any page quotes it. An unrowed name does not fail a check; it makes the check silently stop
 covering that name, which is the failure the ledger exists to prevent, one level
 up. The bare `ledger.mjs` run also prints the count on every invocation, pass or
-fail, so it is hard to miss. It should say *every name in the verified Lean has
-a ledger row*. If it does not, add the rows before you write the page — see §19
+fail, along with a `frags:` line for the fragment pass, so both are hard to
+miss. They should say *every name in the verified Lean has a ledger row* and
+*every tactic in site/lean/e2 is introduced before it is used*. If it does not, add the rows before you write the page — see §19
 for why the timing decides whether the gap gets fixed or waived.
 
 ---
@@ -862,3 +873,175 @@ Nothing else finds this. `verify.sh` compiles the corpus with every solution
 already in place, so a cut in the wrong position is invisible to it. Only
 splicing the context the way the browser splices it, and running the reader's own
 answer through Lean, tells you what the reader will actually see.
+
+---
+
+## 22. A design [G] exercise cannot hide its statement without a placeholder `goal`
+
+Found writing `05-update`'s `x13`, the course's first **[G]** exercise, and it
+will recur at every later one (`x29`, `x30`, and the rest of the `G` column
+in §F).
+
+PEDAGOGY §8 says a [G] exercise "ships with the statement the reader is expected
+to arrive at (**revealed at rung 3**)". But the workbook mounts an editor **only**
+on an `ex` carrying a `goal` (`app.js`: `filter(b => b.t === 'ex' && b.goal)`),
+and it renders that `goal` as a code block *above* the box. So putting the real
+statement in `goal` reveals it at rung 0, and omitting `goal` costs the reader
+the editor and the green tick entirely.
+
+`lint.mjs` closes the third door: an `ex` with a `sol` and no `goal` is an
+**error** ("has a solution but no 'goal'"), and an `ex` with neither is treated
+as a design exercise with no Lean at all — which is not what these are, since
+their `sol` is verified corpus.
+
+**What `05-update` did, for want of anything better.** `goal` is a two-line Lean
+comment plus a placeholder the reader deletes:
+
+```lean
+-- Delete the line below and write your own `theorem update_idem …`.
+-- Any correct statement of the fact will be accepted.
+example : True := by
+```
+
+`starterFor` requires the text to end `:=` or `:= by` — otherwise it appends
+` := by\n  sorry` and mangles it — so the placeholder has to be a real opening.
+The cost is one `lint.mjs` **warning** (`'goal' does not occur verbatim in the
+verified fragments`), which is expected and should not be "fixed" by pasting the
+statement in.
+
+**If you are the author of a later [G] exercise:** either follow this, or fix it
+properly — the clean repair is a `goalHidden` (or `starter`) field that seeds the
+editor without rendering above it, which is about four lines in `app.js` and
+`editor.js` plus a `lint.mjs` clause. Whoever does it should update this section
+and `05-update`.
+
+**Also found, and it is a plan slip rather than a tooling one.** §D Unit 04
+objective 1 says the reader should "say which **three** rewrites `simp` fired in
+each" of `update_same` and `update_other`. It is three in `update_other`
+(`update`, `hne`, `↓reduceIte`) and **two** in `update_same` (`update`,
+`↓reduceIte`) — `simp` settles `x = x` on its own, unprompted, so there is no
+third. Confirmed with `simp?` against the Unit 04 prelude. The page states the
+real counts and makes the difference the lesson.
+
+---
+
+## 23. Unit 04's payoff lands in TWO units, not one — 05 for the lookups, 06 for the equations
+
+Found reviewing `05-update`. §D Unit 04 says the lab exists "so that when
+`Heap.write` arrives in Unit 05 the reader recognises every proof". That is half
+true and it misled the unit's first draft, which told the reader four separate
+times that Unit 05 proves these five theorems again.
+
+What the fragments actually hold:
+
+- `lean/e2/07-heap.lean` (Unit 05) — six **lookup** laws: `singleton_same`,
+  `singleton_other`, `write_same`, `write_other`, `erase_same`, `erase_other`.
+  Every one is a one-line `simp [def]` or `simp [def, hne]`, i.e. the
+  `update_same` / `update_other` shapes. **`funext` does not occur in the file.**
+- `lean/e2/08-heap-laws.lean` (Unit 06, the LAB) — the **equations between
+  heaps**. `write_shadow` is `update_shadow` line for line with `Heap.write` for
+  `update`; `write_comm` is `update_comm` line for line; `write_of_eq` is the
+  hypothesis-carrying generalisation of `update_idem`. This is where `funext`,
+  the three-region hand-driven analysis and the `have` land.
+
+So the `funext` + `by_cases` + `<;> simp` shape that Unit 04 installs is spent in
+Unit **06**, and only the two lookup shapes are spent in Unit 05. `05-update` now
+names the destination theorem for each of its five exercises, which cost six
+`ledgerForward` entries and is worth them: a promise to a named theorem is one a
+reviewer can check, and `ledger.mjs` reports a stale waiver the moment the
+sentence carrying it is deleted.
+
+**Authors of `07-heap` and `08-heap-laws`:** `05-update` makes these promises by
+name. If your fragment stops honouring one, that page changes, not the promise.
+
+**One more thing `05-update` names that no other early unit does.** `Store` is
+`Var → Val` is `Nat → Nat`, so `update` is already at the store's type — §D Unit
+02 says the abbrevs are given meanings there precisely "so Unit 04's `update` is
+visibly the store", and nothing had made it visible. It is now one clause in the
+brief. `21-language`'s `storeSet_same` / `storeSet_other` are literally
+`update_same` / `update_other` applied; that is fourteen units forward and is
+left for `21-language`'s author to collect.
+
+---
+
+## 24. `verify.sh` proves declaration order, not tactic order — and five rows moved because of it
+
+The finding, relayed from a session that has since ended: **`write_of_eq` in
+fragment `08-heap-laws` (unit 06) was written with `subst`, which §E.1 books at
+unit 08.** It compiled. `verify.sh` was green. Nothing caught it, and nothing
+was ever going to, because:
+
+> `verify.sh` only proves *declaration* ordering. It says nothing about *tactic*
+> ordering. A fragment can compile perfectly and still teach a tactic three
+> units before it exists.
+
+That is the whole gap in one sentence, and it is worth reading twice, because
+every author so far has read a green `verify.sh` as "my ordering is clean".
+
+It also escaped `ledger.mjs`, which read `content/*.js` only: the fragment
+existed for hours before `08-heap-laws.js` did, and **a tactic in a fragment
+that no page has quoted yet is invisible to the content pass by construction.**
+
+### The fix: `--fragments`, and it runs by default
+
+`node site/tools/e2/ledger.mjs --fragments` runs the order check directly over
+`site/lean/e2/*.lean`, mapping each fragment to its unit by filename. It is
+merged into the default run and prints a `frags:` line every time, pass or fail,
+for the same reason `--sweep` does — a check nobody remembers to run is a check
+that does not run.
+
+Because every fragment is already written, the first pass found the whole class
+at once rather than one unit at a time. **Five violations, and all five were the
+plan, not the authors.** Four rows moved:
+
+| row | §E said | now | forced by |
+|---|---|---|---|
+| `match … with` | `11-union` | **`10-disjoint`** | `Heap.union`'s body is a `match`, and §D states `union` at `10-disjoint` so `splits` can mention it |
+| `by …` in a term-mode slot | `17-star-algebra` | **`11-union`** | `union_eq_none` is `exact ⟨rfl, by rwa […] at h⟩`; `splits_comm` likewise. Six units early |
+| `Bool` | `21-language` | **`17-star-algebra`** | §D retains `star_forall_right_fails`, whose family is `def Pcx : Bool → Assertion` |
+| `cases … with \| ctor` | `22-exec` | **`03-compute`** | see §25 |
+
+Each move follows the rule already set in §2, §3 and §17a: **the verified corpus
+decides where a construct is first MET; §E's later row is where the LESSON
+belongs.** That pattern has now recurred five times, and it is the single most
+common defect in the plan. `21-language` still owns `Bool` versus `Prop`;
+`11-union` still owns why `match` blocks reduction.
+
+The `by …` case is worth singling out: the Edition-1 audit flagged exactly this
+construct in `01-m0` and `03-m2`, so the shape predates the edition and survived
+into the new corpus. It is now legal from `11-union`, where the proof needs it.
+
+---
+
+## 25. `cases` — the plan contradicts its own ledger
+
+Two legal uses had no row: `cases x with | false | true` on a `Bool` *value*
+(`17-star-algebra`), and `cases h` on `h : some v = none`, a *constructor
+equality* (`03-compute`). §E.1 gives `cases` three rows — saved-equation at unit
+02, inversion and `with | ctor` at unit 20 — and none of them covers either.
+
+**Verified before encoding, because a row moved to fit the code would be worse
+than no row:**
+
+- **§D unit 02's exercise x08 prescribes it verbatim** — *"`some v ≠ none` two
+  ways (`by simp`; `intro h; cases h`)"*. So this is the plan contradicting its
+  own ledger, not an author freelancing.
+- **No fragment before `03-compute` uses `cases` in any form.** `02-terms` uses
+  `rcases`, which has its own row there.
+
+**Decision: one new §E.1 row — *`cases` on a value of an inductive type, or on a
+constructor-equality hypothesis* — booked at file `03-compute`.** Mind the
+offset: §E unit 02 is file `03-compute`, not `02-terms` (§13). The row is
+recorded in `ledger.json` with `check: false`, because the `cases` token row and
+the `cases … with | ctor` shape row do the matching; it exists so the ledger
+*states* the rule and §`tactics` can print it.
+
+**The cost, stated plainly.** A regex cannot tell a value split from an
+inversion on a derivation, so `cases … with | ctor` is now booked at the
+earliest legal form. **Inversion on a derivation used before `22-exec` will not
+be caught.** `22-exec`'s author must check that by eye. This is the third
+`cases` blind spot and they all have the same cause: §E splits one token across
+three units, and a tokeniser cannot follow.
+
+**Consequence for `03-compute`:** its `ledgerAllow: ['cases … with | ctor']` is
+now stale and the checker says so. Delete it.
