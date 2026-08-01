@@ -1045,3 +1045,56 @@ three units, and a tokeniser cannot follow.
 
 **Consequence for `03-compute`:** its `ledgerAllow: ['cases … with | ctor']` is
 now stale and the checker says so. Delete it.
+
+---
+
+## 26. Term-mode `by` in an ARGUMENT, not just a tuple slot — and a row I booked wrong
+
+Two findings from `10-disjoint`'s author, both verified, both mine to own.
+
+**(a) The regex could only see half the construct.** The row for §E.2's
+"`by …` inside a term-mode tuple slot" was `,\s*by\b` — comma-anchored. So it
+saw `⟨rfl, by simp⟩` and was blind to `absurd h (by simp)`, the same construct in
+argument position. That is not a corner case: **PEDAGOGY §2 quotes
+`exact absurd h (by simp)` as the canonical Edition-1 violation**, and
+`10-disjoint.lean`'s `singleton_disjoint_iff` ended with exactly that line, one
+unit earlier than the row I had just claimed was "the earliest in the corpus".
+My verification was as narrow as my regex.
+
+Fixed: the regex is now `[,(]\s*by\b` and the row is renamed **`by …` inside a
+term (tuple slot or argument)**, because that is the construct — a tactic block
+standing where a term is expected. Its author fixed the fragment at source
+(rewritten to `cases h`, booked at `03-compute`, constructor no-confusion), so
+the `11-union` booking is now correct as written.
+
+Widening immediately paid for itself: **two more Edition-1 violations**, and one
+in a live Edition-2 page — `03-compute.js` `blocks[38]` has
+`absurd h (by simp)` in an `illustration`, seven units before the row.
+`03-compute`'s author: your own fragment already proves the same fact the other
+way, with `cases h` at `03-compute.lean:29`. Align the page with the fragment, or
+make the case for moving the row — but the row does not move to fit a page.
+
+**(b) `trivial` was booked at the wrong unit, and it was my typo.** The row said
+`10-disjoint` and claimed the name was "first used in 10-disjoint's
+`singleton_disjoint` tuple". There is no `trivial` in `10-disjoint.lean` and that
+theorem has no tuple. Its only two uses in the entire corpus are
+`17-star-algebra.lean:72` and `:75`. The sweep that found the name had correctly
+reported `17-star-algebra`; I typed the wrong unit into the patch. Moved. The
+clause is owed by `17-star-algebra`, not `10-disjoint`.
+
+**The check that now catches this class.** No existing check could: the sweep
+only asks *is this name rowed at all*, the fragment pass only catches rows that
+are too LATE, and a row booked too EARLY is merely permissive, so nothing fails.
+But it is still a lie in the ledger and it hands the teaching obligation to the
+wrong author. `--audit` now re-derives, for any row marked
+`derived: "first-use"`, the earliest fragment that actually uses it, and reports
+a mismatch either way.
+
+**The marker is deliberately narrow.** It means *this row's unit is a claim
+about observed first use*. Rows booked on pedagogical grounds — where the reader
+**meets** a thing rather than where the Lean first uses it — must not carry it.
+I marked fifteen rows on the first attempt and the check drowned: `False` at
+`00-aliasing` (because `¬ P` is `P → False`) and `Type` at `02-terms` (because
+the page teaches propositions-as-types) are *correct* despite the Lean not
+touching them until `14-assertions` and `12-pcm`. Fifteen markers removed, one
+kept. A check that reports correct decisions as defects gets switched off.

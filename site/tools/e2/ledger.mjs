@@ -756,6 +756,39 @@ export function audit(opts = {}) {
     });
     else if (where !== e.unit) out.push({ name: e.name, ledger: e.unit, lean: where, msg: `ledger says ${e.unit}, the Lean says ${where}` });
   }
+  /* Rows whose unit was DERIVED from observed first use — the ones --sweep
+     produced, not the ones §E dictates — must actually match that first use.
+     §E's own rows are often booked deliberately early ("taught with the
+     connectives, first needed by splits_assoc"), so this check applies only
+     where the ledger is claiming to record an observation. It exists because
+     `trivial` was booked at 10-disjoint when its only uses are in
+     17-star-algebra: a typo in a derived row, invisible to every other check. */
+  const dir = path.join(SITE, 'lean', 'e2');
+  if (fs.existsSync(dir)) {
+    const frags = fs.readdirSync(dir).filter(f => f.endsWith('.lean')).sort()
+      .map(f => ({ unit: f.replace(/\.lean$/, ''), clean: strip(fs.readFileSync(path.join(dir, f), 'utf8')) }));
+    const idx = (u) => (L.index.has(u) ? L.index.get(u) : -1);
+    for (const e of L.entries) {
+      if (!e.derived || e.check === false) continue;
+      let first = null;
+      for (const fr of frags) {
+        const found = e.re
+          ? new RegExp(e.re, e.flags || '').test(fr.clean)
+          : tokenise(fr.clean).some(t => t.name === e.name && !t.afterDot);
+        if (found) { first = fr.unit; break; }
+      }
+      if (first === null) out.push({
+        name: e.name, ledger: e.unit, lean: null, status: 'derived',
+        msg: `booked at ${e.unit} from observed first use, but the fragments never use it`
+      });
+      else if (first !== e.unit) out.push({
+        name: e.name, ledger: e.unit, lean: first, status: 'derived',
+        msg: `booked at ${e.unit} from observed first use, but the earliest fragment using it is ${first}` +
+             (idx(first) < idx(e.unit) ? ' — THE ROW IS TOO LATE, uses before it are unchecked' : ' — the row is early, so the teaching obligation is on the wrong unit')
+      });
+    }
+  }
+
   for (const [name, where] of lean.decls) {
     if (name.includes('.') || inLedger.has(name) || CORE.has(name)) continue;
     out.push({ name, ledger: null, lean: where, msg: `declared in ${where}, no ledger row` });

@@ -5,7 +5,7 @@ def ptsExactly (l : Loc) (v : Val) : Store → Heap → Prop := fun _ h => h = H
 
 def twoCells : Heap := Heap.write (Heap.singleton 4 3) 9 7
 
-/- ex x16 a two-cell heap satisfies the loose reading -/
+/- ex x16 a two cell heap satisfies the loose reading -/
 example : ptsAtLeast 4 3 (fun _ => 0) twoCells := by
   have hne : (4 : Loc) ≠ 9 := by simp
   show twoCells 4 = some 3

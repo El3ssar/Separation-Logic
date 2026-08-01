@@ -41,7 +41,7 @@ theorem singleton_disjoint_iff {l₁ l₂ : Loc} (v₁ v₂ : Val) :
   · intro hd heq
     subst heq
     rcases hd l₁ with h | h <;>
-      · rw [singleton_same] at h; exact absurd h (by simp)
+      · rw [singleton_same] at h; cases h
   · exact singleton_disjoint v₁ v₂
 
 /- ex x19 self_disjoint_iff_empty -/

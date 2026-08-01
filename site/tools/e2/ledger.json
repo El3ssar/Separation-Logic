@@ -577,8 +577,9 @@
   {
    "kind": "library",
    "name": "trivial",
-   "unit": "10-disjoint",
-   "notes": "NOT IN §E. The term that closes a `True` goal; first used in 10-disjoint's `singleton_disjoint` tuple. 10-disjoint's author owes it a clause, or should use `.intro` instead."
+   "unit": "17-star-algebra",
+   "notes": "NOT IN §E. The term that closes a `True` goal; its only two uses in the whole corpus are 17-star-algebra.lean:72 and :75, inside `star_forall_right_fails`. 17-star-algebra owes it a clause. CORRECTION: this row was first written at 10-disjoint, which was simply a transcription slip on my part — the sweep that found the name reported 17-star-algebra and I typed the wrong unit. There is no `trivial` anywhere in 10-disjoint.lean. Caught by 10-disjoint's author reading their own row. Marked `derived: \"first-use\"`: this row's unit is a CLAIM about where the fragments first use the name, so --audit re-checks it against the Lean every run. Rows booked on pedagogical grounds — where the reader MEETS a thing rather than where the Lean first uses it — must not carry this marker, or the check drowns. SCOPE OF THE OBLIGATION: `trivial` is the ONLY thing new to the reader in 17-star-algebra.lean:70-77. Checked row by row — the six-slot `⟨…⟩` (00-aliasing), `(by simp)` (11-union), `?_` and `refine` (12-pcm), `cases x with | false | true` (03-compute), `singleton_disjoint` (10-disjoint) and `union_comm` (12-pcm) are all already met. One clause, not two.",
+   "derived": "first-use"
   },
   {
    "kind": "keyword",
@@ -802,11 +803,11 @@
   },
   {
    "kind": "syntax",
-   "name": "by … in a term-mode slot",
+   "name": "by … inside a term (tuple slot or argument)",
    "unit": "11-union",
-   "re": ",\\s*by\\b",
+   "re": "[,(]\\s*by\\b",
    "flags": "",
-   "notes": "DECIDED, forced by the verified corpus. §E books this at unit 15 (17-star-algebra), but corpus `union_eq_none` is `exact ⟨rfl, by rwa [union_of_none h₂ hl] at h⟩` (11-union.lean:18) and `splits_comm` is `exact ⟨disjoint_symm hd, by rw [he, union_comm hd]⟩` (13-splits.lean:13). Six units before §E introduces it, in the proofs that need it. This is the same construct the Edition-1 audit flagged in `01-m0` and `03-m2`, so the shape predates the edition. Verified: 11-union.lean:18 is the earliest in the corpus. Found by the fragment pass (`ledger.mjs --fragments`), which reads site/lean/e2 rather than the pages. Row moved to 11-union; §E’s later row is where the LESSON belongs, not where the construct is first met."
+   "notes": "DECIDED, forced by the verified corpus. §E.2 books this at unit 15 (17-star-algebra) as \"by … inside a term-mode tuple slot\", but corpus `union_eq_none` is `exact ⟨rfl, by rwa [union_of_none h₂ hl] at h⟩` (11-union.lean:18) and `splits_comm` is `exact ⟨disjoint_symm hd, by rw [he, union_comm hd]⟩` (13-splits.lean:13) — six units before §E introduces it, in the proofs that need it. The Edition-1 audit flagged the same construct in 01-m0 and 03-m2, so the shape predates the edition. Row moved to 11-union; 17-star-algebra keeps the LESSON. REGEX WIDENED from `,\\s*by` to `[,(]\\s*by` and the row renamed: the comma-only form could not see `f x (by tac)`, an argument-position tactic block, which is the same construct. 10-disjoint's author found that hole. Verified after widening, and this supersedes an earlier claim of mine that the argument spelling first appears at 15-pointsto — that was a truncated grep. BOTH spellings arrive together at 11-union, in the same theorem: `union_eq_none` is `exact ⟨rfl, by rwa [...] at h⟩` at line 18 and `exact absurd h (by simp)` at line 19. One row at 11-union is therefore exactly right, and no later unit owes a clause for either spelling."
   },
   {
    "kind": "syntax",

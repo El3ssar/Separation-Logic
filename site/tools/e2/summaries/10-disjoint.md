@@ -1,0 +1,95 @@
+# Unit 08 · `disjoint` · Disjointness
+`site/content/10-disjoint.js` · 45 blocks (41 non-`ex`), 4 exercises, ~1700 words (≈2.8 screens),
+6 traces, 3 `detail` — one before the first exercise. 94 KB rendered.
+
+## One job
+Define what it means for two heaps not to overlap, and prove the first theorem in the course in
+which a disequality between two addresses is **derived** rather than assumed.
+
+## The hook I left (verbatim, final block; word for word from §D)
+> We can say two heaps do not overlap. We still cannot *combine* them, and "the heap splits into
+> these two pieces" needs both halves of that sentence.
+
+The page must display `Heap.union` (`Heap.splits` mentions it), so the paragraph before the `dod`
+ends "What you have here is the text of an operation and not one fact about it" — that is what makes
+the hook true. Opens on `09-footprint`'s hook in its first sentence.
+
+## Introduced
+**Tactics:** `subst` (own `h4`, compiled example, `trace` showing `l₂` *and* the equation leaving the
+context; rejected alternative `rw [heq] at hd`, compiled) · `<;> ·` (own `h4`, working and
+semicolon versions side by side, surviving `case inr` goal printed). `rcases`, `left`/`right`,
+`constructor` on `↔` and `absurd` get their first *use* here per §E; none is re-explained.
+
+**Syntax:** `match … with` in a `def`, one clause only. **`11-union` still owns "why it blocks
+reduction".**
+
+**Names now usable:** `Heap.disjoint`, `Heap.union`, `Heap.splits`, `disjoint_symm`,
+`disjoint_empty_left`, `disjoint_empty_right`, `singleton_disjoint`, `singleton_disjoint_iff`,
+`self_disjoint_iff_empty`. Illustration-only: `dom`, `compatible`, `unionOf`.
+
+**Concepts:** disjointness of resources, at one address at a time · **separation implies
+non-aliasing** (`note kind:'key'`) · the inclusive disjunction as a bound on overlap, not a partition.
+
+**Rejected alternatives, all compiled:** domains as predicates on `Loc` (equivalent; nine lines of De
+Morgan by hand one way against three the other) · compatibility, the weakest hypothesis making
+`Heap.union` commutative — proved so, refused because the course wants ownership, not
+well-definedness · `unionOf` carrying its proof, where associativity **cannot be stated**.
+
+## Exercises
+- `m2-1` **disjoint_symm** [D 1] — `intro hd l`, `(hd l).symm`; pitfall `hd.symm` before an address
+  is chosen, whose `Function.symm` error displays what the hypothesis is.
+- `m2-2` **disjoint_empty_left / _right** [D 1] — no tactics; why `rfl` settles `Heap.empty l = none`;
+  the wrong injection, whose error lands on `rfl`.
+- `m2-3` **singleton_disjoint and singleton_disjoint_iff** [C 3] — separation proves non-aliasing.
+- `x19` **self_disjoint_iff_empty** [C 2] — `deep` shows `rw [h1]` leaving `⊢ none = Heap.empty l`
+  where `exact h1` closes it.
+
+## Not explained (previous summaries say it is known)
+Everything in Modules 0 and 1: all of `funext`/`by_cases`/`<;>`/`;`/`·`/`rw … at`/`have`/`intro`,
+`cases h` on distinct constructors, `rcases`/`constructor`/`left`/`right`/`Or.inl`, `.mp`/`.mpr` and
+dot-notation resolution, `Ne.symm`, `rfl`'s definitional condition, the goal display and `case`
+labels, the four heap operations and the six lookup laws, and exact ownership.
+
+## I changed the Lean fragment — one line
+`singleton_disjoint_iff` ended `exact absurd h (by simp)`. `by` in an argument position is booked at
+**`11-union`**, one unit later, and the ledger regex (`,\s*by\b`) cannot see it. PEDAGOGY §2 quotes
+that exact line as the canonical Edition-1 violation. Now `cases h` (booked at `03-compute`). Same
+statement, same marker, 310 declarations; everything re-run.
+
+## Deviations from COURSE-PLAN.md
+1. **41 non-`ex` blocks against §D's ~26.** Prose is *under* budget; the excess is 15 compiled `code`
+   blocks, 3 `state`s and 6 traces, because two new tactics each need a working exhibit and a broken
+   one. ERRATA §18.
+2. **§D's second `detail` is Unit 09's own objective 2.** Mine states the cost — associativity cannot
+   be *typed* — and hands the resolution to Unit 09 rather than arguing it. The extra fold (domains
+   as predicates) carries §D objective 1 in depth.
+
+## Warnings to successors
+- **`ledger.json`'s `trivial` row is stale**: booked here with a note to this author; the only two in
+  the corpus are `17-star-algebra.lean:72,75`. Reported to `ledger-checker`.
+- **The `by`-in-a-term-slot regex misses `f x (by tac)`** — comma only. Green ledger, six units early.
+- **`rw`'s trailing `rfl` will not unfold an ordinary `def`.** `rw [h1]` leaves
+  `⊢ none = Heap.empty l` where `exact h1` closes the same goal. In `x19`'s `deep`.
+- **`<;>` followed by `;`** runs the second tactic on the first goal only — two compiled instances.
+- **`subst heq` with `heq : l₁ = l₂` eliminates `l₂`**, not `l₁`.
+- **Author of `11-union`:** both `def`s are displayed here with one clause on `match`. Blocked
+  reduction, `simp only [Heap.union]` parking and left-biasing-as-discipline are yours, and my
+  closing paragraph names them. The compatibility fold does contain a compiled
+  `funext` + `cases hx : h₁ l with` proof about `Heap.union`; it is closed and captioned as your
+  technique.
+- **Author of `16-star`:** `x19`'s `why` promises this theorem is why there is no contraction rule.
+- **Weakest part, honestly:** `m2-1`/`m2-2` are one-liners whose rung-4 hints are the answer. The
+  main-line `<;> ·` vehicle, `¬ Heap.disjoint (Heap.singleton 4 3) (Heap.singleton 4 7)`, is two
+  lines of `m2-3`'s `mp` branch with concrete numbers — deliberate, since PEDAGOGY §7 wants the
+  tactic before its use, but it makes `singleton_disjoint_iff` easier than [C 3] suggests.
+
+## Provenance and checks
+Every `state` and `trace` step is `check.sh 10 <snippet> --incl` output byte for byte, `trace_state`
+where a mid-proof state was wanted, `snippet:L:C:` dropped (first caption says so). All 15 `code`
+blocks were re-extracted by script and re-run; each `sketch` gives exactly the error quoted beneath
+it, bar the statements-only one, which quotes nothing. The compatibility-commutativity
+`illustration` compiles with the `def compatible` block directly above it, as on the page. Every
+`pitfall`/`variants` claim was compiled separately; inline error quotes have their line breaks
+removed, per `09-footprint`'s convention. All green: `node --check`; `lint.mjs` 0/0; `ledger.mjs`
+0/0 here and edition-wide, sweeps clean, **no waivers**; `render-check.js`; `verify.sh 10` and bare
+`verify.sh` (310 declarations); `--prove` **34/34**; banned-phrase grep and the widened sweep clean.
