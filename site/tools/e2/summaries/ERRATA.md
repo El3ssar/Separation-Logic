@@ -238,6 +238,43 @@ Genuinely fenced by §E.6 — no unit after `24-interpreter` may use these, beca
 that unit is optional: **`simpa`**, **`induction hle with | refl | step`**,
 **`max`**, **`Nat.le_max_left`**, **`Nat.le_max_right`**. The checker enforces it.
 
+### The `<code>` tag is a citation. Twenty-one course names are English words
+
+The checker reads `<code>` spans in prose, because §E's rule is that a thing
+below your row "must not be mentioned". So tagging an ordinary English word as
+code turns it into a citation of whatever declaration shares its spelling. The
+fix is never a waiver — it is to drop the `<code>` tags, because it was English
+and not a citation.
+
+`00-aliasing` hit this with **`swap`**: §D.0 uses a swap routine as the running
+example of why the classical repair does not scale, and unit 30's LAB is *called*
+`swap`, so `<code>swap</code>` in unit 00 reads as a citation twenty-nine units
+early. Every one of these will do the same to somebody:
+
+`comp` · `mp` · `defined` · `double` · `twice` · `update` · `fact` · `emp` ·
+`star` · `pure` · `run` · `spin` · `subst` · `swap` · `wp` · `node` · `lseg` ·
+`wand` · `countdown` · `drain` · `alloc` — plus the library row `max`.
+
+`fact`, `defined`, `update`, `run`, `double`, `twice`, `node`, `star`, `pure` and
+`swap` are the ones you will actually write by accident. Ask of every `<code>`
+span: *am I naming a declaration the reader could go and look at?* If not, it is
+prose.
+
+**The ledger cannot help you with this, and goes quiet exactly when you stop
+being careful.** A mis-tagged English word only fires as an error while its
+declaration is still in the future. After the introducing unit the checker is
+structurally silent — `<code>fact</code>` used as an English word in unit 30 is
+indistinguishable, to the tool, from a citation of `fact`. So this rule is
+enforced by reading, for every unit except the handful that happen to precede
+each name. A grep is the cheap half:
+
+```
+grep -oE "<code>(comp|mp|defined|double|twice|update|fact|emp|star|pure|run|spin|subst|swap|wp|node|lseg|wand|countdown|drain|alloc|max)</code>" content/<your-file>.js
+```
+
+Every hit is either a real citation — fine — or English that must lose its tags.
+`00-aliasing` returns zero.
+
 ---
 
 ## 8. `calc` is in the Lean but not in the ledger
@@ -367,6 +404,31 @@ file `00-aliasing`; unit 01 is file `02-terms`; unit 05 is `07-heap`; unit 12 is
 `14-assertions`; unit 18 is `21-language`; unit 38 is `41-beyond`.
 
 `ledger.json` stores file ids throughout, and its top-level `note` field states
-the translation. **Quote file ids, not §E unit numbers, in your summaries** —
-"introduced in `12-pcm`", never "introduced in unit 10". The offset is the
-easiest thing in this project to get wrong by one.
+the translation. The offset is the easiest thing in this project to get wrong by
+one, so the two audiences get different vocabularies and neither gets both.
+
+**Writing for the reader — use unit numbers.** On the page, in prose, in a
+`note`, in a hook: "Unit 28 proves it". The reader has never seen a file id and
+never will; what they see is the sidebar badge, which carries the unit number.
+§D's own text does this and it is right.
+
+**Writing for another author or for a tool — use file ids.** Summaries, commit
+messages, ledger rows, anything you say to a reviewer, anything you type at
+`ledger.mjs`: "introduced in `12-pcm`", never "introduced in unit 10".
+
+So a single unit legitimately says "Unit 28" on its page and `31-aliasing-closed`
+in its summary. That is not an inconsistency; they are different readerships.
+
+**Consequence for `num`.** The chapter's `num` field is the **unit** number from
+its §D heading, *not* the file prefix. `31-aliasing-closed.js` carries
+`num: '28'`. Support pages carry `§`, per §C.
+
+**The badge is content identity. It agrees with the filename for `00-aliasing`
+and never again.** `01-goalstate` is a support page, so it takes `§` rather than
+a number, and from `02-terms` — which is unit **01** — the two numberings are
+apart for the rest of the course. Copying the file prefix into `num` is therefore
+correct exactly once, on the first page anyone writes, which is the worst
+possible place for a rule to look true.
+
+(Edition 1 set `num` to the module name, `'M0'` — the badge has always been
+content identity rather than file position.)

@@ -40,6 +40,22 @@ let errors = 0, warnings = 0;
 const err = (f, m) => { console.error(`  \x1b[31m✗\x1b[0m ${f}: ${m}`); errors++; };
 const warn = (f, m) => { if (!QUIET) console.error(`  \x1b[33m!\x1b[0m ${f}: ${m}`); warnings++; };
 
+/* ---- the sidebar badge ----
+   `num` is the UNIT number, not the file prefix. They coincide for the first six
+   files and then never again, because the five support pages take a file slot
+   and a '§' badge rather than a number. An author who copies the file prefix
+   into `num` ships a sidebar that skips 01 and 06 and reads as broken, and
+   nothing else would catch it: the plan gives every unit a `file` and a `phase`
+   and never mentions `num`. So it is derived here, once, and checked. */
+const SUPPORT = new Set(['01-goalstate', '06-errors', '20-compare', '42-tactics', '43-ref']);
+const BADGE = (() => {
+  const order = JSON.parse(fs.readFileSync(path.join(SITE, 'tools', 'e2', 'ledger.json'), 'utf8')).order;
+  const map = {};
+  let unit = 0;
+  for (const id of order) map[id] = SUPPORT.has(id) ? '§' : String(unit++).padStart(2, '0');
+  return map;
+})();
+
 const KNOWN = {
   p: ['h'], h3: ['s'], h4: ['s'], sec: ['s'], quote: ['h'],
   ul: ['items'], ol: ['items'],
@@ -213,6 +229,15 @@ function checkFile(file, seenEx) {
   }
   const expectId = file.replace(/^\d+-/, '').replace(/\.js$/, '');
   if (ch.id !== expectId) err(file, `chapter id '${ch.id}' does not match its file name (expected '${expectId}')`);
+
+  const fileId = file.replace(/\.js$/, '');
+  const badge = BADGE[fileId];
+  if (badge === undefined) warn(file, `not in the course order — no sidebar badge could be derived`);
+  else if (ch.num !== badge) {
+    err(file, `num is '${ch.num}' but this file's sidebar badge is '${badge}'. `
+      + `num is the UNIT number, not the file prefix: the five support pages take a file slot and a '§' badge, `
+      + `so the two stop coinciding after 06-errors.`);
+  }
   if (!ch.orient) err(file, 'no orient card');
   else {
     if (!Array.isArray(ch.orient.youWill) || !ch.orient.youWill.length) err(file, 'orient.youWill is empty');
