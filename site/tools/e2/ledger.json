@@ -1092,13 +1092,25 @@
    "kind": "internal",
    "name": "double_unfold",
    "unit": "03-compute",
-   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. The equation lemma for `double` — §D named it as though it were the whole of x07. Row added by --sweep."
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. The equation lemma for `double`, now proved `by simp [double]`: the case where `rfl` is refused because the definition is a plain `def` — ERRATA §28. §D named it as though it were the whole of x07."
   },
   {
    "kind": "internal",
-   "name": "double_three",
+   "name": "double'",
    "unit": "03-compute",
-   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. `double 3 = 6` by `rfl`: the case that computes. Row added by --sweep."
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. The `abbrev` twin of `double`: identical body, and the keyword is the exercise. Added when x07 was repaired — ERRATA §28."
+  },
+  {
+   "kind": "internal",
+   "name": "double'_unfold",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. `double' n = n + n` by `rfl`: the case that only unfolds, and the control against `double_unfold`."
+  },
+  {
+   "kind": "internal",
+   "name": "double'_three",
+   "unit": "03-compute",
+   "notes": "declared in lean/e2/03-compute.lean by 03-compute’s author, not named in §D. `double' 3 = 6` by `rfl`: the case that computes. Was `double_three` on the `def`; moved to the `abbrev` twin when x07 was repaired, because the reader’s Lean will not unfold a plain `def` inside a `theorem` — ERRATA §28."
   },
   {
    "kind": "internal",

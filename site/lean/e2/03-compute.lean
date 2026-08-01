@@ -9,10 +9,15 @@ theorem calc_demo (a b c : Nat) (h1 : a = b) (h2 : b = c) : a = c :=
 
 def double (n : Nat) : Nat := n + n
 
-/- ex x07 double -/
-theorem double_unfold (n : Nat) : double n = n + n := rfl
+abbrev double' (n : Nat) : Nat := n + n
 
-theorem double_three : double 3 = 6 := rfl
+/- ex x07 double -/
+theorem double'_unfold (n : Nat) : double' n = n + n := rfl
+
+theorem double'_three : double' 3 = 6 := rfl
+
+theorem double_unfold (n : Nat) : double n = n + n := by
+  simp [double]
 
 theorem double_zero_left (n : Nat) : double n = 0 + n + n := by
   simp [double]

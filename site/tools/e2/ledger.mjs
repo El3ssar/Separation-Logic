@@ -104,6 +104,18 @@
  * This is the same family of error as the exemption rule above: narrow the
  * evidence, then trust the result.
  *
+ * There is a second kind, and it needs the opposite repair. The narrowing above
+ * is one YOU choose. The other is one the ARTIFACT imposes: a correct search
+ * against a file that answers a different spelling. `ERRATA.md`'s sections are
+ * cited everywhere as `§27`, but its headings read `## 27.`, so an author
+ * grepping `§27` for a section that existed found nothing and nearly reported it
+ * missing. No amount of widening finds a string that is not there. The repair is
+ * not to search better — it is to make the artifact answer the query people
+ * actually type, which is why those headings now read `## §27.` rather than why
+ * anyone was told to grep differently. When a search comes back empty, the
+ * question to ask before "was my search too narrow?" is "does this file spell it
+ * the way I just asked for it?" Found by `10-disjoint`'s author, on this file.
+ *
  * WHAT A GREEN RUN DOES NOT MEAN. The ledger books names at UNIT granularity:
  * a name introduced anywhere in unit N is available everywhere in unit N. So
  * "the ledger is green" means *introduced in this unit or earlier* — it does

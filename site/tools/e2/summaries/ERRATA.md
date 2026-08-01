@@ -1154,3 +1154,122 @@ this is its exhibit; the two belong together. It is also the better sentence,
 since it says *why* spending the name is legitimate instead of asserting a
 history the reader does not have. Read this section as a solved case study, not
 an open defect — what carries forward is the tell, not the instance.
+
+---
+
+## §28. Local Lean is MORE PERMISSIVE than the reader's. `rfl` will not unfold a plain `def`
+
+Written by `03-compute`'s author, who shipped two lines that pass every check in
+this repository and are **rejected on the page**, in the one environment that
+counts. Read this before you write `:= rfl` after a `def` anywhere.
+
+### The fact
+
+The course is checked with local Lean **4.32.2**. The reader's proofs are checked
+by Lean **4.33-pre** compiled to WebAssembly, in a worker in their browser. Those
+are different compilers, and they disagree. The browser's tracks master, whose
+module system does not hand a plain `def`'s body to an exported declaration.
+
+```lean
+def double (n : Nat) : Nat := n + n
+
+theorem double_unfold (n : Nat) : double n = n + n := rfl
+```
+
+Local Lean: silence. The reader's Lean:
+
+```
+error: Not a definitional equality: the left-hand side
+  double n
+is not definitionally equal to the right-hand side
+  n + n
+
+Note: This theorem is exported from the current module. This requires that all
+definitions that need to be unfolded to prove this theorem must be exposed.
+```
+
+The exact shape of it, all of it compiled through both kernels:
+
+| construct                                             | reader's Lean | local 4.32.2 |
+|---|---|---|
+| `abbrev twice … ; theorem : twice 3 = 6 := rfl`       | accepted | accepted |
+| `def double … ; theorem : double 3 = 6 := rfl`        | **REJECTED** | accepted |
+| `def double … ; example : double 3 = 6 := rfl`        | accepted | accepted |
+| `def double … ; theorem … := by simp [double]`        | accepted | accepted |
+| `def double … ; theorem … := by unfold double`        | leaves `⊢ n + n = n + n` | accepted |
+| `def double … ; theorem … := by unfold double` + `rfl`| accepted | accepted |
+| `@[expose] def double … ; theorem … := rfl`           | accepted | accepted **but WARNS** |
+
+Read the second and third rows together: it is not `rfl` that changed, it is what
+a **`theorem`** is allowed to unfold. An `example` has no name and exports
+nothing, so nothing is hidden from it — which is why an illustration written as
+an `example` can pass while the identical line written as a `theorem` fails.
+`tools/e2/wasm-check.cjs`'s header carries the same table; this section is the
+part about what to do.
+
+### What to do
+
+1. **`abbrev` when you want `rfl` to see through the name.** An `abbrev` is a
+   `def` marked reducible, and a reducible definition's body travels with its
+   name. This is why `abbrev Heap := Loc → Option Val` and the other four lines
+   of the model are `abbrev`s, and it is not a stylistic preference. Declare
+   `def Heap := Loc → Option Val` instead and, in the reader's Lean, applying a
+   heap to a location stops elaborating: `Function expected at h, but this term
+   has type Heap`. The name no longer unfolds to a function type on
+   its own. (Compiled.)
+2. **`simp [f]` when a plain `def` is what you have** — or `unfold f`, remembering
+   that `unfold` does not try `rfl` afterwards and `simp` does. Both work because
+   both *name* the definition, which is the thing `rfl` cannot do.
+3. **Read the `Note:` line, and notice when it is missing.** Lean adds it when,
+   and only when, exposing the definition would have fixed the goal. Present: the
+   keyword is your problem, and (1) or (2) repairs it. Absent: the *term* is your
+   problem — a variable sitting where a definition wants to take cases — and no
+   amount of unfolding will help; you need a theorem. `03-compute` shows both
+   messages side by side and makes the presence of the note the discriminator.
+4. **Do not reach for `@[expose]`.** It works in the browser, and local Lean warns
+   `` `@[expose]` has no effect outside a `module` file ``. `verify.sh` treats any
+   output as failure, so it breaks the corpus build.
+
+### The check that finds it
+
+```
+node --stack-size=60000 site/tools/e2/wasm-check.cjs          # the whole corpus
+node --stack-size=60000 site/tools/e2/wasm-check.cjs f.lean   # any one file
+```
+
+It attributes each error to the fragment and line that owns it. It costs about a
+minute, nearly all of it loading Lean's environment snapshot, so it is not a check
+to run after every paragraph: **run it when you add Lean, and always before you
+hand your unit on.** `tools/check-all-exercises.cjs` is the finer-grained version —
+each exercise's own solution against its own spliced context, through the same
+kernel.
+
+Nothing else finds this. `check.sh`, `verify.sh` and `gen-contexts.mjs --prove`
+all run local Lean, and local Lean is happy. The failure mode is the worst kind
+the course has: a page that is green in the repository, and a reader who types
+what it told them to type and is told they are wrong.
+
+### The blast radius, and why it is not just your own two lines
+
+The two bad lines were in `lean/e2/03-compute.lean` — the shared context prefix.
+Every exercise whose context is cut after them is spliced onto a file that already
+contains an error, so **43 of 49 end-to-end runs failed**, in units whose authors
+had done nothing wrong. If your unit is early, a `:= rfl` you get away with locally
+is not a defect in your unit; it is a defect in everybody's.
+
+### What `03-compute` did with it
+
+Turned it into the lesson. `def double` and `abbrev double'` now sit side by side
+with identical bodies, x07 asks for four theorems instead of three, and the same
+statement is proved by `rfl` under one keyword and by `simp [double]` under the
+other. The unit's `note kind:'key'` states a two-part rule — the term can block
+`rfl`, and so can the keyword — where it used to state a one-part rule whose
+second sentence was *"a definition can always be unfolded, so a `def` is never
+what blocks you"*. If a page of yours says anything of that shape, it is wrong.
+
+**One thing not on the page, recorded here.** The refusal is on term-mode `rfl`
+elaborated against a `theorem`'s stated type. The tactic spelling `by rfl` slips
+past the same check today and closes `double n = n + n` (compiled, in the
+browser). That is an inconsistency in the compiler rather than a rule; do not
+build a page on it in either direction, and do not "fix" a rejected `:= rfl` by
+writing `by rfl`. Change the definition or name it.
