@@ -28,22 +28,34 @@ will not start.
 
 ## The Lean runtime
 
-Interactive checking needs `site/lean-wasm/` — about 295 MB, so it is not in
-git. Fetch it once:
+Interactive checking needs `site/lean-wasm/`, and **it is in git** — clone the
+repository and the Check button works. Nothing to fetch, no build step:
 
 ```bash
-site/tools/fetch-lean-wasm.sh
+git clone --depth 1 -b edition-2 https://github.com/El3ssar/Separation-Logic.git
 ```
 
-That downloads Lean 4.33-pre compiled to wasm32, installs Init's `.olean` files
-(only Init — this course imports nothing, so Std/Lean/Lake are skipped, saving
-~410 MB), and bakes the startup snapshot.
+That is a 50 MB download, 219 MB on disk. Checking your own proofs is what this
+workbook is for, so the runtime is not an optional extra to be fetched
+afterwards; `--depth 1` skips the history, which is where the weight is.
+
+Five files carry it: `lean.js`, `lean.wasm`, `lean-worker.js`,
+`lean-lib-files.json` and `snapshots/init.snap`. Init's 1885 `.olean` files are
+**not** among them and are gitignored — the snapshot already carries the whole
+imported `Init` environment, so the runtime never reads one. (Verified by
+running `tools/lean-harness.cjs` with `NO_LIB=1`.)
+
+`site/tools/fetch-lean-wasm.sh` still reproduces the runtime from scratch if you
+ever need to rebuild it against a new Lean: it downloads Lean 4.33-pre compiled
+to wasm32, installs Init's `.olean` files (only Init — this course imports
+nothing, so Std/Lean/Lake are skipped, saving ~410 MB), and bakes the snapshot.
 
 | | |
 |---|---|
 | cold start | ~11 s |
 | each check afterwards | 200 ms – a few seconds |
-| installed size | ~295 MB |
+| in the repository | 213 MiB, largest file 96 MiB |
+| with `lean-lib`, as `fetch-lean-wasm.sh` builds it | ~295 MB |
 
 The snapshot is what makes the first number small. Without it, every session
 spends ~100 s importing Init before it can check anything.
@@ -117,12 +129,13 @@ site/
   lean/
     corpus.lean       M0–M13 as one file: every definition, every proof
     prelude/*.lean    cumulative context up to each chapter
-  lean-wasm/          the Lean 4 WebAssembly runtime (not in git — fetch it)
+  lean-wasm/          the Lean 4 WebAssembly runtime — in git, so a clone can
+                      check proofs; lean-lib/ is not (the snapshot replaces it)
   sw.js               service worker: offline cache + COOP/COEP replay
   manifest.webmanifest
   tools/
     serve.py               static server: isolation headers, no caching
-    fetch-lean-wasm.sh     download and install the Lean runtime
+    fetch-lean-wasm.sh     rebuild the runtime from upstream (it is committed)
     validate.js            schema, Lean fidelity, and teaching-depth checks
     render-check.js        render every chapter headlessly, check the HTML
     check-all-exercises.cjs  prove all 75 solutions through the WASM kernel
