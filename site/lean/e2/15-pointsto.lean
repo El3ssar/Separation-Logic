@@ -20,3 +20,13 @@ theorem pointsTo_not_emp (l : Loc) (v : Val) :
   have : Heap.singleton l v l = Heap.empty l := by rw [h]
   rw [singleton_same] at this
   exact absurd this (by simp [Heap.empty])
+
+/- ex x30 emp as nothing anywhere -/
+theorem emp_iff_all_none : emp ⊣⊢ fun _ h => ∀ l, h l = none := by
+  constructor
+  · intro σ h hp l
+    rw [hp]
+    simp [Heap.empty]
+  · intro σ h hp
+    funext l
+    simp [Heap.empty, hp l]

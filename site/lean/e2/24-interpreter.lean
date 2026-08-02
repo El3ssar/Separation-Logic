@@ -32,6 +32,14 @@ def run : Nat → Cmd → State → Option State
           | none    => none
       | false => some s
 
+def demoProg : Cmd := .load 0 3 ;; .write 3 (.plus (.var 0) (.const 1))
+
+def demoStart : State := ⟨fun _ => 0, Heap.singleton 3 7⟩
+
+/- ex x47 run_example -/
+example : run 6 demoProg demoStart
+    = some ⟨Store.set demoStart.store 0 7, Heap.write demoStart.heap 3 8⟩ := by rfl
+
 /- ex m5-3 run_sound -/
 theorem run_sound : ∀ (n : Nat) (c : Cmd) (s s' : State), run n c s = some s' → Exec c s s' := by
   intro n

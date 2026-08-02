@@ -1,5 +1,8 @@
 /- ===== Unit 30 · `swap` · LAB/capstone — swap ===== -/
 
+def swap (tmp₁ tmp₂ : Var) (l₁ l₂ : Loc) : Cmd :=
+  .load tmp₁ l₁ ;; (.load tmp₂ l₂ ;; (.write l₁ (.var tmp₂) ;; .write l₂ (.var tmp₁)))
+
 /- ex m9-4 preserves_load_fact -/
 theorem preserves_load_fact {x y : Var} {v : Val} (l : Loc) (hne : y ≠ x) :
     Preserves (.load x l) (pure (fun σ => σ y = v)) := by
@@ -11,9 +14,6 @@ theorem preserves_load_fact {x y : Var} {v : Val} (l : Loc) (hne : y ≠ x) :
       show Store.set s.store x _ y = v
       simp [Store.set, hne]
       exact hy
-
-def swap (tmp₁ tmp₂ : Var) (l₁ l₂ : Loc) : Cmd :=
-  .load tmp₁ l₁ ;; (.load tmp₂ l₂ ;; (.write l₁ (.var tmp₂) ;; .write l₂ (.var tmp₁)))
 
 /- ex x61 swap_heap -/
 theorem swap_heap (l₁ l₂ : Loc) (a b : Val) (hne : l₁ ≠ l₂) :

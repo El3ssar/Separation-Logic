@@ -27,15 +27,20 @@ theorem hoare_free (l : Loc) (v : Val) : Hoare (l ↦ v) ((.free l)) (emp) := by
          Exec.free (singleton_same l v),
          erase_singleton l v⟩
 
-/- ex m7-4 clearCell_spec -/
 def clearCell (l : Loc) : Cmd := .write l (.const 0)
 
+/- ex m7-4 clearCell_spec -/
 theorem clearCell_spec (l : Loc) (old : Val) : Hoare (l ↦ old) ((clearCell l)) (l ↦ 0) :=
   hoare_write l (.const 0) old
 
-/- ex m7-5 readAndFree_spec -/
+/- ex x48 writeTwice_spec -/
+theorem writeTwice_spec (l : Loc) (old : Val) :
+    Hoare (l ↦ old) ((.write l (.const 1) ;; .write l (.const 2))) (l ↦ 2) :=
+  hoare_seq (hoare_write l (.const 1) old) (hoare_write l (.const 2) 1)
+
 def readAndFree (x : Var) (l : Loc) : Cmd := .load x l ;; .free l
 
+/- ex m7-5 readAndFree_spec -/
 theorem readAndFree_spec (x : Var) (l : Loc) (v : Val) :
     Hoare (l ↦ v) ((readAndFree x l)) (pure (fun σ => σ x = v)) := by
   intro σ h hp

@@ -48,6 +48,8 @@ theorem storeSet_other (σ : Store) (x y : Var) (v : Val) (hne : y ≠ x) :
     Store.set σ x v y = σ y := update_other σ x y v hne
 
 /- ex x40 Atom evaluation and truncated subtraction -/
+example : (Atom.plus (.var 0) (.minus (.var 1) (.const 2))).eval (Store.set (fun _ => 0) 1 9) = 7 := rfl
+
 example (σ : Store) : (Atom.minus (.const 3) (.const 5)).eval σ = 0 := rfl
 
 /- ex x41 Atom.size -/

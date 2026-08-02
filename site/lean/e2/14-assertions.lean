@@ -50,3 +50,10 @@ theorem equiv_symm {P Q : Assertion} (h : P ⊣⊢ Q) : Q ⊣⊢ P := ⟨h.2, h.
 
 theorem equiv_trans {P Q R : Assertion} (h₁ : P ⊣⊢ Q) (h₂ : Q ⊣⊢ R) : P ⊣⊢ R :=
   ⟨entails_trans h₁.1 h₂.1, entails_trans h₂.2 h₁.2⟩
+
+/- ex x29 and_comm_iff / and_assoc_iff -/
+theorem and_comm_iff (P Q : Assertion) : aAnd P Q ⊣⊢ aAnd Q P :=
+  ⟨fun _ _ hp => ⟨hp.2, hp.1⟩, fun _ _ hp => ⟨hp.2, hp.1⟩⟩
+
+theorem and_assoc_iff (P Q R : Assertion) : aAnd P (aAnd Q R) ⊣⊢ aAnd (aAnd P Q) R :=
+  ⟨fun _ _ hp => ⟨⟨hp.1, hp.2.1⟩, hp.2.2⟩, fun _ _ hp => ⟨hp.1.1, hp.1.2, hp.2⟩⟩

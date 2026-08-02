@@ -881,10 +881,33 @@
    "flags": ""
   },
   {
+   "kind": "syntax",
+   "name": "++ (list append)",
+   "unit": "23-induction",
+   "re": "\\+\\+",
+   "flags": "",
+   "notes": "NOT IN §E. `append_nil` needs it and 23-induction introduces it in prose. Added by 23-induction's review; the only other occurrence in the verified Lean is 36-lseg's `++`, which is after. RESTORED at 24-interpreter's review after this file was reverted by accident; the row's content is as its author's summary records it, the exact wording of the original note is lost."
+  },
+  {
+   "kind": "library",
+   "name": "List.length",
+   "unit": "23-induction",
+   "re": "(?<![A-Za-z0-9_'])\\.length\\b",
+   "flags": "",
+   "notes": "NOT IN §E. allZeros_length needs it and this unit introduces it in prose. Added by review; no other occurrence anywhere in site/lean/e2 or the e2 pages."
+  },
+  {
    "kind": "library",
    "name": "max",
    "unit": "24-interpreter",
    "fenced": true
+  },
+  {
+   "kind": "library",
+   "name": "Nat.le",
+   "unit": "24-interpreter",
+   "fenced": true,
+   "notes": "the inductive proposition behind `≤`, displayed with `#print Nat.le` on the page so that `induction hle with | refl | step` has two named constructors to induct over. Constructors `Nat.le.refl` and `Nat.le.step` are covered by this row. §E rows neither."
   },
   {
    "kind": "library",
@@ -897,6 +920,24 @@
    "name": "Nat.le_max_right",
    "unit": "24-interpreter",
    "fenced": true
+  },
+  {
+   "kind": "library",
+   "name": "Option.isSome",
+   "unit": "24-interpreter",
+   "re": "(?<![A-Za-z0-9_'])\\.isSome\\b",
+   "flags": "",
+   "fenced": true,
+   "notes": "NOT IN §E. Used only inside the two #eval lines of 24-interpreter, where it is how you ask whether a run produced an answer without printing the state (a heap is a function and has no display). Explained in that block's caption. No occurrence anywhere else in site/lean/e2 or in the e2 pages; fenced with the rest of this optional unit."
+  },
+  {
+   "kind": "library",
+   "name": "Option.map",
+   "unit": "24-interpreter",
+   "re": "(?<![A-Za-z0-9_'])\\.map\\b",
+   "flags": "",
+   "fenced": true,
+   "notes": "NOT IN §E. Used only inside the third #eval line of 24-interpreter, to reach under a `some` and print two numbers. Explained in that block's caption. No occurrence anywhere else in site/lean/e2 or in the e2 pages; fenced with the rest of this optional unit."
   },
   {
    "kind": "syntax",
@@ -1961,17 +2002,29 @@
   },
   {
    "kind": "internal",
+   "name": "demoProg",
+   "unit": "24-interpreter",
+   "notes": "not named in §D; declared in fragment 24-interpreter as the concrete two-command program of exercise x47 (`.load 0 3 ;; .write 3 (.plus (.var 0) (.const 1))`). Setup, above the `/- ex x47 -/` marker. Row added from --sweep."
+  },
+  {
+   "kind": "internal",
+   "name": "demoStart",
+   "unit": "24-interpreter",
+   "notes": "not named in §D; declared in fragment 24-interpreter as the starting state of exercise x47 (`⟨fun _ => 0, Heap.singleton 3 7⟩`). Setup, above the `/- ex x47 -/` marker. Row added from --sweep. RESTORED at 24-interpreter's review after this file was reverted by accident; the exact wording of the original note is lost, the row's content is not."
+  },
+  {
+   "kind": "internal",
    "name": "run_example",
    "unit": "24-interpreter",
-   "status": "todo",
-   "notes": "§D ⧗, exercise x47"
+   "status": "display",
+   "notes": "§D ⧗, exercise x47 — WRITTEN. It ships as an ANONYMOUS `example` in fragment 24-interpreter (under the `/- ex x47 run_example -/` marker), so no declaration carries this name and --audit will always report it. Named, it would have to be `theorem run_example … := by rfl`, which the reader's Lean does accept (term-mode `:= rfl` it does NOT — measured, see 24-interpreter's summary); the anonymous form is what §D specifies and what x40 already does. The row is kept so that citing the name is order-checked."
   },
   {
    "kind": "internal",
    "name": "runIf",
    "unit": "24-interpreter",
-   "status": "todo",
-   "notes": "NOT a migration — no `def runIf` exists in content/, lean/ or the fragments. Edition 1 quotes a goal state from a declaration that is not in the repo, so that goal state is unverifiable. The author of 24-interpreter either (a) writes the variant interpreter — the `ite` case spelled with `if` instead of `match`, about fifteen lines — compiles it, and RE-DERIVES the goal, in which case the re-derived goal wins over Edition 1's quoted one if they differ; or (b) drops the comparison and says so in their summary. It is an optional lab unit, so it is their call. What they may not do is quote a goal state nobody can reproduce."
+   "status": "display",
+   "notes": "ERRATA §12, resolved by 24-interpreter's author by option (a): `runIf` IS written, compiled against the unit's own prelude, and its goal states re-derived. It lives on the page as an `illustration` (a `detail` on `match … with | true | false` versus `if`), not in the fragment, because it is a rejected alternative rather than course corpus. FINDING: the `if` form is not broken — both the `ite` and `loop` cases of soundness go through under it. What changes is the display: `if BExpr.eval s.store b = true then …` puts a PROPOSITION where the program wrote a Bool, and after `rw [hb]` the hypothesis reads `if true = true then …`. Edition 1's quoted goal state is superseded by the re-derived one."
   },
   {
    "kind": "internal",
@@ -2079,8 +2132,7 @@
    "kind": "internal",
    "name": "writeTwice_spec",
    "unit": "26-small-footprint",
-   "status": "todo",
-   "notes": "§D ⧗, exercise x48"
+   "notes": "§D ⧗, exercise x48 — WRITTEN. In fragment 26-small-footprint under /- ex x48 writeTwice_spec -/, as the term hoare_seq (hoare_write l (.const 1) old) (hoare_write l (.const 2) 1). No consequence rule is needed: hoare_write's postcondition (fun σ h => (l ↦ (e.eval σ)) σ h) is definitionally l ↦ 1 for e = .const 1, and unification eta-reduces it."
   },
   {
    "kind": "internal",
@@ -2146,8 +2198,7 @@
    "kind": "internal",
    "name": "HeapLocalWeak",
    "unit": "27-locality",
-   "status": "migrate",
-   "notes": "plain def, no sorry, compiles against 27-locality; lives in content/09-m8.js. The stranded frame proof that CONSUMES it is an anonymous `example` with a `sorry`, so it has no ledger row and can never live in a fragment — verify.sh refuses a sorry. §D calls it the unit's central exhibit; it has to be checked out of band."
+   "notes": "declared in site/lean/e2/27-locality.lean, where it is the textbook locality condition, one conjunct short of HeapLocal. The stranded frame proof that CONSUMES it is an anonymous `example` with two `sorry`s and can never live in a fragment (verify.sh refuses a sorry); it is on the page as a `sketch`, compiled with tools/e2/check.sh 27 --incl, and is §D's central exhibit for the unit. Nothing after 27-locality cites the name."
   },
   {
    "kind": "internal",
@@ -2283,8 +2334,7 @@
    "kind": "internal",
    "name": "readAndFree_framed",
    "unit": "32-symbolic",
-   "status": "migrate",
-   "notes": "the complete sorry-free version is in content/10-m9.js and compiles against 32-symbolic. content/09-m8.js also holds a copy with a deliberate sorry in the Preserves slot — a different block, and a display-only exhibit."
+   "notes": "now IN the fragment: site/lean/e2/32-symbolic.lean declares it under the /- ex x58 -/ marker, and 32-symbolic sets it as exercise x58. The stale `migrate` status (pointing at Edition-1 content/10-m9.js) is cleared."
   },
   {
    "kind": "internal",
@@ -3020,6 +3070,13 @@
    "check": false
   },
   {
+   "kind": "syntax",
+   "name": "[a, b, c] (list literal)",
+   "unit": "35-listrep",
+   "check": false,
+   "notes": "NOT IN §E, though §D's New Lean list for unit 32 names it. 23-induction introduces `List`, `[]` and `::` and never writes a multi-element bracket literal (grepped, all e2 pages); 35-listrep is the first, and now says in prose that `[10, 20, 30]` is `10 :: (20 :: (30 :: []))`. `check:false` because no regex separates a list literal from `simp [f, h]` or `rw [hu, he]`, which are on every page from unit 00. Added by 35-listrep's reviewer."
+  },
+  {
    "kind": "internal",
    "name": "load_stuck",
    "unit": "22-exec",
@@ -3066,6 +3123,18 @@
    "name": "noncomputable",
    "unit": "03-compute",
    "notes": "NOT IN §E. Named in the same `detail` as `open Classical`, as the marker that makes a classical `if` legal and keeps it un-runnable. Added by 03-compute's reviewer."
+  },
+  {
+   "kind": "library",
+   "name": "Nat.add_comm",
+   "unit": "18-star-assoc",
+   "notes": "NOT IN §E, and used with no row since 18-star-assoc, whose `sqSum_comm` illustration closes with `simp [sqSum, Nat.add_comm]`. 41-beyond uses it again as the `op_comm` field of `countPCM` and `clashPCM`, and names it at x75 hint 3. Booked at its first appearance. Added by 41-beyond's reviewer."
+  },
+  {
+   "kind": "library",
+   "name": "Nat.add_assoc",
+   "unit": "41-beyond",
+   "notes": "NOT IN §E. First and only use is 41-beyond: the `op_assoc` field of `countPCM` and `clashPCM`, named at x75 hint 3 alongside `Nat.add_comm` and `Nat.zero_add`. Added by 41-beyond's reviewer."
   }
  ],
  "note": "COURSE-PLAN §E numbers UNITS 00-38; §C and §D number FILES 00-43, because five support pages are interleaved (01-goalstate, 06-errors, 20-compare, 42-tactics, 43-ref). Every \"unit\" field below is a FILE id, translated from §E's unit number: unit 00 = 00-aliasing, 01 = 02-terms, 04 = 05-update, 05 = 07-heap, 08 = 10-disjoint, 12 = 14-assertions, 18 = 21-language, 22 = 25-hoare, 24 = 27-locality, 32 = 35-listrep, 38 = 41-beyond. \"order\" is the file order and is what every check compares against."

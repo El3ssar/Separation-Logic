@@ -1,5 +1,17 @@
 /- ===== Unit 25 · `local-heap` · Locality of `write` and `free` ===== -/
 
+theorem write_union_no_disjointness (h hFrame : Heap) (l : Loc) (v : Val) :
+    Heap.write (Heap.union h hFrame) l v = Heap.union (Heap.write h l v) hFrame := by
+  funext x
+  by_cases hx : x = l
+  · subst hx
+    rw [write_same, union_of_some hFrame (write_same h x v)]
+  · rw [write_other (Heap.union h hFrame) l x v hx]
+    have hw : Heap.write h l v x = h x := write_other h l x v hx
+    cases hh : h x with
+    | none => rw [union_of_none hFrame hh, union_of_none hFrame (hw.trans hh)]
+    | some w => rw [union_of_some hFrame hh, union_of_some hFrame (hw.trans hh)]
+
 /- ex m8-2 heapLocal_write -/
 theorem heapLocal_write (l : Loc) (e : Atom) : HeapLocal (.write l e) := by
   intro σ h hFrame s' hd hex
@@ -58,15 +70,3 @@ theorem heapLocal_free (l : Loc) : HeapLocal (.free l) := by
         cases hx : h x with
         | none => rw [union_of_none hFrame hx, union_of_none hFrame (hex'.trans hx)]
         | some w => rw [union_of_some hFrame hx, union_of_some hFrame (hex'.trans hx)]
-
-theorem write_union_no_disjointness (h hFrame : Heap) (l : Loc) (v : Val) :
-    Heap.write (Heap.union h hFrame) l v = Heap.union (Heap.write h l v) hFrame := by
-  funext x
-  by_cases hx : x = l
-  · subst hx
-    rw [write_same, union_of_some hFrame (write_same h x v)]
-  · rw [write_other (Heap.union h hFrame) l x v hx]
-    have hw : Heap.write h l v x = h x := write_other h l x v hx
-    cases hh : h x with
-    | none => rw [union_of_none hFrame hh, union_of_none hFrame (hw.trans hh)]
-    | some w => rw [union_of_some hFrame hh, union_of_some hFrame (hw.trans hh)]

@@ -41,10 +41,10 @@ def drainBody (x : Var) (l : Loc) : Cmd :=
 
 def drain (x : Var) (l : Loc) : Cmd := .loop (counterGuard x) (drainBody x l)
 
+/- ex x73 drainInv / drain_step / drain_stop / drain_spec -/
 def drainInv (x : Var) (l : Loc) (n : Nat) : Assertion :=
   aAnd (fact (fun σ => σ x = n)) (l ↦ n)
 
-/- ex x73 drain_spec / drain_step / drain_stop -/
 theorem drain_step (x : Var) (l : Loc) (n : Nat) :
     Hoare (aAnd (drainInv x l (n + 1)) (bTrue (counterGuard x)))
           (drainBody x l) (drainInv x l n) := by
