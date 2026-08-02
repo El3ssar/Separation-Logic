@@ -1,11 +1,15 @@
 # Unit 29 · `symbolic` · Symbolic execution
-`site/content/32-symbolic.js` · 59 blocks (52 non-`ex`), **7 exercises**, 98 KB source / 140 KB
+`site/content/32-symbolic.js` · 59 blocks (52 non-`ex`), **7 exercises**, 101 KB source / 142 KB
 rendered. 31 `p` top-level (37 counting `deep`), 9 `trace` (**all in `deep`**), 9 `code` (6
 top-level), 5 `sec`, 2 each `note` `state` `ol`, 1 each `txt` `tbl` `cmp` `anat` `dod`.
 **No `detail`.** **Lean fragment untouched.** One `ledger.json` row edited. No waivers.
 *Reviewed and revised — see "What review changed" at the bottom. **No Lean was edited at review**;
 every goal state, every quoted compiler message and all four illustrations were re-derived from
 Lean, and every `variants` claim was recompiled.*
+*Hardened and re-reviewed in a second pass — see "What the hardening pass changed" at the bottom.
+**No Lean was edited then either**; all 30 goal displays and all 9 quoted compiler messages were
+re-derived a second time from `check.sh`, every `variants` and `pitfall` claim recompiled, and the
+eight page-only illustrations were put through the reader's WASM kernel as well as local Lean.*
 
 ## One job
 Establish the working style — split, frame, apply, renormalise — supply the glue lemmas, and verify
@@ -189,9 +193,86 @@ paragraph counts three. **`m9-2`'s `variants` now reconciles itself with `21-lan
 example** — see warning 8, the one place a reader was liable to stop and conclude the page was
 wrong.
 
+## What the hardening pass changed
+No ids, no names, no exercise `goal`/`sol`, no Lean, no block added or deleted. Nine fields
+rewritten.
+
+**The hint ladders of `m9-1`, `m9-2` and `m9-3` all began at the wrong rung.** Each rung 1 named a
+tactic (`refine hoare_seq …`, `constructor`, `hoare_seq`) where PEDAGOGY §8 rung 1 is *restate the
+goal, no strategy*. All three rewritten to unfold the goal and read its two ends against each
+other. Worse, **`m9-1`'s rung 2 handed over the middle assertion in Lean** — the one creative act
+of the exercise, and of the unit, given away at the rung whose job is "the shape of the argument,
+in mathematics, with no Lean", and redundant besides, because rung 4 already spells the same
+`(Q := …)`. Rung 2 is now the backwards-from-the-write reasoning in words, pointing at the
+numbered plan's fourth line; rung 3, which used to give both halves as fully applied terms, now
+names the lemmas and the order they run in without arranging them. The climb is four real rungs and
+rung 4 is still the near-giveaway §8 asks for.
+
+**`m9-2`'s `deep` spent `moveCell_spec` one exercise before the reader proves it** (ERRATA §27).
+`moveCellRight_spec := hoare_seq_regroup (moveCell_spec …)` sat in an illustration captioned "for
+free", with a paragraph reading as though the reader had the theorem. Repaired by rewording, per
+§27's own closed case: the caption now says which exercise supplies it and the paragraph says to
+read the block as what that theorem *will* be worth. Blocks not reordered — the illustration is the
+payoff of `exec_seq_assoc` and belongs under it.
+
+**Two `pitfall`s were diagnoses without the message.** `m9-3` described the mismatch and never
+showed it; it now quotes the real `Application type mismatch`, whose two lines differ only in the
+postcondition's conjunct order — which is the thing worth learning to read. `x58`'s pitfall now says
+where the complaint lands (inside the frame, not at `hoare_seq`) and points at `variants`, which
+already carried the message verbatim.
+
+**Three smaller corrections.** `x59`'s `solNote` said the derived proof was "two-line"; its body is
+one line. `m9-3`'s `variants` said the failed entailment "*is* `star_not_weakening`", which is a
+different, universally quantified statement; reworded to say what that theorem denies. `m9-1`'s
+`setup` said "all six names the proof needs", which is false — the proof uses about fourteen; it now
+says the six are what the two *framings* take as arguments, and attributes each to its unit (23, 24,
+25, and this page).
+
+**One banned-phrase grep hit**, missed by the first review: "just as true" in `x58`'s `pitfall`
+(PEDAGOGY §4 bans `just` applied to a proof step). Now "equally true". The grep is zero.
+
+**Nothing was found wrong in the Lean or the displays.** All seven solutions compiled first time
+through `check.sh 32 --incl`. All 30 goal states in the nine `trace` blocks and both main-line
+`state` blocks reproduced **byte for byte** — six for `x57`, three for `x58`, four for `x59`, four
+for `x60`, seven for `m9-1`, three for `m9-2`, three for `m9-3`, plus the two quoted error
+displays. Every quoted compiler message reproduced exactly: the `σ`/`σ'` `Preserves` mismatch,
+`hoare_write` on a `.var` atom, `rfl` before `cases`, the missing `subst he` rewrite failure, the
+`Eq.refl` slot count, `3 provided, but 2 expected`, ``don't know how to synthesize implicit argument
+`Q` `` with `⊢ Assertion`, `x58`'s in-frame mismatch down to `?m.15`, and the `note kind:'info'`
+bracketing mismatch with its second unsolved goal. Recompiled again: `StoreStable .skip`,
+`¬ StoreStable (.assign 0 (.const 5))`, both discharger swaps in `m9-1`, the alternative middle
+assertion, `moveCell` freeing `dst`, the reverse of `pure_star_regroup`, and — newly, since the page
+asserts falsity and the first pass only argued it — **machine-checked refutations of both `variants`
+counterexamples**: `fact` for `pure` in `pure_star_regroup` and `pure` for `fact` in
+`and_fact_star` are each now *proved* false, not merely claimed.
+
+**Both kernels.** The corpus is clean through `wasm-check.cjs`, and so are the eight page-only
+illustrations, compiled as one file on top of `prelude.sh 32 --incl`. No `theorem … := rfl` after a
+plain `def` occurs anywhere on this page (ERRATA §28); the three plain `def`s it introduces —
+`StoreStable`, `copyCell`, `moveCell` — are only ever unfolded during unification, which the
+reader's Lean does.
+
+**Markers re-checked against ERRATA §21.** All seven sit above the first declaration of the
+reader's answer and below every definition the page hands over: `def StoreStable` above `x57`,
+`hoare_write_val` between `x58` and `x59`, `def copyCell` above `m9-1`, `def moveCell` above `m9-2`.
+`gen-contexts.mjs --prove` is 150/150.
+
+Green at the end of the hardening pass: `node --check`; `lint.mjs 32-symbolic` **0/0** (59 blocks,
+7 ex, 101 KB); `ledger.mjs 32-symbolic` **0/0**, frags clean, sweep 3 (pre-existing —
+`and_assoc_iff`, `and_comm_iff`, `emp_iff_all_none`, none of them this unit's); edition-wide
+`ledger.mjs` **0/0**; `render-check.js` **0 problems** (this unit 142 KB, 7 ex, 9 traces);
+`verify.sh` with no argument — 2327 lines, 319 declarations, all compiled; `gen-contexts.mjs
+--prove` **150 proved, 0 failed**; `wasm-check.cjs` on the whole corpus **clean**, and separately
+on the eight page-only illustrations spliced onto `prelude.sh 32 --incl` **clean**; banned-phrase
+grep **0**; the ERRATA §7 English-word grep returns only genuine citations (`emp`, `fact`, `pure`,
+the `subst` tactic, and `mp` naming an `Iff` goal case).
+
 ## Weakest part, honestly
 `x57`, `x58` and `m9-3` are short and their rung-4 hints hand over nearly everything, so the unit is
-measured by `m9-1` — where the middle assertion is given at rung 2. **No [G]:** nothing asks the
+measured by `m9-1` — where the middle assertion is now withheld until rung 4, but where the
+numbered plan sixteen blocks earlier has already given it in words, so a reader who read the page
+in order is not choosing it so much as translating it. That is as much creative room as §D leaves,
+since the plan block is what objective 6 is delivered by. **No [G]:** nothing asks the
 reader to *state* a specification, which is exactly what Unit 30 will demand. `hoare_write_val` is
 handed over rather than proved or set; review added a paragraph on its proof, but a reader who wants
 to check it must open the fragment. `and_fact_star_intro` is proved and used by nothing on the page;
