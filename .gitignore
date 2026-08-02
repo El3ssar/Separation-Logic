@@ -27,3 +27,8 @@ build/
 
 # self-signed dev certificate
 site/tools/.cert/
+
+# build outputs — reproducible, and heavy enough to ruin a clone
+/workbook-for-phone.tar.gz          # site/tools/pack-for-phone.sh
+/separation-logic-site.tar.gz       # tar czf … site
+/separation-logic-workbook.html     # site/tools/e2/bundle.mjs
