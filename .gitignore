@@ -1,6 +1,14 @@
-# Lean WASM runtime — ~73 MB of prebuilt binaries, fetched by
-# site/tools/fetch-lean-wasm.sh rather than committed.
-site/lean-wasm/
+# The Lean WASM runtime IS committed. It is not an optional extra: the course
+# is a workbook whose exercises are checked by a real Lean kernel in the
+# reader's browser, so a clone without it is a book about proofs rather than a
+# place to write them. 213 MiB, largest file 96 MiB — under GitHub's 100 MiB
+# limit, so it needs no LFS. site/tools/fetch-lean-wasm.sh still reproduces it.
+#
+# lean-lib/ is the exception, and it is 1885 files and 76 MiB of them. The
+# startup snapshot carries the whole imported Init environment, so the runtime
+# never reads a single .olean — verified by running the harness with NO_LIB=1,
+# and the reason pack-for-phone.sh leaves them out too.
+site/lean-wasm/lean-lib/
 
 # Lean build output
 .lake/
