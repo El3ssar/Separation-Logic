@@ -14,23 +14,69 @@
       service worker has to put them back or Lean silently refuses to start.
    ========================================================================== */
 
-const VERSION = 'sl-v6';
+const VERSION = 'sl-v7';
 const SHELL = VERSION + '-shell';
 const LEAN = VERSION + '-lean';
 
 /* Everything needed to read the course. Small — a couple of megabytes. */
 const SHELL_FILES = [
-  './', './index.html', './manifest.webmanifest',
-  './assets/base.css', './assets/blocks.css', './assets/editor.css', './assets/responsive.css',
-  './assets/app.js', './assets/editor.js', './assets/lean-runtime.js',
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './assets/base.css',
+  './assets/blocks.css',
+  './assets/editor.css',
+  './assets/responsive.css',
+  './assets/app.js',
+  './assets/editor.js',
+  './assets/lean-runtime.js',
   './assets/icon.svg',
-  './lean/context.lean', './lean/context-index.json',
-  './content/00-overview.js', './content/01-m0.js', './content/02-m1.js',
-  './content/03-m2.js', './content/04-m3.js', './content/05-m4.js',
-  './content/06-m5.js', './content/07-m6.js', './content/08-m7.js',
-  './content/09-m8.js', './content/10-m9.js', './content/11-m10.js',
-  './content/12-m11.js', './content/13-m12.js', './content/14-m13.js',
-  './content/15-m14.js', './content/16-ref.js'
+  './lean/context.lean',
+  './lean/context-index.json',
+  './content/00-aliasing.js',
+  './content/01-goalstate.js',
+  './content/02-terms.js',
+  './content/03-compute.js',
+  './content/04-funext.js',
+  './content/05-update.js',
+  './content/06-errors.js',
+  './content/07-heap.js',
+  './content/08-heap-laws.js',
+  './content/09-footprint.js',
+  './content/10-disjoint.js',
+  './content/11-union.js',
+  './content/12-pcm.js',
+  './content/13-splits.js',
+  './content/14-assertions.js',
+  './content/15-pointsto.js',
+  './content/16-star.js',
+  './content/17-star-algebra.js',
+  './content/18-star-assoc.js',
+  './content/19-pure.js',
+  './content/20-compare.js',
+  './content/21-language.js',
+  './content/22-exec.js',
+  './content/23-induction.js',
+  './content/24-interpreter.js',
+  './content/25-hoare.js',
+  './content/26-small-footprint.js',
+  './content/27-locality.js',
+  './content/28-local-heap.js',
+  './content/29-local-compose.js',
+  './content/30-frame.js',
+  './content/31-aliasing-closed.js',
+  './content/32-symbolic.js',
+  './content/33-swap.js',
+  './content/34-wp.js',
+  './content/35-listrep.js',
+  './content/36-lseg.js',
+  './content/37-wand.js',
+  './content/38-partial.js',
+  './content/39-invariant.js',
+  './content/40-variant.js',
+  './content/41-beyond.js',
+  './content/42-tactics.js',
+  './content/43-ref.js'
 ];
 
 /* The Lean runtime. Big, and deliberately opt-in. */

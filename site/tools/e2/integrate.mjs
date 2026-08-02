@@ -104,7 +104,10 @@ console.log(`sw.js        ${shell.length} shell files, cache sl-v${ver} → sl-v
 /* ---- app.js: keep Edition-1 deep links alive ---- */
 const appPath = path.join(SITE, 'assets', 'app.js');
 let app = fs.readFileSync(appPath, 'utf8');
-const missing = Object.values(REDIRECT).filter(v => !ids.includes(v));
+/* Compare against CHAPTER ids (`heap`), not file ids (`07-heap`): the redirect
+   sends an old hash to a new chapter id, which is what boot resolves against. */
+const chapterIds = chapters.map(c => c.id);
+const missing = Object.values(REDIRECT).filter(v => !chapterIds.includes(v));
 if (missing.length && !PARTIAL) { console.error(`  ✗ redirect targets not present: ${missing.join(', ')}`); process.exit(1); }
 const redirectBlock = `/* Edition-1 chapter ids, kept alive: #m4 was a permanent link for a year, and
    the second edition renumbered every chapter. Each old id maps to the unit that

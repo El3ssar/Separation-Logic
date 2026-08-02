@@ -1347,15 +1347,20 @@ theorem hoare_free (l : Loc) (v : Val) : Hoare (l ↦ v) ((.free l)) (emp) := by
          Exec.free (singleton_same l v),
          erase_singleton l v⟩
 
-/- ex m7-4 clearCell_spec -/
 def clearCell (l : Loc) : Cmd := .write l (.const 0)
 
+/- ex m7-4 clearCell_spec -/
 theorem clearCell_spec (l : Loc) (old : Val) : Hoare (l ↦ old) ((clearCell l)) (l ↦ 0) :=
   hoare_write l (.const 0) old
 
-/- ex m7-5 readAndFree_spec -/
+/- ex x48 writeTwice_spec -/
+theorem writeTwice_spec (l : Loc) (old : Val) :
+    Hoare (l ↦ old) ((.write l (.const 1) ;; .write l (.const 2))) (l ↦ 2) :=
+  hoare_seq (hoare_write l (.const 1) old) (hoare_write l (.const 2) 1)
+
 def readAndFree (x : Var) (l : Loc) : Cmd := .load x l ;; .free l
 
+/- ex m7-5 readAndFree_spec -/
 theorem readAndFree_spec (x : Var) (l : Loc) (v : Val) :
     Hoare (l ↦ v) ((readAndFree x l)) (pure (fun σ => σ x = v)) := by
   intro σ h hp
@@ -1455,6 +1460,18 @@ theorem frame_needs_preserves (x : Var) :
 
 /- ===== Unit 25 · `local-heap` · Locality of `write` and `free` ===== -/
 
+theorem write_union_no_disjointness (h hFrame : Heap) (l : Loc) (v : Val) :
+    Heap.write (Heap.union h hFrame) l v = Heap.union (Heap.write h l v) hFrame := by
+  funext x
+  by_cases hx : x = l
+  · subst hx
+    rw [write_same, union_of_some hFrame (write_same h x v)]
+  · rw [write_other (Heap.union h hFrame) l x v hx]
+    have hw : Heap.write h l v x = h x := write_other h l x v hx
+    cases hh : h x with
+    | none => rw [union_of_none hFrame hh, union_of_none hFrame (hw.trans hh)]
+    | some w => rw [union_of_some hFrame hh, union_of_some hFrame (hw.trans hh)]
+
 /- ex m8-2 heapLocal_write -/
 theorem heapLocal_write (l : Loc) (e : Atom) : HeapLocal (.write l e) := by
   intro σ h hFrame s' hd hex
@@ -1513,18 +1530,6 @@ theorem heapLocal_free (l : Loc) : HeapLocal (.free l) := by
         cases hx : h x with
         | none => rw [union_of_none hFrame hx, union_of_none hFrame (hex'.trans hx)]
         | some w => rw [union_of_some hFrame hx, union_of_some hFrame (hex'.trans hx)]
-
-theorem write_union_no_disjointness (h hFrame : Heap) (l : Loc) (v : Val) :
-    Heap.write (Heap.union h hFrame) l v = Heap.union (Heap.write h l v) hFrame := by
-  funext x
-  by_cases hx : x = l
-  · subst hx
-    rw [write_same, union_of_some hFrame (write_same h x v)]
-  · rw [write_other (Heap.union h hFrame) l x v hx]
-    have hw : Heap.write h l v x = h x := write_other h l x v hx
-    cases hh : h x with
-    | none => rw [union_of_none hFrame hh, union_of_none hFrame (hw.trans hh)]
-    | some w => rw [union_of_some hFrame hh, union_of_some hFrame (hw.trans hh)]
 
 /- ===== Unit 26 · `local-compose` · Locality composes ===== -/
 
@@ -1760,6 +1765,9 @@ theorem moveCell_spec (tmp : Var) (src dst : Loc) (a b : Val) :
 
 /- ===== Unit 30 · `swap` · LAB/capstone — swap ===== -/
 
+def swap (tmp₁ tmp₂ : Var) (l₁ l₂ : Loc) : Cmd :=
+  .load tmp₁ l₁ ;; (.load tmp₂ l₂ ;; (.write l₁ (.var tmp₂) ;; .write l₂ (.var tmp₁)))
+
 /- ex m9-4 preserves_load_fact -/
 theorem preserves_load_fact {x y : Var} {v : Val} (l : Loc) (hne : y ≠ x) :
     Preserves (.load x l) (pure (fun σ => σ y = v)) := by
@@ -1771,9 +1779,6 @@ theorem preserves_load_fact {x y : Var} {v : Val} (l : Loc) (hne : y ≠ x) :
       show Store.set s.store x _ y = v
       simp [Store.set, hne]
       exact hy
-
-def swap (tmp₁ tmp₂ : Var) (l₁ l₂ : Loc) : Cmd :=
-  .load tmp₁ l₁ ;; (.load tmp₂ l₂ ;; (.write l₁ (.var tmp₂) ;; .write l₂ (.var tmp₁)))
 
 /- ex x61 swap_heap -/
 theorem swap_heap (l₁ l₂ : Loc) (a b : Val) (hne : l₁ ≠ l₂) :
@@ -2270,10 +2275,10 @@ def drainBody (x : Var) (l : Loc) : Cmd :=
 
 def drain (x : Var) (l : Loc) : Cmd := .loop (counterGuard x) (drainBody x l)
 
+/- ex x73 drainInv / drain_step / drain_stop / drain_spec -/
 def drainInv (x : Var) (l : Loc) (n : Nat) : Assertion :=
   aAnd (fact (fun σ => σ x = n)) (l ↦ n)
 
-/- ex x73 drain_spec / drain_step / drain_stop -/
 theorem drain_step (x : Var) (l : Loc) (n : Nat) :
     Hoare (aAnd (drainInv x l (n + 1)) (bTrue (counterGuard x)))
           (drainBody x l) (drainInv x l n) := by

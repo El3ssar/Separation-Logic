@@ -1,667 +1,1205 @@
 {
- "overview": {
-  "num": "§",
-  "phase": "Start here",
-  "title": "What we are building, and why",
-  "ex": {},
-  "code": [
-   "abbrev Loc   := Nat\nabbrev Val   := Nat\nabbrev Heap  := Loc → Option Val\nabbrev Var   := Nat\nabbrev Store := Var → Val",
-   "abbrev Assertion := Store → Heap → Prop"
-  ]
+ "aliasing": {
+  "num": "00",
+  "phase": "Phase 0 · Getting started",
+  "title": "The rule that is false",
+  "ex": {
+   "x01": {
+    "name": "write a heap, prove a lookup",
+    "goal": "example : twoAllocated 7 = none := by",
+    "sol": "def twoAllocated : Heap := fun x => if x = 4 then some 5 else if x = 9 then some 2 else none\n\nexample : twoAllocated 7 = none := by\n  simp [twoAllocated]",
+    "hard": false
+   },
+   "x02": {
+    "name": "the aliased postcondition is unsatisfiable",
+    "goal": "example : ¬ (aliasedAfter 4 = some 3 ∧ aliasedAfter 4 = some 5) := by\n  intro ⟨h3, _⟩",
+    "sol": "example : ¬ (aliasedAfter 4 = some 3 ∧ aliasedAfter 4 = some 5) := by\n  intro ⟨h3, _⟩\n  simp [aliasedAfter] at h3",
+    "hard": false
+   }
+  }
  },
- "m0": {
-  "num": "M0",
-  "phase": "Phase 1 · Semantic foundations",
-  "title": "The Lean you actually need",
+ "goalstate": {
+  "num": "§",
+  "phase": "Phase 0 · Getting started",
+  "title": "Reading what Lean tells you",
+  "ex": {}
+ },
+ "terms": {
+  "num": "01",
+  "phase": "Phase 0 · Getting started",
+  "title": "Propositions are types, proofs are terms",
+  "ex": {
+   "x03": {
+    "name": "comp",
+    "goal": "theorem comp (P Q R : Prop) (f : P → Q) (g : Q → R) : P → R :=",
+    "sol": "theorem comp (P Q R : Prop) (f : P → Q) (g : Q → R) : P → R := fun hp => g (f hp)",
+    "hard": false
+   },
+   "x04": {
+    "name": "and_comm'",
+    "goal": "theorem and_comm' (P Q : Prop) : P ∧ Q → Q ∧ P :=",
+    "sol": "theorem and_comm' (P Q : Prop) : P ∧ Q → Q ∧ P := fun h => ⟨h.2, h.1⟩",
+    "hard": false
+   },
+   "x05": {
+    "name": "exists_mono",
+    "goal": "theorem exists_mono {P Q : Nat → Prop} (h : ∀ n, P n → Q n) :\n    (∃ n, P n) → ∃ n, Q n := by",
+    "sol": "theorem exists_mono {P Q : Nat → Prop} (h : ∀ n, P n → Q n) :\n    (∃ n, P n) → ∃ n, Q n := by\n  intro hp\n  obtain ⟨n, hn⟩ := hp\n  exact ⟨n, h n hn⟩",
+    "hard": false
+   },
+   "x06": {
+    "name": "nested_pack / nested_unpack",
+    "goal": "theorem nested_pack {P Q : Nat → Prop} {a b : Nat} (hp : P a) (hq : Q b) :\n    ∃ x y, x = a ∧ y = b ∧ P x ∧ Q y :=\n  sorry\n\ntheorem nested_unpack {P Q : Nat → Prop} (h : ∃ x y, P x ∧ Q y ∧ x = y) :\n    ∃ z, P z ∧ Q z := by",
+    "sol": "theorem nested_pack {P Q : Nat → Prop} {a b : Nat} (hp : P a) (hq : Q b) :\n    ∃ x y, x = a ∧ y = b ∧ P x ∧ Q y :=\n  ⟨a, b, rfl, rfl, hp, hq⟩\n\ntheorem nested_unpack {P Q : Nat → Prop} (h : ∃ x y, P x ∧ Q y ∧ x = y) :\n    ∃ z, P z ∧ Q z := by\n  obtain ⟨x, y, hpx, hqy, hxy⟩ := h\n  simp [hxy] at hpx\n  exact ⟨y, hpx, hqy⟩",
+    "hard": false
+   }
+  }
+ },
+ "compute": {
+  "num": "02",
+  "phase": "Phase 0 · Getting started",
+  "title": "Equality, computation, and the limits of rfl",
+  "ex": {
+   "x07": {
+    "name": "double",
+    "goal": "theorem double'_unfold (n : Nat) : double' n = n + n :=\n  sorry\n\ntheorem double'_three : double' 3 = 6 :=\n  sorry\n\ntheorem double_unfold (n : Nat) : double n = n + n := by\n  sorry\n\ntheorem double_zero_left (n : Nat) : double n = 0 + n + n := by",
+    "sol": "theorem double'_unfold (n : Nat) : double' n = n + n := rfl\n\ntheorem double'_three : double' 3 = 6 := rfl\n\ntheorem double_unfold (n : Nat) : double n = n + n := by\n  simp [double]\n\ntheorem double_zero_left (n : Nat) : double n = 0 + n + n := by\n  simp [double]",
+    "hard": false
+   },
+   "x08": {
+    "name": "some_inj / some_ne_none",
+    "goal": "theorem some_inj (v w : Val) (h : some v = some w) : v = w :=\n  sorry\n\ntheorem some_ne_none (v : Val) : some v ≠ none := by\n  sorry\n\ntheorem some_ne_none' (v : Val) : some v ≠ none := by",
+    "sol": "theorem some_inj (v w : Val) (h : some v = some w) : v = w :=\n  Option.some.inj h\n\ntheorem some_ne_none (v : Val) : some v ≠ none := by\n  simp\n\ntheorem some_ne_none' (v : Val) : some v ≠ none := by\n  intro h\n  cases h",
+    "hard": false
+   },
+   "x09": {
+    "name": "defined_of_ne_none",
+    "goal": "theorem defined_of_ne_none (h : Heap) (l : Loc) (hne : h l ≠ none) : defined h l := by",
+    "sol": "theorem defined_of_ne_none (h : Heap) (l : Loc) (hne : h l ≠ none) : defined h l := by\n  cases hl : h l with\n  | none   => exact absurd hl hne\n  | some v => exact ⟨v, hl⟩",
+    "hard": false
+   }
+  }
+ },
+ "funext": {
+  "num": "03",
+  "phase": "Phase 0 · Getting started",
+  "title": "Functions as values",
+  "ex": {
+   "x10": {
+    "name": "funext_drill",
+    "goal": "theorem funext_drill : (fun n : Nat => 0 + n) = (fun n => n) := by",
+    "sol": "theorem funext_drill : (fun n : Nat => 0 + n) = (fun n => n) := by\n  funext n\n  simp",
+    "hard": false
+   },
+   "x11": {
+    "name": "if_drill",
+    "goal": "theorem if_drill (f : Nat → Nat) (a b : Nat) (hab : a ≠ b) :\n    (if a = a then f a else f b) = f a ∧ (if b = a then f a else f b) = f b := by",
+    "sol": "theorem if_drill (f : Nat → Nat) (a b : Nat) (hab : a ≠ b) :\n    (if a = a then f a else f b) = f a ∧ (if b = a then f a else f b) = f b := by\n  constructor\n  · rw [if_pos rfl]\n  · rw [if_neg (Ne.symm hab)]",
+    "hard": false
+   },
+   "x12": {
+    "name": "by_cases_drill",
+    "goal": "theorem by_cases_drill (f : Nat → Nat) (x y : Nat) :\n    (if y = x then f x else f y) = f y := by",
+    "sol": "theorem by_cases_drill (f : Nat → Nat) (x y : Nat) :\n    (if y = x then f x else f y) = f y := by\n  by_cases h : y = x <;> simp [h]",
+    "hard": false
+   }
+  }
+ },
+ "update": {
+  "num": "04",
+  "phase": "Phase 0 · Getting started",
+  "title": "LAB — the update family",
   "ex": {
    "m0-1": {
     "name": "update_same",
-    "goal": "theorem update_same (f : Nat → Nat) (x value : Nat) :\n    update f x value x = value",
+    "goal": "theorem update_same (f : Nat → Nat) (x value : Nat) :\n    update f x value x = value := by",
     "sol": "theorem update_same (f : Nat → Nat) (x value : Nat) :\n    update f x value x = value := by\n  simp [update]",
     "hard": false
    },
    "m0-2": {
     "name": "update_other",
-    "goal": "theorem update_other (f : Nat → Nat) (x y value : Nat) (hne : y ≠ x) :\n    update f x value y = f y",
+    "goal": "theorem update_other (f : Nat → Nat) (x y value : Nat) (hne : y ≠ x) :\n    update f x value y = f y := by",
     "sol": "theorem update_other (f : Nat → Nat) (x y value : Nat) (hne : y ≠ x) :\n    update f x value y = f y := by\n  simp [update, hne]",
     "hard": false
    },
    "m0-3": {
     "name": "update_shadow",
-    "goal": "theorem update_shadow (f : Nat → Nat) (x a b : Nat) :\n    update (update f x a) x b = update f x b",
+    "goal": "theorem update_shadow (f : Nat → Nat) (x a b : Nat) :\n    update (update f x a) x b = update f x b := by",
     "sol": "theorem update_shadow (f : Nat → Nat) (x a b : Nat) :\n    update (update f x a) x b = update f x b := by\n  funext y\n  by_cases h : y = x <;> simp [update, h]",
     "hard": false
    },
    "m0-4": {
     "name": "update_comm",
-    "goal": "theorem update_comm (f : Nat → Nat) (x y a b : Nat) (hne : x ≠ y) :\n    update (update f x a) y b = update (update f y b) x a",
+    "goal": "theorem update_comm (f : Nat → Nat) (x y a b : Nat) (hne : x ≠ y) :\n    update (update f x a) y b = update (update f y b) x a := by",
     "sol": "theorem update_comm (f : Nat → Nat) (x y a b : Nat) (hne : x ≠ y) :\n    update (update f x a) y b = update (update f y b) x a := by\n  funext z\n  unfold update\n  by_cases hzx : z = x\n  · have hzy : z ≠ y := by rw [hzx]; exact hne\n    rw [if_neg hzy, if_pos hzx, if_pos hzx]\n  · by_cases hzy : z = y\n    · rw [if_pos hzy, if_neg hzx, if_pos hzy]\n    · rw [if_neg hzy, if_neg hzx, if_neg hzx, if_neg hzy]",
     "hard": false
+   },
+   "x13": {
+    "name": "update_idem",
+    "goal": "-- Delete the line below and write your own `theorem update_idem …`.\n-- Any correct statement of the fact will be accepted.\nexample : True := by",
+    "sol": "theorem update_idem (f : Nat → Nat) (x : Nat) : update f x (f x) = f := by\n  funext y\n  by_cases h : y = x <;> simp [update, h]",
+    "hard": false
    }
-  },
-  "code": [
-   "theorem implication_example (P Q : Prop) :\n    P → (P → Q) → Q :=\n  fun hp hpq => hpq hp",
-   "theorem exists_example : ∃ n : Nat, n = 3 := ⟨3, rfl⟩",
-   "theorem function_extensionality {f g : Nat → Nat}\n    (h : ∀ x, f x = g x) : f = g := funext h",
-   "def update (f : Nat → Nat) (x value : Nat) : Nat → Nat :=\n  fun y => if y = x then value else f y"
-  ]
+  }
  },
- "m1": {
-  "num": "M1",
-  "phase": "Phase 1 · Semantic foundations",
-  "title": "Heaps as partial functions",
+ "errors": {
+  "num": "§",
+  "phase": "Phase 0 · Getting started",
+  "title": "When Lean says no",
+  "ex": {}
+ },
+ "heap": {
+  "num": "05",
+  "phase": "Phase 1 · The resource algebra",
+  "title": "Memory as a partial function",
   "ex": {
    "m1-1": {
     "name": "singleton_same",
-    "goal": "theorem singleton_same (l : Loc) (v : Val) :\n    Heap.singleton l v l = some v",
+    "goal": "theorem singleton_same (l : Loc) (v : Val) :\n    Heap.singleton l v l = some v := by",
     "sol": "theorem singleton_same (l : Loc) (v : Val) :\n    Heap.singleton l v l = some v := by\n  simp [Heap.singleton]",
     "hard": false
    },
    "m1-2": {
     "name": "singleton_other",
-    "goal": "theorem singleton_other (l x : Loc) (v : Val) (hne : x ≠ l) :\n    Heap.singleton l v x = none",
+    "goal": "theorem singleton_other (l x : Loc) (v : Val) (hne : x ≠ l) :\n    Heap.singleton l v x = none := by",
     "sol": "theorem singleton_other (l x : Loc) (v : Val) (hne : x ≠ l) :\n    Heap.singleton l v x = none := by\n  simp [Heap.singleton, hne]",
     "hard": false
    },
    "m1-3": {
     "name": "write_same / write_other",
-    "goal": "theorem write_same (h : Heap) (l : Loc) (v : Val) :\n    Heap.write h l v l = some v\n\ntheorem write_other (h : Heap) (l x : Loc) (v : Val) (hne : x ≠ l) :\n    Heap.write h l v x = h x",
+    "goal": "theorem write_same (h : Heap) (l : Loc) (v : Val) :\n    Heap.write h l v l = some v := by\n  sorry\n\ntheorem write_other (h : Heap) (l x : Loc) (v : Val) (hne : x ≠ l) :\n    Heap.write h l v x = h x := by",
     "sol": "theorem write_same (h : Heap) (l : Loc) (v : Val) :\n    Heap.write h l v l = some v := by\n  simp [Heap.write]\n\ntheorem write_other (h : Heap) (l x : Loc) (v : Val) (hne : x ≠ l) :\n    Heap.write h l v x = h x := by\n  simp [Heap.write, hne]",
     "hard": false
    },
    "m1-4": {
     "name": "erase_same / erase_other",
-    "goal": "theorem erase_same (h : Heap) (l : Loc) :\n    Heap.erase h l l = none\n\ntheorem erase_other (h : Heap) (l x : Loc) (hne : x ≠ l) :\n    Heap.erase h l x = h x",
+    "goal": "theorem erase_same (h : Heap) (l : Loc) :\n    Heap.erase h l l = none := by\n  sorry\n\ntheorem erase_other (h : Heap) (l x : Loc) (hne : x ≠ l) :\n    Heap.erase h l x = h x := by",
     "sol": "theorem erase_same (h : Heap) (l : Loc) :\n    Heap.erase h l l = none := by\n  simp [Heap.erase]\n\ntheorem erase_other (h : Heap) (l x : Loc) (hne : x ≠ l) :\n    Heap.erase h l x = h x := by\n  simp [Heap.erase, hne]",
     "hard": false
-   },
+   }
+  }
+ },
+ "heap-laws": {
+  "num": "06",
+  "phase": "Phase 1 · The resource algebra",
+  "title": "Equations between heaps",
+  "ex": {
    "m1-5": {
     "name": "write_shadow",
-    "goal": "theorem write_shadow (h : Heap) (l : Loc) (v₁ v₂ : Val) :\n    Heap.write (Heap.write h l v₁) l v₂ = Heap.write h l v₂",
+    "goal": "theorem write_shadow (h : Heap) (l : Loc) (v₁ v₂ : Val) :\n    Heap.write (Heap.write h l v₁) l v₂ = Heap.write h l v₂ := by",
     "sol": "theorem write_shadow (h : Heap) (l : Loc) (v₁ v₂ : Val) :\n    Heap.write (Heap.write h l v₁) l v₂ = Heap.write h l v₂ := by\n  funext x\n  by_cases hx : x = l <;> simp [Heap.write, hx]",
     "hard": false
    },
    "m1-6": {
     "name": "erase_write_same",
-    "goal": "theorem erase_write_same (h : Heap) (l : Loc) (v : Val) :\n    Heap.erase (Heap.write h l v) l = Heap.erase h l",
+    "goal": "theorem erase_write_same (h : Heap) (l : Loc) (v : Val) :\n    Heap.erase (Heap.write h l v) l = Heap.erase h l := by",
     "sol": "theorem erase_write_same (h : Heap) (l : Loc) (v : Val) :\n    Heap.erase (Heap.write h l v) l = Heap.erase h l := by\n  funext x\n  by_cases hx : x = l <;> simp [Heap.erase, Heap.write, hx]",
     "hard": false
    },
    "m1-7": {
     "name": "write_comm",
-    "goal": "theorem write_comm (h : Heap) (l₁ l₂ : Loc) (v₁ v₂ : Val) (hne : l₁ ≠ l₂) :\n    Heap.write (Heap.write h l₁ v₁) l₂ v₂ =\n    Heap.write (Heap.write h l₂ v₂) l₁ v₁",
+    "goal": "theorem write_comm (h : Heap) (l₁ l₂ : Loc) (v₁ v₂ : Val) (hne : l₁ ≠ l₂) :\n    Heap.write (Heap.write h l₁ v₁) l₂ v₂ = Heap.write (Heap.write h l₂ v₂) l₁ v₁ := by",
     "sol": "theorem write_comm (h : Heap) (l₁ l₂ : Loc) (v₁ v₂ : Val) (hne : l₁ ≠ l₂) :\n    Heap.write (Heap.write h l₁ v₁) l₂ v₂ = Heap.write (Heap.write h l₂ v₂) l₁ v₁ := by\n  funext x\n  unfold Heap.write\n  by_cases hx₁ : x = l₁\n  · have hx₂ : x ≠ l₂ := by rw [hx₁]; exact hne\n    rw [if_neg hx₂, if_pos hx₁, if_pos hx₁]\n  · by_cases hx₂ : x = l₂\n    · rw [if_pos hx₂, if_neg hx₁, if_pos hx₂]\n    · rw [if_neg hx₂, if_neg hx₁, if_neg hx₁, if_neg hx₂]",
     "hard": false
    },
    "m1-8": {
     "name": "write_singleton / erase_singleton",
-    "goal": "theorem write_singleton (l : Loc) (v w : Val) :\n    Heap.write (Heap.singleton l v) l w = Heap.singleton l w\n\ntheorem erase_singleton (l : Loc) (v : Val) :\n    Heap.erase (Heap.singleton l v) l = Heap.empty",
+    "goal": "theorem write_singleton (l : Loc) (v w : Val) :\n    Heap.write (Heap.singleton l v) l w = Heap.singleton l w := by\n  sorry\n\ntheorem erase_singleton (l : Loc) (v : Val) :\n    Heap.erase (Heap.singleton l v) l = Heap.empty := by",
     "sol": "theorem write_singleton (l : Loc) (v w : Val) :\n    Heap.write (Heap.singleton l v) l w = Heap.singleton l w := by\n  funext x\n  by_cases hx : x = l <;> simp [Heap.write, Heap.singleton, hx]\n\ntheorem erase_singleton (l : Loc) (v : Val) :\n    Heap.erase (Heap.singleton l v) l = Heap.empty := by\n  funext x\n  by_cases hx : x = l <;> simp [Heap.erase, Heap.singleton, Heap.empty, hx]",
     "hard": false
+   },
+   "x14": {
+    "name": "erase_erase, write_of_eq",
+    "goal": "theorem erase_erase (h : Heap) (l : Loc) :\n    Heap.erase (Heap.erase h l) l = Heap.erase h l := by\n  sorry\n\ntheorem write_of_eq {h : Heap} {l : Loc} {v : Val} (hl : h l = some v) :\n    Heap.write h l v = h := by",
+    "sol": "theorem erase_erase (h : Heap) (l : Loc) :\n    Heap.erase (Heap.erase h l) l = Heap.erase h l := by\n  funext x\n  by_cases hx : x = l <;> simp [Heap.erase, hx]\n\ntheorem write_of_eq {h : Heap} {l : Loc} {v : Val} (hl : h l = some v) :\n    Heap.write h l v = h := by\n  funext x\n  by_cases hx : x = l\n  · rw [hx, write_same]\n    exact hl.symm\n  · rw [write_other h l x v hx]",
+    "hard": false
+   },
+   "x15": {
+    "name": "erase_write_comm, and the claim it is not",
+    "goal": "theorem erase_write_comm (h : Heap) (l l' : Loc) (v : Val) (hne : l ≠ l') :\n    Heap.erase (Heap.write h l v) l' = Heap.write (Heap.erase h l') l v := by\n  sorry\n\n-- Now drop `hne`. State the claim that erase and write commute unconditionally,\n-- and refute it. Any correct statement will be accepted.\nexample : True := by",
+    "sol": "theorem erase_write_comm (h : Heap) (l l' : Loc) (v : Val) (hne : l ≠ l') :\n    Heap.erase (Heap.write h l v) l' = Heap.write (Heap.erase h l') l v := by\n  funext x\n  simp only [Heap.write, Heap.erase]\n  by_cases hx : x = l'\n  · have hxl : x ≠ l := by rw [hx]; exact fun hc => hne hc.symm\n    rw [if_pos hx, if_neg hxl, if_pos hx]\n  · by_cases hxl : x = l\n    · rw [if_neg hx, if_pos hxl, if_pos hxl]\n    · rw [if_neg hx, if_neg hxl, if_neg hxl, if_neg hx]\n\nexample : ¬ ∀ (h : Heap) (l l' : Loc) (v : Val),\n    Heap.erase (Heap.write h l v) l' = Heap.write (Heap.erase h l') l v := by\n  intro hc\n  have hbad := congrFun (hc Heap.empty 0 0 7) 0\n  simp [Heap.erase, Heap.write] at hbad",
+    "hard": false
    }
-  },
-  "code": [
-   "def empty : Heap := fun _ => none\n\ndef singleton (l : Loc) (v : Val) : Heap :=\n  fun x => if x = l then some v else none\n\ndef write (h : Heap) (l : Loc) (v : Val) : Heap :=\n  fun x => if x = l then some v else h x\n\ndef erase (h : Heap) (l : Loc) : Heap :=\n  fun x => if x = l then none else h x\n\nend Heap"
-  ]
+  }
  },
- "m2": {
-  "num": "M2",
-  "phase": "Phase 1 · Semantic foundations",
-  "title": "Disjointness, union, and the resource monoid",
+ "footprint": {
+  "num": "07",
+  "phase": "Phase 1 · The resource algebra",
+  "title": "How much do you own?",
+  "ex": {
+   "x16": {
+    "name": "a two-cell heap satisfies the loose reading",
+    "goal": "example : ptsAtLeast 4 3 (fun _ => 0) twoCells := by",
+    "sol": "example : ptsAtLeast 4 3 (fun _ => 0) twoCells := by\n  have hne : (4 : Loc) ≠ 9 := by simp\n  show twoCells 4 = some 3\n  unfold twoCells\n  rw [write_other (Heap.singleton 4 3) 9 4 7 hne, singleton_same]",
+    "hard": false
+   },
+   "x17": {
+    "name": "it does not satisfy the exact reading",
+    "goal": "example : ¬ ptsExactly 4 3 (fun _ => 0) twoCells := by",
+    "sol": "example : ¬ ptsExactly 4 3 (fun _ => 0) twoCells := by\n  intro h\n  have hne : (9 : Loc) ≠ 4 := by simp\n  have h9 := congrFun h 9\n  unfold twoCells at h9\n  rw [write_same, singleton_other 4 9 3 hne] at h9\n  exact some_ne_none 7 h9",
+    "hard": false
+   },
+   "x18": {
+    "name": "after free, the heap is not empty",
+    "goal": "example : Heap.erase twoCells 4 ≠ Heap.empty := by",
+    "sol": "example : Heap.erase twoCells 4 ≠ Heap.empty := by\n  intro h\n  have hne : (9 : Loc) ≠ 4 := by simp\n  have h9 := congrFun h 9\n  rw [erase_other twoCells 4 9 hne] at h9\n  unfold twoCells at h9\n  rw [write_same] at h9\n  exact some_ne_none 7 h9",
+    "hard": false
+   }
+  }
+ },
+ "disjoint": {
+  "num": "08",
+  "phase": "Phase 1 · The resource algebra",
+  "title": "Disjointness",
   "ex": {
    "m2-1": {
     "name": "disjoint_symm",
-    "goal": "theorem disjoint_symm {h₁ h₂ : Heap} :\n    Heap.disjoint h₁ h₂ → Heap.disjoint h₂ h₁",
+    "goal": "theorem disjoint_symm {h₁ h₂ : Heap} : Heap.disjoint h₁ h₂ → Heap.disjoint h₂ h₁ := by",
     "sol": "theorem disjoint_symm {h₁ h₂ : Heap} : Heap.disjoint h₁ h₂ → Heap.disjoint h₂ h₁ := by\n  intro hd l\n  exact (hd l).symm",
     "hard": false
    },
    "m2-2": {
-    "name": "disjoint_empty_left / right",
-    "goal": "theorem disjoint_empty_left  (h : Heap) : Heap.disjoint Heap.empty h\ntheorem disjoint_empty_right (h : Heap) : Heap.disjoint h Heap.empty",
+    "name": "disjoint_empty_left / disjoint_empty_right",
+    "goal": "theorem disjoint_empty_left (h : Heap) : Heap.disjoint Heap.empty h :=\n  sorry\n\ntheorem disjoint_empty_right (h : Heap) : Heap.disjoint h Heap.empty :=",
     "sol": "theorem disjoint_empty_left (h : Heap) : Heap.disjoint Heap.empty h :=\n  fun _ => Or.inl rfl\n\ntheorem disjoint_empty_right (h : Heap) : Heap.disjoint h Heap.empty :=\n  fun _ => Or.inr rfl",
     "hard": false
    },
    "m2-3": {
-    "name": "singleton_disjoint (and its converse)",
-    "goal": "theorem singleton_disjoint {l₁ l₂ : Loc} (v₁ v₂ : Val) (hne : l₁ ≠ l₂) :\n    Heap.disjoint (Heap.singleton l₁ v₁) (Heap.singleton l₂ v₂)\n\ntheorem singleton_disjoint_iff {l₁ l₂ : Loc} (v₁ v₂ : Val) :\n    Heap.disjoint (Heap.singleton l₁ v₁) (Heap.singleton l₂ v₂) ↔ l₁ ≠ l₂",
-    "sol": "theorem singleton_disjoint {l₁ l₂ : Loc} (v₁ v₂ : Val) (hne : l₁ ≠ l₂) :\n    Heap.disjoint (Heap.singleton l₁ v₁) (Heap.singleton l₂ v₂) := by\n  intro x\n  by_cases hx : x = l₁\n  · right\n    have : x ≠ l₂ := by rw [hx]; exact hne\n    exact singleton_other l₂ x v₂ this\n  · left\n    exact singleton_other l₁ x v₁ hx\n\ntheorem singleton_disjoint_iff {l₁ l₂ : Loc} (v₁ v₂ : Val) :\n    Heap.disjoint (Heap.singleton l₁ v₁) (Heap.singleton l₂ v₂) ↔ l₁ ≠ l₂ := by\n  constructor\n  · intro hd heq\n    subst heq\n    rcases hd l₁ with h | h <;>\n      · rw [singleton_same] at h; exact absurd h (by simp)\n  · exact singleton_disjoint v₁ v₂",
+    "name": "singleton_disjoint and singleton_disjoint_iff",
+    "goal": "theorem singleton_disjoint {l₁ l₂ : Loc} (v₁ v₂ : Val) (hne : l₁ ≠ l₂) :\n    Heap.disjoint (Heap.singleton l₁ v₁) (Heap.singleton l₂ v₂) := by\n  sorry\n\ntheorem singleton_disjoint_iff {l₁ l₂ : Loc} (v₁ v₂ : Val) :\n    Heap.disjoint (Heap.singleton l₁ v₁) (Heap.singleton l₂ v₂) ↔ l₁ ≠ l₂ := by",
+    "sol": "theorem singleton_disjoint {l₁ l₂ : Loc} (v₁ v₂ : Val) (hne : l₁ ≠ l₂) :\n    Heap.disjoint (Heap.singleton l₁ v₁) (Heap.singleton l₂ v₂) := by\n  intro x\n  by_cases hx : x = l₁\n  · right\n    have : x ≠ l₂ := by rw [hx]; exact hne\n    exact singleton_other l₂ x v₂ this\n  · left\n    exact singleton_other l₁ x v₁ hx\n\ntheorem singleton_disjoint_iff {l₁ l₂ : Loc} (v₁ v₂ : Val) :\n    Heap.disjoint (Heap.singleton l₁ v₁) (Heap.singleton l₂ v₂) ↔ l₁ ≠ l₂ := by\n  constructor\n  · intro hd heq\n    subst heq\n    rcases hd l₁ with h | h <;>\n      · rw [singleton_same] at h; cases h\n  · exact singleton_disjoint v₁ v₂",
+    "hard": false
+   },
+   "x19": {
+    "name": "self_disjoint_iff_empty",
+    "goal": "theorem self_disjoint_iff_empty (h : Heap) : Heap.disjoint h h ↔ h = Heap.empty := by",
+    "sol": "theorem self_disjoint_iff_empty (h : Heap) : Heap.disjoint h h ↔ h = Heap.empty := by\n  constructor\n  · intro hd\n    funext l\n    rcases hd l with h1 | h1 <;> exact h1\n  · intro he l\n    subst he\n    exact Or.inl rfl",
+    "hard": false
+   }
+  }
+ },
+ "union": {
+  "num": "09",
+  "phase": "Phase 1 · The resource algebra",
+  "title": "Union, and why it must be total",
+  "ex": {
+   "x20": {
+    "name": "union_of_none / union_of_some",
+    "goal": "theorem union_of_none {h₁ : Heap} (h₂ : Heap) {l : Loc} (hl : h₁ l = none) :\n    Heap.union h₁ h₂ l = h₂ l := by\n  sorry\n\ntheorem union_of_some {h₁ : Heap} (h₂ : Heap) {l : Loc} {v : Val} (hl : h₁ l = some v) :\n    Heap.union h₁ h₂ l = some v := by",
+    "sol": "theorem union_of_none {h₁ : Heap} (h₂ : Heap) {l : Loc} (hl : h₁ l = none) :\n    Heap.union h₁ h₂ l = h₂ l := by\n  simp [Heap.union, hl]\n\ntheorem union_of_some {h₁ : Heap} (h₂ : Heap) {l : Loc} {v : Val} (hl : h₁ l = some v) :\n    Heap.union h₁ h₂ l = some v := by\n  simp [Heap.union, hl]",
+    "hard": false
+   },
+   "x21": {
+    "name": "union_eq_none",
+    "goal": "theorem union_eq_none {h₁ h₂ : Heap} {l : Loc} :\n    Heap.union h₁ h₂ l = none ↔ h₁ l = none ∧ h₂ l = none := by",
+    "sol": "theorem union_eq_none {h₁ h₂ : Heap} {l : Loc} :\n    Heap.union h₁ h₂ l = none ↔ h₁ l = none ∧ h₂ l = none := by\n  constructor\n  · intro h\n    cases hl : h₁ l with\n    | none   => exact ⟨rfl, by rwa [union_of_none h₂ hl] at h⟩\n    | some v => rw [union_of_some h₂ hl] at h; exact absurd h (by simp)\n  · intro ⟨ha, hb⟩\n    rw [union_of_none h₂ ha]; exact hb",
     "hard": false
    },
    "m2-4": {
-    "name": "union_empty_left / right",
-    "goal": "theorem union_empty_left  (h : Heap) : Heap.union Heap.empty h = h\ntheorem union_empty_right (h : Heap) : Heap.union h Heap.empty = h",
+    "name": "union_empty_left / union_empty_right",
+    "goal": "theorem union_empty_left (h : Heap) : Heap.union Heap.empty h = h := by\n  sorry\n\ntheorem union_empty_right (h : Heap) : Heap.union h Heap.empty = h := by",
     "sol": "theorem union_empty_left (h : Heap) : Heap.union Heap.empty h = h := by\n  funext l; rfl\n\ntheorem union_empty_right (h : Heap) : Heap.union h Heap.empty = h := by\n  funext l\n  cases hl : h l with\n  | none   => rw [union_of_none Heap.empty hl]; rfl\n  | some v => rw [union_of_some Heap.empty hl]",
     "hard": false
    },
+   "x22": {
+    "name": "union_self",
+    "goal": "theorem union_self (h : Heap) : Heap.union h h = h := by",
+    "sol": "theorem union_self (h : Heap) : Heap.union h h = h := by\n  funext l\n  cases hl : h l with\n  | none   => rw [union_of_none h hl]; exact hl\n  | some v => rw [union_of_some h hl]",
+    "hard": false
+   }
+  }
+ },
+ "pcm": {
+  "num": "10",
+  "phase": "Phase 1 · The resource algebra",
+  "title": "The partial commutative monoid",
+  "ex": {
    "m2-5": {
     "name": "union_assoc",
-    "goal": "theorem union_assoc (h₁ h₂ h₃ : Heap) :\n    Heap.union (Heap.union h₁ h₂) h₃ = Heap.union h₁ (Heap.union h₂ h₃)",
+    "goal": "theorem union_assoc (h₁ h₂ h₃ : Heap) :\n    Heap.union (Heap.union h₁ h₂) h₃ = Heap.union h₁ (Heap.union h₂ h₃) := by",
     "sol": "theorem union_assoc (h₁ h₂ h₃ : Heap) :\n    Heap.union (Heap.union h₁ h₂) h₃ = Heap.union h₁ (Heap.union h₂ h₃) := by\n  funext l\n  cases hl : h₁ l with\n  | none =>\n      rw [union_of_none (Heap.union h₂ h₃) hl]\n      cases hl2 : h₂ l with\n      | none =>\n          rw [union_of_none h₃ (union_eq_none.mpr ⟨hl, hl2⟩), union_of_none h₃ hl2]\n      | some v =>\n          have hu : Heap.union h₁ h₂ l = some v := by rw [union_of_none h₂ hl]; exact hl2\n          rw [union_of_some h₃ hu, union_of_some h₃ hl2]\n  | some v =>\n      rw [union_of_some h₃ (union_of_some h₂ hl), union_of_some (Heap.union h₂ h₃) hl]",
     "hard": false
    },
    "m2-6": {
     "name": "union_comm",
-    "goal": "theorem union_comm {h₁ h₂ : Heap} (hd : Heap.disjoint h₁ h₂) :\n    Heap.union h₁ h₂ = Heap.union h₂ h₁",
+    "goal": "theorem union_comm {h₁ h₂ : Heap} (hd : Heap.disjoint h₁ h₂) :\n    Heap.union h₁ h₂ = Heap.union h₂ h₁ := by",
     "sol": "theorem union_comm {h₁ h₂ : Heap} (hd : Heap.disjoint h₁ h₂) :\n    Heap.union h₁ h₂ = Heap.union h₂ h₁ := by\n  funext l\n  rcases hd l with h | h\n  · rw [union_of_none h₂ h]\n    cases hl : h₂ l with\n    | none   => rw [union_of_none h₁ hl, h]\n    | some v => rw [union_of_some h₁ hl]\n  · rw [union_of_none h₁ h]\n    cases hl : h₁ l with\n    | none   => rw [union_of_none h₂ hl]; exact h\n    | some v => rw [union_of_some h₂ hl]",
     "hard": false
    },
    "m2-7": {
-    "name": "disjoint_union_left / right",
-    "goal": "theorem disjoint_union_left {h₁ h₂ h₃ : Heap} :\n    Heap.disjoint (Heap.union h₁ h₂) h₃ ↔ Heap.disjoint h₁ h₃ ∧ Heap.disjoint h₂ h₃\n\ntheorem disjoint_union_right {h₁ h₂ h₃ : Heap} :\n    Heap.disjoint h₁ (Heap.union h₂ h₃) ↔ Heap.disjoint h₁ h₂ ∧ Heap.disjoint h₁ h₃",
+    "name": "disjoint_union_left / disjoint_union_right",
+    "goal": "theorem disjoint_union_left {h₁ h₂ h₃ : Heap} :\n    Heap.disjoint (Heap.union h₁ h₂) h₃ ↔ Heap.disjoint h₁ h₃ ∧ Heap.disjoint h₂ h₃ := by\n  sorry\n\ntheorem disjoint_union_right {h₁ h₂ h₃ : Heap} :\n    Heap.disjoint h₁ (Heap.union h₂ h₃) ↔ Heap.disjoint h₁ h₂ ∧ Heap.disjoint h₁ h₃ := by",
     "sol": "theorem disjoint_union_left {h₁ h₂ h₃ : Heap} :\n    Heap.disjoint (Heap.union h₁ h₂) h₃ ↔ Heap.disjoint h₁ h₃ ∧ Heap.disjoint h₂ h₃ := by\n  constructor\n  · intro hd\n    refine ⟨fun l => ?_, fun l => ?_⟩\n    · rcases hd l with h | h\n      · exact Or.inl (union_eq_none.mp h).1\n      · exact Or.inr h\n    · rcases hd l with h | h\n      · exact Or.inl (union_eq_none.mp h).2\n      · exact Or.inr h\n  · intro ⟨ha, hb⟩ l\n    rcases ha l with h | h\n    · rcases hb l with h' | h'\n      · exact Or.inl (union_eq_none.mpr ⟨h, h'⟩)\n      · exact Or.inr h'\n    · exact Or.inr h\n\ntheorem disjoint_union_right {h₁ h₂ h₃ : Heap} :\n    Heap.disjoint h₁ (Heap.union h₂ h₃) ↔ Heap.disjoint h₁ h₂ ∧ Heap.disjoint h₁ h₃ := by\n  constructor\n  · intro hd\n    have h' := disjoint_union_left.mp (disjoint_symm hd)\n    exact ⟨disjoint_symm h'.1, disjoint_symm h'.2⟩\n  · intro ⟨ha, hb⟩\n    exact disjoint_symm (disjoint_union_left.mpr ⟨disjoint_symm ha, disjoint_symm hb⟩)",
+    "hard": true
+   },
+   "x23": {
+    "name": "heapPCM",
+    "goal": "def heapPCM : PCM Heap where\n  op         :=",
+    "sol": "def heapPCM : PCM Heap where\n  op         := Heap.union\n  unit       := Heap.empty\n  valid      := Heap.disjoint\n  op_comm    := fun _ _ hd => union_comm hd\n  op_assoc   := union_assoc\n  unit_left  := union_empty_left\n  valid_unit := disjoint_empty_left\n  valid_comm := fun _ _ hd => disjoint_symm hd",
+    "hard": false
+   },
+   "x24": {
+    "name": "union_cancel_left",
+    "goal": "theorem union_cancel_left {h₁ h₂ h₃ : Heap}\n    (hd₂ : Heap.disjoint h₁ h₂) (hd₃ : Heap.disjoint h₁ h₃)\n    (he : Heap.union h₁ h₂ = Heap.union h₁ h₃) : h₂ = h₃ := by",
+    "sol": "theorem union_cancel_left {h₁ h₂ h₃ : Heap}\n    (hd₂ : Heap.disjoint h₁ h₂) (hd₃ : Heap.disjoint h₁ h₃)\n    (he : Heap.union h₁ h₂ = Heap.union h₁ h₃) : h₂ = h₃ := by\n  funext l\n  have hl := congrFun he l\n  cases h1 : h₁ l with\n  | none => rw [union_of_none h₂ h1, union_of_none h₃ h1] at hl; exact hl\n  | some v =>\n      rcases hd₂ l with e | e\n      · rw [h1] at e; exact absurd e (by simp)\n      · rcases hd₃ l with e' | e'\n        · rw [h1] at e'; exact absurd e' (by simp)\n        · rw [e, e']",
+    "hard": true
+   }
+  }
+ },
+ "splits": {
+  "num": "11",
+  "phase": "Phase 1 · The resource algebra",
+  "title": "LAB — splitting a heap",
+  "ex": {
+   "x25": {
+    "name": "splits_empty_right",
+    "goal": "theorem splits_empty_right (h : Heap) : Heap.splits h h Heap.empty :=",
+    "sol": "theorem splits_empty_right (h : Heap) : Heap.splits h h Heap.empty :=\n  ⟨disjoint_empty_right h, (union_empty_right h).symm⟩",
     "hard": false
    },
    "m2-8": {
     "name": "splits_empty_left / splits_comm",
-    "goal": "theorem splits_empty_left (h : Heap) : Heap.splits h Heap.empty h\ntheorem splits_comm {h h₁ h₂ : Heap} : Heap.splits h h₁ h₂ → Heap.splits h h₂ h₁",
+    "goal": "theorem splits_empty_left (h : Heap) : Heap.splits h Heap.empty h :=\n  sorry\n\ntheorem splits_comm {h h₁ h₂ : Heap} : Heap.splits h h₁ h₂ → Heap.splits h h₂ h₁ := by",
     "sol": "theorem splits_empty_left (h : Heap) : Heap.splits h Heap.empty h :=\n  ⟨disjoint_empty_left h, (union_empty_left h).symm⟩\n\ntheorem splits_comm {h h₁ h₂ : Heap} : Heap.splits h h₁ h₂ → Heap.splits h h₂ h₁ := by\n  intro ⟨hd, he⟩\n  exact ⟨disjoint_symm hd, by rw [he, union_comm hd]⟩",
     "hard": false
    },
    "m2-9": {
     "name": "splits_assoc",
-    "goal": "theorem splits_assoc {h hPQ hP hQ hR : Heap}\n    (h1 : Heap.splits h hPQ hR) (h2 : Heap.splits hPQ hP hQ) :\n    ∃ hQR, Heap.splits h hP hQR ∧ Heap.splits hQR hQ hR",
+    "goal": "theorem splits_assoc {h hPQ hP hQ hR : Heap}\n    (h1 : Heap.splits h hPQ hR) (h2 : Heap.splits hPQ hP hQ) :\n    ∃ hQR, Heap.splits h hP hQR ∧ Heap.splits hQR hQ hR := by",
     "sol": "theorem splits_assoc {h hPQ hP hQ hR : Heap}\n    (h1 : Heap.splits h hPQ hR) (h2 : Heap.splits hPQ hP hQ) :\n    ∃ hQR, Heap.splits h hP hQR ∧ Heap.splits hQR hQ hR := by\n  obtain ⟨hd₁, he₁⟩ := h1\n  obtain ⟨hd₂, he₂⟩ := h2\n  subst he₂\n  obtain ⟨hPR, hQR'⟩ := disjoint_union_left.mp hd₁\n  refine ⟨Heap.union hQ hR, ⟨disjoint_union_right.mpr ⟨hd₂, hPR⟩, ?_⟩, ⟨hQR', rfl⟩⟩\n  rw [he₁, union_assoc]",
     "hard": true
-   }
-  },
-  "code": [
-   "def Heap.disjoint (h₁ h₂ : Heap) : Prop :=\n  ∀ l, h₁ l = none ∨ h₂ l = none\n\ndef Heap.union (h₁ h₂ : Heap) : Heap :=\n  fun l =>\n    match h₁ l with\n    | some v => some v\n    | none   => h₂ l\n\ndef Heap.splits (whole left right : Heap) : Prop :=\n  Heap.disjoint left right ∧ whole = Heap.union left right",
-   "theorem union_of_none {h₁ : Heap} (h₂ : Heap) {l : Loc} (hl : h₁ l = none) :\n    Heap.union h₁ h₂ l = h₂ l := by\n  simp [Heap.union, hl]\n\ntheorem union_of_some {h₁ : Heap} (h₂ : Heap) {l : Loc} {v : Val} (hl : h₁ l = some v) :\n    Heap.union h₁ h₂ l = some v := by\n  simp [Heap.union, hl]\n\ntheorem union_eq_none {h₁ h₂ : Heap} {l : Loc} :\n    Heap.union h₁ h₂ l = none ↔ h₁ l = none ∧ h₂ l = none := by\n  constructor\n  · intro h\n    cases hl : h₁ l with\n    | none   => exact ⟨rfl, by rwa [union_of_none h₂ hl] at h⟩\n    | some v => rw [union_of_some h₂ hl] at h; exact absurd h (by simp)\n  · intro ⟨ha, hb⟩\n    rw [union_of_none h₂ ha]; exact hb"
-  ]
- },
- "m3": {
-  "num": "M3",
-  "phase": "Phase 1 · Semantic foundations",
-  "title": "Assertions, entailment, and exact ownership",
-  "ex": {
-   "m3-1": {
-    "name": "pointsTo_value_unique — and why the obvious statement is false",
-    "goal": "-- the version you will be tempted to write:\ntheorem bad :\n    aAnd (l ↦ v₁) (l ↦ v₂) ⊢ pure (fun _ => v₁ = v₂)\n\n-- the version that is actually true:\ntheorem pointsTo_value_unique (l : Loc) (v₁ v₂ : Val) :\n    aAnd (l ↦ v₁) (l ↦ v₂) ⊢ fact (fun _ => v₁ = v₂)",
-    "sol": "theorem pointsTo_value_unique (l : Loc) (v₁ v₂ : Val) :\n    aAnd (l ↦ v₁) (l ↦ v₂) ⊢ fact (fun _ => v₁ = v₂) := by\n  intro σ h ⟨h1, h2⟩\n  have : Heap.singleton l v₁ l = Heap.singleton l v₂ l := by rw [← h1, ← h2]\n  rw [singleton_same, singleton_same] at this\n  exact Option.some.inj this\n\ntheorem pointsTo_not_emp (l : Loc) (v : Val) :\n    ¬ ((l ↦ v) ⊢ emp) := by\n  intro hcontra\n  have h := hcontra (fun _ => 0) (Heap.singleton l v) rfl\n  have : Heap.singleton l v l = Heap.empty l := by rw [h]\n  rw [singleton_same] at this\n  exact absurd this (by simp [Heap.empty])",
-    "hard": false
    },
+   "x26": {
+    "name": "union_not_comm",
+    "goal": "-- Delete the line below and write your own `theorem union_not_comm …`.\n-- Any correct statement of the fact will be accepted.\nexample : True := by",
+    "sol": "theorem union_not_comm :\n    ¬ ∀ h₁ h₂ : Heap, Heap.union h₁ h₂ = Heap.union h₂ h₁ := by\n  intro h\n  have h0 := congrFun (h (Heap.singleton 0 4) (Heap.singleton 0 7)) 0\n  rw [union_of_some (Heap.singleton 0 7) (singleton_same 0 4),\n      union_of_some (Heap.singleton 0 4) (singleton_same 0 7)] at h0\n  exact absurd h0 (by simp)",
+    "hard": false
+   }
+  }
+ },
+ "assertions": {
+  "num": "12",
+  "phase": "Phase 2 · The logic of ownership",
+  "title": "Assertions and entailment",
+  "ex": {
    "m3-2": {
     "name": "entails_refl / entails_trans",
-    "goal": "theorem entails_refl (P : Assertion) : P ⊢ P\ntheorem entails_trans {P Q R : Assertion} (h₁ : P ⊢ Q) (h₂ : Q ⊢ R) : P ⊢ R",
+    "goal": "theorem entails_refl (P : Assertion) : P ⊢ P :=\n  sorry\n\ntheorem entails_trans {P Q R : Assertion} (h₁ : P ⊢ Q) (h₂ : Q ⊢ R) : P ⊢ R :=",
     "sol": "theorem entails_refl (P : Assertion) : P ⊢ P := fun _ _ hp => hp\n\ntheorem entails_trans {P Q R : Assertion} (h₁ : P ⊢ Q) (h₂ : Q ⊢ R) : P ⊢ R :=\n  fun σ h hp => h₂ σ h (h₁ σ h hp)",
     "hard": false
    },
    "m3-3": {
     "name": "and_left / and_right / and_intro",
-    "goal": "theorem and_left  (P Q : Assertion) : aAnd P Q ⊢ P\ntheorem and_right (P Q : Assertion) : aAnd P Q ⊢ Q\ntheorem and_intro {P Q R : Assertion} (h₁ : P ⊢ Q) (h₂ : P ⊢ R) : P ⊢ aAnd Q R",
+    "goal": "theorem and_left (P Q : Assertion) : aAnd P Q ⊢ P :=\n  sorry\n\ntheorem and_right (P Q : Assertion) : aAnd P Q ⊢ Q :=\n  sorry\n\ntheorem and_intro {P Q R : Assertion} (h₁ : P ⊢ Q) (h₂ : P ⊢ R) : P ⊢ aAnd Q R :=",
     "sol": "theorem and_left (P Q : Assertion) : aAnd P Q ⊢ P := fun _ _ h => h.1\n\ntheorem and_right (P Q : Assertion) : aAnd P Q ⊢ Q := fun _ _ h => h.2\n\ntheorem and_intro {P Q R : Assertion} (h₁ : P ⊢ Q) (h₂ : P ⊢ R) : P ⊢ aAnd Q R :=\n  fun σ h hp => ⟨h₁ σ h hp, h₂ σ h hp⟩",
     "hard": false
+   },
+   "x27": {
+    "name": "or_left / or_right / or_elim",
+    "goal": "theorem or_left (P Q : Assertion) : P ⊢ aOr P Q :=\n  sorry\n\ntheorem or_right (P Q : Assertion) : Q ⊢ aOr P Q :=\n  sorry\n\ntheorem or_elim {P Q R : Assertion} (h₁ : P ⊢ R) (h₂ : Q ⊢ R) : aOr P Q ⊢ R := by",
+    "sol": "theorem or_left (P Q : Assertion) : P ⊢ aOr P Q := fun _ _ hp => Or.inl hp\ntheorem or_right (P Q : Assertion) : Q ⊢ aOr P Q := fun _ _ hq => Or.inr hq\ntheorem or_elim {P Q R : Assertion} (h₁ : P ⊢ R) (h₂ : Q ⊢ R) : aOr P Q ⊢ R := by\n  intro σ h hpq\n  rcases hpq with hp | hq\n  · exact h₁ σ h hp\n  · exact h₂ σ h hq",
+    "hard": false
+   },
+   "x28": {
+    "name": "equiv_refl / equiv_symm / equiv_trans",
+    "goal": "theorem equiv_refl (P : Assertion) : P ⊣⊢ P :=\n  sorry\n\ntheorem equiv_symm {P Q : Assertion} (h : P ⊣⊢ Q) : Q ⊣⊢ P :=\n  sorry\n\ntheorem equiv_trans {P Q R : Assertion} (h₁ : P ⊣⊢ Q) (h₂ : Q ⊣⊢ R) : P ⊣⊢ R :=",
+    "sol": "theorem equiv_refl (P : Assertion) : P ⊣⊢ P := ⟨entails_refl P, entails_refl P⟩\n\ntheorem equiv_symm {P Q : Assertion} (h : P ⊣⊢ Q) : Q ⊣⊢ P := ⟨h.2, h.1⟩\n\ntheorem equiv_trans {P Q R : Assertion} (h₁ : P ⊣⊢ Q) (h₂ : Q ⊣⊢ R) : P ⊣⊢ R :=\n  ⟨entails_trans h₁.1 h₂.1, entails_trans h₂.2 h₁.2⟩",
+    "hard": false
+   },
+   "x29": {
+    "name": "and_comm_iff / and_assoc_iff",
+    "goal": "theorem and_comm_iff (P Q : Assertion) : aAnd P Q ⊣⊢ aAnd Q P :=\n  sorry\n\ntheorem and_assoc_iff (P Q R : Assertion) : aAnd P (aAnd Q R) ⊣⊢ aAnd (aAnd P Q) R :=",
+    "sol": "theorem and_comm_iff (P Q : Assertion) : aAnd P Q ⊣⊢ aAnd Q P :=\n  ⟨fun _ _ hp => ⟨hp.2, hp.1⟩, fun _ _ hp => ⟨hp.2, hp.1⟩⟩\n\ntheorem and_assoc_iff (P Q R : Assertion) : aAnd P (aAnd Q R) ⊣⊢ aAnd (aAnd P Q) R :=\n  ⟨fun _ _ hp => ⟨⟨hp.1, hp.2.1⟩, hp.2.2⟩, fun _ _ hp => ⟨hp.1.1, hp.1.2, hp.2⟩⟩",
+    "hard": false
    }
-  },
-  "code": [
-   "abbrev Assertion := Store → Heap → Prop",
-   "def Entails (P Q : Assertion) : Prop := ∀ σ h, P σ h → Q σ h\ninfix:40 \" ⊢ \" => Entails\n\ndef AssertionEquiv (P Q : Assertion) : Prop := Entails P Q ∧ Entails Q P\ninfix:40 \" ⊣⊢ \" => AssertionEquiv",
-   "def aTrue  : Assertion := fun _ _ => True\n\ndef aFalse : Assertion := fun _ _ => False\n\ndef aAnd (P Q : Assertion) : Assertion := fun σ h => P σ h ∧ Q σ h\n\ndef aOr  (P Q : Assertion) : Assertion := fun σ h => P σ h ∨ Q σ h\n\ndef aExists {α : Sort u} (P : α → Assertion) : Assertion := fun σ h => ∃ x, P x σ h",
-   "def emp : Assertion := fun _ h => h = Heap.empty\n\ndef pointsTo (l : Loc) (v : Val) : Assertion := fun _ h => h = Heap.singleton l v\ninfix:60 \" ↦ \" => pointsTo",
-   "def fact (φ : Store → Prop) : Assertion := fun σ _ => φ σ\n\ndef pure (φ : Store → Prop) : Assertion := aAnd (fact φ) emp"
-  ]
+  }
  },
- "m4": {
-  "num": "M4",
-  "phase": "Phase 1 · Semantic foundations",
-  "title": "Separating conjunction",
+ "pointsto": {
+  "num": "13",
+  "phase": "Phase 2 · The logic of ownership",
+  "title": "emp, ↦, and exact ownership",
+  "ex": {
+   "m3-1": {
+    "name": "pointsTo_value_unique / pointsTo_not_emp",
+    "goal": "theorem pointsTo_value_unique (l : Loc) (v₁ v₂ : Val) :\n    aAnd (l ↦ v₁) (l ↦ v₂) ⊢ fact (fun _ => v₁ = v₂) := by\n  sorry\n\ntheorem pointsTo_not_emp (l : Loc) (v : Val) :\n    ¬ ((l ↦ v) ⊢ emp) := by",
+    "sol": "theorem pointsTo_value_unique (l : Loc) (v₁ v₂ : Val) :\n    aAnd (l ↦ v₁) (l ↦ v₂) ⊢ fact (fun _ => v₁ = v₂) := by\n  intro σ h ⟨h1, h2⟩\n  have : Heap.singleton l v₁ l = Heap.singleton l v₂ l := by rw [← h1, ← h2]\n  rw [singleton_same, singleton_same] at this\n  exact Option.some.inj this\n\ntheorem pointsTo_not_emp (l : Loc) (v : Val) :\n    ¬ ((l ↦ v) ⊢ emp) := by\n  intro hcontra\n  have h := hcontra (fun _ => 0) (Heap.singleton l v) rfl\n  have : Heap.singleton l v l = Heap.empty l := by rw [h]\n  rw [singleton_same] at this\n  exact absurd this (by simp [Heap.empty])",
+    "hard": false
+   },
+   "x30": {
+    "name": "emp as “nothing anywhere”",
+    "goal": "-- Delete the line below and write your own `theorem` about `emp`.\n-- Any correct statement of the fact will be accepted.\nexample : True := by",
+    "sol": "theorem emp_iff_all_none : emp ⊣⊢ fun _ h => ∀ l, h l = none := by\n  constructor\n  · intro σ h hp l\n    rw [hp]\n    simp [Heap.empty]\n  · intro σ h hp\n    funext l\n    simp [Heap.empty, hp l]",
+    "hard": false
+   }
+  }
+ },
+ "star": {
+  "num": "14",
+  "phase": "Phase 2 · The logic of ownership",
+  "title": "Separating conjunction, and what it cannot do",
+  "ex": {
+   "x31": {
+    "name": "star_intro",
+    "goal": "theorem star_intro {P Q : Assertion} {σ : Store} {h h₁ h₂ : Heap}\n    (hd : Heap.disjoint h₁ h₂) (hu : h = Heap.union h₁ h₂)\n    (hp : P σ h₁) (hq : Q σ h₂) : (P ∗ Q) σ h :=",
+    "sol": "theorem star_intro {P Q : Assertion} {σ : Store} {h h₁ h₂ : Heap}\n    (hd : Heap.disjoint h₁ h₂) (hu : h = Heap.union h₁ h₂)\n    (hp : P σ h₁) (hq : Q σ h₂) : (P ∗ Q) σ h :=\n  ⟨h₁, h₂, hd, hu, hp, hq⟩",
+    "hard": false
+   },
+   "x32": {
+    "name": "star_same_loc_absurd",
+    "goal": "theorem star_same_loc_absurd (l : Loc) (v₁ v₂ : Val) :\n    (l ↦ v₁) ∗ (l ↦ v₂) ⊢ aFalse := by",
+    "sol": "theorem star_same_loc_absurd (l : Loc) (v₁ v₂ : Val) :\n    (l ↦ v₁) ∗ (l ↦ v₂) ⊢ aFalse := by\n  intro σ h ⟨h₁, h₂, hd, _, hp, hq⟩\n  subst hp; subst hq\n  exact ((singleton_disjoint_iff v₁ v₂).mp hd) rfl",
+    "hard": false
+   },
+   "x33": {
+    "name": "no_star_weakening",
+    "goal": "theorem no_star_weakening : ¬ ((0 ↦ 4) ∗ (1 ↦ 7) ⊢ (0 ↦ 4)) := by",
+    "sol": "theorem no_star_weakening : ¬ ((0 ↦ 4) ∗ (1 ↦ 7) ⊢ (0 ↦ 4)) := by\n  intro hall\n  have h := hall (fun _ => 0) (Heap.union (Heap.singleton 0 4) (Heap.singleton 1 7))\n    ⟨Heap.singleton 0 4, Heap.singleton 1 7, singleton_disjoint 4 7 (by simp), rfl, rfl, rfl⟩\n  have h1 := congrFun h 1\n  rw [union_of_none (Heap.singleton 1 7) (singleton_other 0 1 4 (by simp)),\n      singleton_same, singleton_other 0 1 4 (by simp)] at h1\n  exact absurd h1 (by simp)",
+    "hard": true
+   },
+   "x34": {
+    "name": "no_star_duplication",
+    "goal": "theorem no_star_duplication : ¬ (∀ P : Assertion, P ⊢ P ∗ P) := by",
+    "sol": "theorem no_star_duplication : ¬ (∀ P : Assertion, P ⊢ P ∗ P) := by\n  intro hall\n  obtain ⟨h₁, h₂, hd, hu, hp, hq⟩ := hall (4 ↦ 7) (fun _ => 0) (Heap.singleton 4 7) rfl\n  have e1 : h₁ = Heap.singleton 4 7 := hp\n  have e2 : h₂ = Heap.singleton 4 7 := hq\n  subst e1; subst e2\n  exact ((singleton_disjoint_iff 7 7).mp hd) rfl",
+    "hard": true
+   },
+   "x35": {
+    "name": "starNoDisj_dup",
+    "goal": "theorem starNoDisj_dup (P : Assertion) : P ⊢ starNoDisj P P := by",
+    "sol": "theorem starNoDisj_dup (P : Assertion) : P ⊢ starNoDisj P P := by\n  intro σ h hp\n  exact ⟨h, h, (union_self h).symm, hp, hp⟩",
+    "hard": false
+   }
+  }
+ },
+ "star-algebra": {
+  "num": "15",
+  "phase": "Phase 2 · The logic of ownership",
+  "title": "LAB — the laws of ∗",
   "ex": {
    "m4-1": {
     "name": "star_emp_left / star_emp_right",
-    "goal": "theorem star_emp_left  (P : Assertion) : emp ∗ P ⊢ P\ntheorem star_emp_right (P : Assertion) : P ∗ emp ⊢ P",
+    "goal": "theorem star_emp_left (P : Assertion) : emp ∗ P ⊢ P := by\n  sorry\n\ntheorem star_emp_right (P : Assertion) : P ∗ emp ⊢ P := by",
     "sol": "theorem star_emp_left (P : Assertion) : emp ∗ P ⊢ P := by\n  intro σ h ⟨h₁, h₂, _, hu, he, hp⟩\n  rw [hu, he, union_empty_left]\n  exact hp\n\ntheorem star_emp_right (P : Assertion) : P ∗ emp ⊢ P := by\n  intro σ h ⟨h₁, h₂, _, hu, hp, he⟩\n  rw [hu, he, union_empty_right]\n  exact hp",
     "hard": false
    },
    "m4-2": {
     "name": "star_emp_left_intro / star_emp_right_intro",
-    "goal": "theorem star_emp_left_intro  (P : Assertion) : P ⊢ emp ∗ P\ntheorem star_emp_right_intro (P : Assertion) : P ⊢ P ∗ emp",
+    "goal": "theorem star_emp_left_intro (P : Assertion) : P ⊢ emp ∗ P := by\n  sorry\n\ntheorem star_emp_right_intro (P : Assertion) : P ⊢ P ∗ emp := by",
     "sol": "theorem star_emp_left_intro (P : Assertion) : P ⊢ emp ∗ P := by\n  intro σ h hp\n  exact ⟨Heap.empty, h, disjoint_empty_left h, (union_empty_left h).symm, rfl, hp⟩\n\ntheorem star_emp_right_intro (P : Assertion) : P ⊢ P ∗ emp := by\n  intro σ h hp\n  exact ⟨h, Heap.empty, disjoint_empty_right h, (union_empty_right h).symm, hp, rfl⟩",
     "hard": false
    },
    "m4-3": {
     "name": "star_comm",
-    "goal": "theorem star_comm (P Q : Assertion) : P ∗ Q ⊢ Q ∗ P",
+    "goal": "theorem star_comm (P Q : Assertion) : P ∗ Q ⊢ Q ∗ P := by",
     "sol": "theorem star_comm (P Q : Assertion) : P ∗ Q ⊢ Q ∗ P := by\n  intro σ h ⟨h₁, h₂, hd, hu, hp, hq⟩\n  exact ⟨h₂, h₁, disjoint_symm hd, by rw [hu, union_comm hd], hq, hp⟩",
     "hard": false
    },
-   "m4-4": {
-    "name": "star_assoc_left / star_assoc_right",
-    "goal": "theorem star_assoc_left  (P Q R : Assertion) : (P ∗ Q) ∗ R ⊢ P ∗ (Q ∗ R)\ntheorem star_assoc_right (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ (P ∗ Q) ∗ R",
-    "sol": "theorem star_assoc_left (P Q R : Assertion) : (P ∗ Q) ∗ R ⊢ P ∗ (Q ∗ R) := by\n  intro σ h ⟨hPQ, hR, hd₁, hu₁, ⟨hP, hQ, hd₂, hu₂, hp, hq⟩, hr⟩\n  subst hu₂\n  obtain ⟨hPR, hQR⟩ := disjoint_union_left.mp hd₁\n  refine ⟨hP, Heap.union hQ hR, disjoint_union_right.mpr ⟨hd₂, hPR⟩, ?_, hp, ?_⟩\n  · rw [hu₁, union_assoc]\n  · exact ⟨hQ, hR, hQR, rfl, hq, hr⟩\n\ntheorem star_assoc_right (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ (P ∗ Q) ∗ R := by\n  intro σ h ⟨hP, hQR, hd₁, hu₁, hp, ⟨hQ, hR, hd₂, hu₂, hq, hr⟩⟩\n  subst hu₂\n  obtain ⟨hPQ, hPR⟩ := disjoint_union_right.mp hd₁\n  refine ⟨Heap.union hP hQ, hR, disjoint_union_left.mpr ⟨hPR, hd₂⟩, ?_, ⟨hP, hQ, hPQ, rfl, hp, hq⟩, hr⟩\n  rw [hu₁, union_assoc]",
-    "hard": true
-   },
    "m4-5": {
-    "name": "star_mono",
-    "goal": "theorem star_mono {P P' Q Q' : Assertion} (hpq : P ⊢ P') (hrs : Q ⊢ Q') :\n    P ∗ Q ⊢ P' ∗ Q'",
+    "name": "star_mono and its two specialisations",
+    "goal": "theorem star_mono {P P' Q Q' : Assertion} (hpq : P ⊢ P') (hrs : Q ⊢ Q') :\n    P ∗ Q ⊢ P' ∗ Q' := by\n  sorry\n\ntheorem star_mono_left {P P' : Assertion} (Q : Assertion) (h : P ⊢ P') : P ∗ Q ⊢ P' ∗ Q :=\n  sorry\n\ntheorem star_mono_right (P : Assertion) {Q Q' : Assertion} (h : Q ⊢ Q') : P ∗ Q ⊢ P ∗ Q' :=",
     "sol": "theorem star_mono {P P' Q Q' : Assertion} (hpq : P ⊢ P') (hrs : Q ⊢ Q') :\n    P ∗ Q ⊢ P' ∗ Q' := by\n  intro σ h ⟨h₁, h₂, hd, hu, hp, hq⟩\n  exact ⟨h₁, h₂, hd, hu, hpq σ h₁ hp, hrs σ h₂ hq⟩\n\ntheorem star_mono_left {P P' : Assertion} (Q : Assertion) (h : P ⊢ P') : P ∗ Q ⊢ P' ∗ Q :=\n  star_mono h (entails_refl Q)\n\ntheorem star_mono_right (P : Assertion) {Q Q' : Assertion} (h : Q ⊢ Q') : P ∗ Q ⊢ P ∗ Q' :=\n  star_mono (entails_refl P) h",
     "hard": false
    },
    "m4-6": {
     "name": "star_or_left / star_exists_left",
-    "goal": "theorem star_or_left (P Q R : Assertion) :\n    (aOr P Q) ∗ R ⊢ aOr (P ∗ R) (Q ∗ R)\n\ntheorem star_exists_left {α : Sort u} (P : α → Assertion) (Q : Assertion) :\n    aExists P ∗ Q ⊢ aExists (fun x => P x ∗ Q)",
+    "goal": "theorem star_or_left (P Q R : Assertion) : (aOr P Q) ∗ R ⊢ aOr (P ∗ R) (Q ∗ R) := by\n  sorry\n\ntheorem star_exists_left {α : Sort u} (P : α → Assertion) (Q : Assertion) :\n    aExists P ∗ Q ⊢ aExists (fun x => P x ∗ Q) := by",
     "sol": "theorem star_or_left (P Q R : Assertion) : (aOr P Q) ∗ R ⊢ aOr (P ∗ R) (Q ∗ R) := by\n  intro σ h ⟨h₁, h₂, hd, hu, hpq, hr⟩\n  rcases hpq with hp | hq\n  · exact Or.inl ⟨h₁, h₂, hd, hu, hp, hr⟩\n  · exact Or.inr ⟨h₁, h₂, hd, hu, hq, hr⟩\n\ntheorem star_exists_left {α : Sort u} (P : α → Assertion) (Q : Assertion) :\n    aExists P ∗ Q ⊢ aExists (fun x => P x ∗ Q) := by\n  intro σ h ⟨h₁, h₂, hd, hu, ⟨x, hp⟩, hq⟩\n  exact ⟨x, h₁, h₂, hd, hu, hp, hq⟩",
     "hard": false
    },
+   "x36": {
+    "name": "star_emp_left_iff / star_emp_right_iff / star_comm_iff / star_congr",
+    "goal": "theorem star_emp_left_iff (P : Assertion) : emp ∗ P ⊣⊢ P :=\n  sorry\n\ntheorem star_emp_right_iff (P : Assertion) : P ∗ emp ⊣⊢ P :=\n  sorry\n\ntheorem star_comm_iff (P Q : Assertion) : P ∗ Q ⊣⊢ Q ∗ P :=\n  sorry\n\ntheorem star_congr {P P' Q Q' : Assertion} (hp : P ⊣⊢ P') (hq : Q ⊣⊢ Q') :\n    P ∗ Q ⊣⊢ P' ∗ Q' :=",
+    "sol": "theorem star_emp_left_iff (P : Assertion) : emp ∗ P ⊣⊢ P :=\n  ⟨star_emp_left P, star_emp_left_intro P⟩\n\ntheorem star_emp_right_iff (P : Assertion) : P ∗ emp ⊣⊢ P :=\n  ⟨star_emp_right P, star_emp_right_intro P⟩\n\ntheorem star_comm_iff (P Q : Assertion) : P ∗ Q ⊣⊢ Q ∗ P :=\n  ⟨star_comm P Q, star_comm Q P⟩\n\ntheorem star_congr {P P' Q Q' : Assertion} (hp : P ⊣⊢ P') (hq : Q ⊣⊢ Q') :\n    P ∗ Q ⊣⊢ P' ∗ Q' :=\n  ⟨star_mono hp.1 hq.1, star_mono hp.2 hq.2⟩",
+    "hard": false
+   }
+  }
+ },
+ "star-assoc": {
+  "num": "16",
+  "phase": "Phase 2 · The logic of ownership",
+  "title": "Associativity",
+  "ex": {
+   "m4-4": {
+    "name": "star_assoc_left / star_assoc_right",
+    "goal": "theorem star_assoc_left (P Q R : Assertion) : (P ∗ Q) ∗ R ⊢ P ∗ (Q ∗ R) := by\n  sorry\n\ntheorem star_assoc_right (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ (P ∗ Q) ∗ R := by",
+    "sol": "theorem star_assoc_left (P Q R : Assertion) : (P ∗ Q) ∗ R ⊢ P ∗ (Q ∗ R) := by\n  intro σ h ⟨hPQ, hR, hd₁, hu₁, ⟨hP, hQ, hd₂, hu₂, hp, hq⟩, hr⟩\n  subst hu₂\n  obtain ⟨hPR, hQR⟩ := disjoint_union_left.mp hd₁\n  refine ⟨hP, Heap.union hQ hR, disjoint_union_right.mpr ⟨hd₂, hPR⟩, ?_, hp, ?_⟩\n  · rw [hu₁, union_assoc]\n  · exact ⟨hQ, hR, hQR, rfl, hq, hr⟩\n\ntheorem star_assoc_right (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ (P ∗ Q) ∗ R := by\n  intro σ h ⟨hP, hQR, hd₁, hu₁, hp, ⟨hQ, hR, hd₂, hu₂, hq, hr⟩⟩\n  subst hu₂\n  obtain ⟨hPQ, hPR⟩ := disjoint_union_right.mp hd₁\n  refine ⟨Heap.union hP hQ, hR, disjoint_union_left.mpr ⟨hPR, hd₂⟩, ?_, ⟨hP, hQ, hPQ, rfl, hp, hq⟩, hr⟩\n  rw [hu₁, union_assoc]",
+    "hard": true
+   },
+   "x37": {
+    "name": "star_assoc_iff",
+    "goal": "theorem star_assoc_iff (P Q R : Assertion) : (P ∗ Q) ∗ R ⊣⊢ P ∗ (Q ∗ R) :=",
+    "sol": "theorem star_assoc_iff (P Q R : Assertion) : (P ∗ Q) ∗ R ⊣⊢ P ∗ (Q ∗ R) :=\n  ⟨star_assoc_left P Q R, star_assoc_right P Q R⟩",
+    "hard": false
+   }
+  }
+ },
+ "pure": {
+  "num": "17",
+  "phase": "Phase 2 · The logic of ownership",
+  "title": "Propositions inside a star, and the toolkit",
+  "ex": {
    "m4-7": {
     "name": "two_cells_distinct",
-    "goal": "theorem two_cells_distinct (l₁ l₂ : Loc) (v₁ v₂ : Val) :\n    (l₁ ↦ v₁) ∗ (l₂ ↦ v₂) ⊢ fact (fun _ => l₁ ≠ l₂)",
+    "goal": "theorem two_cells_distinct (l₁ l₂ : Loc) (v₁ v₂ : Val) :\n    (l₁ ↦ v₁) ∗ (l₂ ↦ v₂) ⊢ fact (fun _ => l₁ ≠ l₂) := by",
     "sol": "theorem two_cells_distinct (l₁ l₂ : Loc) (v₁ v₂ : Val) :\n    (l₁ ↦ v₁) ∗ (l₂ ↦ v₂) ⊢ fact (fun _ => l₁ ≠ l₂) := by\n  intro σ h ⟨h₁, h₂, hd, _, hp, hq⟩\n  subst hp; subst hq\n  exact (singleton_disjoint_iff v₁ v₂).mp hd",
     "hard": false
    },
    "m4-8": {
-    "name": "star_swap_middle, star_rotate_left/right, star_pure_left/right",
-    "goal": "theorem star_swap_middle  (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ Q ∗ (P ∗ R)\ntheorem star_rotate_left  (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ (P ∗ Q) ∗ R\ntheorem star_rotate_right (P Q R : Assertion) : (P ∗ Q) ∗ R ⊢ P ∗ (Q ∗ R)\n\ntheorem star_pure_left  (φ : Store → Prop) (P : Assertion) : pure φ ∗ P ⊢ aAnd (fact φ) P\ntheorem star_pure_right (φ : Store → Prop) (P : Assertion) : aAnd (fact φ) P ⊢ pure φ ∗ P",
+    "name": "star_pure_left / star_pure_right / star_swap_middle / star_rotate_left / star_rotate_right",
+    "goal": "theorem star_swap_middle (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ Q ∗ (P ∗ R) :=\n  sorry\n\ntheorem star_rotate_left (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ (P ∗ Q) ∗ R :=\n  sorry\n\ntheorem star_rotate_right (P Q R : Assertion) : (P ∗ Q) ∗ R ⊢ P ∗ (Q ∗ R) :=\n  sorry\n\ntheorem star_pure_left (φ : Store → Prop) (P : Assertion) :\n    pure φ ∗ P ⊢ aAnd (fact φ) P := by\n  sorry\n\ntheorem star_pure_right (φ : Store → Prop) (P : Assertion) :\n    aAnd (fact φ) P ⊢ pure φ ∗ P := by",
     "sol": "theorem star_swap_middle (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ Q ∗ (P ∗ R) :=\n  entails_trans (star_assoc_right P Q R)\n    (entails_trans (star_mono_left R (star_comm P Q)) (star_assoc_left Q P R))\n\ntheorem star_rotate_left (P Q R : Assertion) : P ∗ (Q ∗ R) ⊢ (P ∗ Q) ∗ R :=\n  star_assoc_right P Q R\n\ntheorem star_rotate_right (P Q R : Assertion) : (P ∗ Q) ∗ R ⊢ P ∗ (Q ∗ R) :=\n  star_assoc_left P Q R\n\ntheorem star_pure_left (φ : Store → Prop) (P : Assertion) :\n    pure φ ∗ P ⊢ aAnd (fact φ) P := by\n  intro σ h ⟨h₁, h₂, _, hu, ⟨hφ, he⟩, hp⟩\n  subst he\n  rw [hu, union_empty_left]\n  exact ⟨hφ, hp⟩\n\ntheorem star_pure_right (φ : Store → Prop) (P : Assertion) :\n    aAnd (fact φ) P ⊢ pure φ ∗ P := by\n  intro σ h ⟨hφ, hp⟩\n  exact ⟨Heap.empty, h, disjoint_empty_left h, (union_empty_left h).symm, ⟨hφ, rfl⟩, hp⟩",
     "hard": false
+   },
+   "x38": {
+    "name": "star_or_right / star_exists_right",
+    "goal": "theorem star_or_right (P Q R : Assertion) : aOr (P ∗ R) (Q ∗ R) ⊢ (aOr P Q) ∗ R := by\n  sorry\n\ntheorem star_exists_right {α : Sort u} (P : α → Assertion) (Q : Assertion) :\n    aExists (fun x => P x ∗ Q) ⊢ aExists P ∗ Q := by",
+    "sol": "theorem star_or_right (P Q R : Assertion) : aOr (P ∗ R) (Q ∗ R) ⊢ (aOr P Q) ∗ R := by\n  intro σ h hor\n  rcases hor with ⟨h₁, h₂, hd, hu, hp, hr⟩ | ⟨h₁, h₂, hd, hu, hq, hr⟩\n  · exact ⟨h₁, h₂, hd, hu, Or.inl hp, hr⟩\n  · exact ⟨h₁, h₂, hd, hu, Or.inr hq, hr⟩\n\ntheorem star_exists_right {α : Sort u} (P : α → Assertion) (Q : Assertion) :\n    aExists (fun x => P x ∗ Q) ⊢ aExists P ∗ Q := by\n  intro σ h ⟨x, h₁, h₂, hd, hu, hp, hq⟩\n  exact ⟨h₁, h₂, hd, hu, ⟨x, hp⟩, hq⟩",
+    "hard": false
    }
-  },
-  "code": [
-   "def star (P Q : Assertion) : Assertion :=\n  fun σ h => ∃ h₁ h₂, Heap.disjoint h₁ h₂ ∧ h = Heap.union h₁ h₂ ∧ P σ h₁ ∧ Q σ h₂\ninfixr:55 \" ∗ \" => star"
-  ]
+  }
  },
- "m5": {
-  "num": "M5",
-  "phase": "Phase 2 · Program logic",
-  "title": "A tiny imperative language",
+ "compare": {
+  "num": "§",
+  "phase": "Phase 2 · The logic of ownership",
+  "title": "The same proof, several ways",
+  "ex": {}
+ },
+ "language": {
+  "num": "18",
+  "phase": "Phase 3 · Programs and their semantics",
+  "title": "A language that can get memory wrong",
+  "ex": {
+   "x39": {
+    "name": "@Store.set = @update, and the two store lookup laws",
+    "goal": "example : @Store.set = @update :=\n  sorry\n\ntheorem storeSet_same (σ : Store) (x : Var) (v : Val) : Store.set σ x v x = v :=\n  sorry\n\ntheorem storeSet_other (σ : Store) (x y : Var) (v : Val) (hne : y ≠ x) :\n    Store.set σ x v y = σ y :=",
+    "sol": "example : @Store.set = @update := rfl\n\ntheorem storeSet_same (σ : Store) (x : Var) (v : Val) : Store.set σ x v x = v := update_same σ x v\ntheorem storeSet_other (σ : Store) (x y : Var) (v : Val) (hne : y ≠ x) :\n    Store.set σ x v y = σ y := update_other σ x y v hne",
+    "hard": false
+   },
+   "x40": {
+    "name": "Evaluating a compound expression",
+    "goal": "example : (Atom.plus (.var 0) (.minus (.var 1) (.const 2))).eval (Store.set (fun _ => 0) 1 9) = 7 :=\n  sorry\n\nexample (σ : Store) : (Atom.minus (.const 3) (.const 5)).eval σ = 0 :=",
+    "sol": "example : (Atom.plus (.var 0) (.minus (.var 1) (.const 2))).eval (Store.set (fun _ => 0) 1 9) = 7 := rfl\n\nexample (σ : Store) : (Atom.minus (.const 3) (.const 5)).eval σ = 0 := rfl",
+    "hard": false
+   },
+   "x41": {
+    "name": "Atom.size",
+    "goal": "def Atom.size : Atom → Nat\n  | .const _ => sorry\n  | .var _ => sorry\n  | .plus a b => sorry\n  | .minus a b => sorry\n\nexample : (Atom.plus (.const 1) (.var 0)).size = 3 :=",
+    "sol": "def Atom.size : Atom → Nat\n  | .const _ => 1\n  | .var _ => 1\n  | .plus a b => a.size + b.size + 1\n  | .minus a b => a.size + b.size + 1\n\nexample : (Atom.plus (.const 1) (.var 0)).size = 3 := rfl",
+    "hard": false
+   }
+  }
+ },
+ "exec": {
+  "num": "19",
+  "phase": "Phase 3 · Programs and their semantics",
+  "title": "Running a command is a relation",
   "ex": {
    "m5-1": {
     "name": "exec_skip_inv",
-    "goal": "theorem exec_skip_inv {s s' : State} (h : Exec .skip s s') : s' = s",
+    "goal": "theorem exec_skip_inv {s s' : State} (h : Exec .skip s s') : s' = s := by",
     "sol": "theorem exec_skip_inv {s s' : State} (h : Exec .skip s s') : s' = s := by\n  cases h; rfl",
+    "hard": false
+   },
+   "x42": {
+    "name": "exec_assign_inv / exec_load_inv",
+    "goal": "theorem exec_assign_inv {x : Var} {e : Atom} {s s' : State} (h : Exec (.assign x e) s s') :\n    s' = ⟨Store.set s.store x (e.eval s.store), s.heap⟩ :=\n  sorry\n\ntheorem exec_load_inv {x : Var} {l : Loc} {s s' : State} (h : Exec (.load x l) s s') :\n    ∃ v, s.heap l = some v ∧ s' = ⟨Store.set s.store x v, s.heap⟩ := by",
+    "sol": "theorem exec_assign_inv {x : Var} {e : Atom} {s s' : State} (h : Exec (.assign x e) s s') :\n    s' = ⟨Store.set s.store x (e.eval s.store), s.heap⟩ := by\n  cases h; rfl\n\ntheorem exec_load_inv {x : Var} {l : Loc} {s s' : State} (h : Exec (.load x l) s s') :\n    ∃ v, s.heap l = some v ∧ s' = ⟨Store.set s.store x v, s.heap⟩ := by\n  cases h with\n  | load hl => exact ⟨_, hl, rfl⟩",
+    "hard": false
+   },
+   "x43": {
+    "name": "exec_load_stuck",
+    "goal": "theorem exec_load_stuck (x : Var) (l : Loc) (σ : Store) (s' : State) :\n    ¬ Exec (.load x l) ⟨σ, Heap.empty⟩ s' := by",
+    "sol": "theorem exec_load_stuck (x : Var) (l : Loc) (σ : Store) (s' : State) :\n    ¬ Exec (.load x l) ⟨σ, Heap.empty⟩ s' := by\n  intro hex\n  cases hex with\n  | load hl => exact absurd hl (by simp [Heap.empty])",
+    "hard": false
+   },
+   "x44": {
+    "name": "exec_skip_seq_inv",
+    "goal": "theorem exec_skip_seq_inv {c : Cmd} {s s' : State} (h : Exec (.skip ;; c) s s') : Exec c s s' := by",
+    "sol": "theorem exec_skip_seq_inv {c : Cmd} {s s' : State} (h : Exec (.skip ;; c) s s') : Exec c s s' := by\n  cases h with\n  | seq h₁ h₂ => cases h₁; exact h₂",
+    "hard": false
+   }
+  }
+ },
+ "induction": {
+  "num": "20",
+  "phase": "Phase 3 · Programs and their semantics",
+  "title": "Structural induction, up to derivations",
+  "ex": {
+   "x45": {
+    "name": "allZeros_length / append_nil",
+    "goal": "theorem allZeros_length (n : Nat) : (allZeros n).length = n :=\n  sorry\n\ntheorem append_nil (xs : List Nat) : xs ++ [] = xs := by",
+    "sol": "theorem allZeros_length (n : Nat) : (allZeros n).length = n := by\n  induction n with\n  | zero => rfl\n  | succ n ih => simp [allZeros, ih]\n\ntheorem append_nil (xs : List Nat) : xs ++ [] = xs := by\n  induction xs with\n  | nil => rfl\n  | cons x xs ih => simp",
+    "hard": false
+   },
+   "x46": {
+    "name": "exec_id",
+    "goal": "theorem exec_id {c : Cmd} {s s' : State} (h : Exec c s s') : Exec c s s' := by",
+    "sol": "theorem exec_id {c : Cmd} {s s' : State} (h : Exec c s s') : Exec c s s' := by\n  induction h with\n  | skip => exact .skip\n  | assign => exact .assign\n  | load hl => exact .load hl\n  | write hl => exact .write hl\n  | free hl => exact .free hl\n  | seq _ _ ih₁ ih₂ => exact .seq ih₁ ih₂\n  | iteTrue hb _ ih => exact .iteTrue hb ih\n  | iteFalse hb _ ih => exact .iteFalse hb ih\n  | loopFalse hb => exact .loopFalse hb\n  | loopTrue hb _ _ ihb ihr => exact .loopTrue hb ihb ihr",
     "hard": false
    },
    "m5-2": {
     "name": "exec_deterministic",
-    "goal": "theorem exec_deterministic {c : Cmd} {s s₁ s₂ : State}\n    (h₁ : Exec c s s₁) (h₂ : Exec c s s₂) : s₁ = s₂",
+    "goal": "theorem exec_deterministic {c : Cmd} {s s₁ s₂ : State}\n    (h₁ : Exec c s s₁) (h₂ : Exec c s s₂) : s₁ = s₂ := by",
     "sol": "theorem exec_deterministic {c : Cmd} {s s₁ s₂ : State}\n    (h₁ : Exec c s s₁) (h₂ : Exec c s s₂) : s₁ = s₂ := by\n  induction h₁ generalizing s₂ with\n  | skip => cases h₂; rfl\n  | assign => cases h₂; rfl\n  | load hl => cases h₂ with | load hl' => rw [hl] at hl'; cases hl'; rfl\n  | write hl => cases h₂ with | write hl' => rfl\n  | free hl => cases h₂ with | free hl' => rfl\n  | seq _ _ ih₁ ih₂ =>\n      cases h₂ with\n      | seq h₁' h₂' => exact ih₂ (ih₁ h₁' ▸ h₂')\n  | iteTrue hb _ ih =>\n      cases h₂ with\n      | iteTrue hb' h' => exact ih h'\n      | iteFalse hb' h' => rw [hb] at hb'; exact absurd hb' (by simp)\n  | iteFalse hb _ ih =>\n      cases h₂ with\n      | iteTrue hb' h' => rw [hb] at hb'; exact absurd hb' (by simp)\n      | iteFalse hb' h' => exact ih h'\n  | loopFalse hb =>\n      cases h₂ with\n      | loopFalse hb' => rfl\n      | loopTrue hb' _ _ => rw [hb] at hb'; exact absurd hb' (by simp)\n  | loopTrue hb _ _ ihb ihr =>\n      cases h₂ with\n      | loopFalse hb' => rw [hb] at hb'; exact absurd hb' (by simp)\n      | loopTrue hb' hbody' hrest' => exact ihr (ihb hbody' ▸ hrest')",
     "hard": true
+   }
+  }
+ },
+ "interpreter": {
+  "num": "21",
+  "phase": "Phase 3 · Programs and their semantics",
+  "title": "LAB — an interpreter, proved to agree",
+  "ex": {
+   "x47": {
+    "name": "run_example",
+    "goal": "example : run 6 demoProg demoStart\n    = some ⟨Store.set demoStart.store 0 7, Heap.write demoStart.heap 3 8⟩ := by",
+    "sol": "example : run 6 demoProg demoStart\n    = some ⟨Store.set demoStart.store 0 7, Heap.write demoStart.heap 3 8⟩ := by rfl",
+    "hard": false
    },
    "m5-3": {
     "name": "run_sound",
-    "goal": "theorem run_sound : ∀ (n : Nat) (c : Cmd) (s s' : State),\n    run n c s = some s' → Exec c s s'",
+    "goal": "theorem run_sound : ∀ (n : Nat) (c : Cmd) (s s' : State), run n c s = some s' → Exec c s s' := by",
     "sol": "theorem run_sound : ∀ (n : Nat) (c : Cmd) (s s' : State), run n c s = some s' → Exec c s s' := by\n  intro n\n  induction n with\n  | zero => intro c s s' h; simp [run] at h\n  | succ n ih =>\n    intro c s s' h\n    cases c with\n    | skip => simp [run] at h; rw [← h]; exact .skip\n    | assign x e => simp [run] at h; rw [← h]; exact .assign\n    | load x l =>\n        simp only [run] at h\n        cases hl : s.heap l with\n        | none   => rw [hl] at h; simp at h\n        | some v => rw [hl] at h; simp at h; rw [← h]; exact .load hl\n    | write l e =>\n        simp only [run] at h\n        cases hl : s.heap l with\n        | none   => rw [hl] at h; simp at h\n        | some v => rw [hl] at h; simp at h; rw [← h]; exact .write hl\n    | free l =>\n        simp only [run] at h\n        cases hl : s.heap l with\n        | none   => rw [hl] at h; simp at h\n        | some v => rw [hl] at h; simp at h; rw [← h]; exact .free hl\n    | seq c₁ c₂ =>\n        simp only [run] at h\n        cases hr : run n c₁ s with\n        | none    => rw [hr] at h; simp at h\n        | some s₁ => rw [hr] at h; exact .seq (ih c₁ s s₁ hr) (ih c₂ s₁ s' h)\n    | ite b c₁ c₂ =>\n        simp only [run] at h\n        cases hb : b.eval s.store with\n        | true  => rw [hb] at h; exact .iteTrue hb (ih c₁ s s' h)\n        | false => rw [hb] at h; exact .iteFalse hb (ih c₂ s s' h)\n    | loop b c =>\n        simp only [run] at h\n        cases hb : b.eval s.store with\n        | false =>\n            rw [hb] at h\n            have hs : s = s' := Option.some.inj h\n            subst hs\n            exact .loopFalse hb\n        | true  =>\n            rw [hb] at h\n            cases hr : run n c s with\n            | none    => rw [hr] at h; simp at h\n            | some s₁ => rw [hr] at h; exact .loopTrue hb (ih c s s₁ hr) (ih _ s₁ s' h)",
     "hard": true
    },
    "m5-4": {
     "name": "run_mono, run_le, run_complete",
-    "goal": "theorem run_mono : ∀ (n : Nat) (c : Cmd) (s s' : State),\n    run n c s = some s' → run (n + 1) c s = some s'\n\ntheorem run_le {n m : Nat} (hle : n ≤ m) {c : Cmd} {s s' : State}\n    (h : run n c s = some s') : run m c s = some s'\n\ntheorem run_complete {c : Cmd} {s s' : State} (h : Exec c s s') :\n    ∃ n, run n c s = some s'",
+    "goal": "theorem run_mono : ∀ (n : Nat) (c : Cmd) (s s' : State),\n    run n c s = some s' → run (n + 1) c s = some s' := by\n  sorry\n\ntheorem run_le {n m : Nat} (hle : n ≤ m) {c : Cmd} {s s' : State}\n    (h : run n c s = some s') : run m c s = some s' := by\n  sorry\n\ntheorem run_complete {c : Cmd} {s s' : State} (h : Exec c s s') :\n    ∃ n, run n c s = some s' := by",
     "sol": "theorem run_mono : ∀ (n : Nat) (c : Cmd) (s s' : State),\n    run n c s = some s' → run (n + 1) c s = some s' := by\n  intro n\n  induction n with\n  | zero => intro c s s' h; simp [run] at h\n  | succ n ih =>\n    intro c s s' h\n    cases c with\n    | skip => simpa [run] using h\n    | assign x e => simpa [run] using h\n    | load x l => simpa [run] using h\n    | write l e => simpa [run] using h\n    | free l => simpa [run] using h\n    | seq c₁ c₂ =>\n        simp only [run] at h ⊢\n        cases hr : run n c₁ s with\n        | none    => rw [hr] at h; simp at h\n        | some s₁ => rw [hr] at h; rw [ih c₁ s s₁ hr]; exact ih c₂ s₁ s' h\n    | ite b c₁ c₂ =>\n        simp only [run] at h ⊢\n        cases hb : b.eval s.store with\n        | true  => rw [hb] at h; exact ih c₁ s s' h\n        | false => rw [hb] at h; exact ih c₂ s s' h\n    | loop b c =>\n        simp only [run] at h ⊢\n        cases hb : b.eval s.store with\n        | false => rw [hb] at h; exact h\n        | true  =>\n            rw [hb] at h\n            cases hr : run n c s with\n            | none    => rw [hr] at h; simp at h\n            | some s₁ =>\n                rw [hr] at h\n                have : run (n + 1) c s = some s₁ := ih c s s₁ hr\n                rw [this]\n                exact ih _ s₁ s' h\n\ntheorem run_le {n m : Nat} (hle : n ≤ m) {c : Cmd} {s s' : State}\n    (h : run n c s = some s') : run m c s = some s' := by\n  induction hle with\n  | refl => exact h\n  | step _ ih => exact run_mono _ _ _ _ ih\n\ntheorem run_complete {c : Cmd} {s s' : State} (h : Exec c s s') :\n    ∃ n, run n c s = some s' := by\n  induction h with\n  | skip => exact ⟨1, rfl⟩\n  | assign => exact ⟨1, rfl⟩\n  | load hl => exact ⟨1, by simp [run, hl]⟩\n  | write hl => exact ⟨1, by simp [run, hl]⟩\n  | free hl => exact ⟨1, by simp [run, hl]⟩\n  | seq _ _ ih₁ ih₂ =>\n      obtain ⟨n₁, h₁⟩ := ih₁\n      obtain ⟨n₂, h₂⟩ := ih₂\n      refine ⟨max n₁ n₂ + 1, ?_⟩\n      simp only [run]\n      rw [run_le (Nat.le_max_left n₁ n₂) h₁]\n      exact run_le (Nat.le_max_right n₁ n₂) h₂\n  | iteTrue hb _ ih =>\n      obtain ⟨n, hn⟩ := ih\n      exact ⟨n + 1, by simp only [run, hb]; exact hn⟩\n  | iteFalse hb _ ih =>\n      obtain ⟨n, hn⟩ := ih\n      exact ⟨n + 1, by simp only [run, hb]; exact hn⟩\n  | loopFalse hb => exact ⟨1, by simp only [run, hb]⟩\n  | loopTrue hb _ _ ihb ihr =>\n      obtain ⟨n₁, h₁⟩ := ihb\n      obtain ⟨n₂, h₂⟩ := ihr\n      refine ⟨max n₁ n₂ + 1, ?_⟩\n      simp only [run, hb]\n      rw [run_le (Nat.le_max_left n₁ n₂) h₁]\n      exact run_le (Nat.le_max_right n₁ n₂) h₂",
     "hard": true
    }
-  },
-  "code": [
-   "inductive Atom where\n  | const : Nat → Atom\n  | var   : Var → Atom\n  | plus  : Atom → Atom → Atom\n  | minus : Atom → Atom → Atom\n  deriving Repr\n\ndef Atom.eval (σ : Store) : Atom → Val\n  | .const v  => v\n  | .var x    => σ x\n  | .plus a b => a.eval σ + b.eval σ\n  | .minus a b => a.eval σ - b.eval σ\n\ndef Store.set (σ : Store) (x : Var) (v : Val) : Store :=\n  fun y => if y = x then v else σ y\n\nstructure State where\n  store : Store\n  heap  : Heap",
-   "inductive BExpr where\n  | equals : Atom → Atom → BExpr\n  | not    : BExpr → BExpr\n\ndef BExpr.eval (σ : Store) : BExpr → Bool\n  | .equals a b => a.eval σ == b.eval σ\n  | .not b      => !(b.eval σ)",
-   "inductive Cmd where\n  | skip\n  | assign : Var → Atom → Cmd\n  | load   : Var → Loc → Cmd\n  | write  : Loc → Atom → Cmd\n  | free   : Loc → Cmd\n  | seq    : Cmd → Cmd → Cmd\n  | ite    : BExpr → Cmd → Cmd → Cmd\n  | loop   : BExpr → Cmd → Cmd\n\ninfixr:60 \" ;; \" => Cmd.seq",
-   "inductive Exec : Cmd → State → State → Prop where\n  | skip {s} : Exec .skip s s\n  | assign {s x e} :\n      Exec (.assign x e) s ⟨Store.set s.store x (e.eval s.store), s.heap⟩\n  | load {s x l v} (hl : s.heap l = some v) :\n      Exec (.load x l) s ⟨Store.set s.store x v, s.heap⟩\n  | write {s l e old} (hl : s.heap l = some old) :\n      Exec (.write l e) s ⟨s.store, Heap.write s.heap l (e.eval s.store)⟩\n  | free {s l v} (hl : s.heap l = some v) :\n      Exec (.free l) s ⟨s.store, Heap.erase s.heap l⟩\n  | seq {s s' s'' c₁ c₂} (h₁ : Exec c₁ s s') (h₂ : Exec c₂ s' s'') :\n      Exec (c₁ ;; c₂) s s''\n  | iteTrue {s s' b c₁ c₂} (hb : b.eval s.store = true) (h : Exec c₁ s s') :\n      Exec (.ite b c₁ c₂) s s'\n  | iteFalse {s s' b c₁ c₂} (hb : b.eval s.store = false) (h : Exec c₂ s s') :\n      Exec (.ite b c₁ c₂) s s'\n  | loopFalse {s b c} (hb : b.eval s.store = false) :\n      Exec (.loop b c) s s\n  | loopTrue {s s' s'' b c} (hb : b.eval s.store = true)\n      (hbody : Exec c s s') (hrest : Exec (.loop b c) s' s'') :\n      Exec (.loop b c) s s''",
-   "def run : Nat → Cmd → State → Option State\n  | 0,     _,            _ => none\n  | _ + 1, .skip,        s => some s\n  | _ + 1, .assign x e,  s => some ⟨Store.set s.store x (e.eval s.store), s.heap⟩\n  | _ + 1, .load x l,    s =>\n      match s.heap l with\n      | some v => some ⟨Store.set s.store x v, s.heap⟩\n      | none   => none\n  | _ + 1, .write l e,   s =>\n      match s.heap l with\n      | some _ => some ⟨s.store, Heap.write s.heap l (e.eval s.store)⟩\n      | none   => none\n  | _ + 1, .free l,      s =>\n      match s.heap l with\n      | some _ => some ⟨s.store, Heap.erase s.heap l⟩\n      | none   => none\n  | n + 1, .seq c₁ c₂,   s =>\n      match run n c₁ s with\n      | some s' => run n c₂ s'\n      | none    => none\n  | n + 1, .ite b c₁ c₂, s =>\n      match b.eval s.store with\n      | true  => run n c₁ s\n      | false => run n c₂ s\n  | n + 1, .loop b c,   s =>\n      match b.eval s.store with\n      | true  =>\n          match run n c s with\n          | some s' => run n (.loop b c) s'\n          | none    => none\n      | false => some s"
-  ]
+  }
  },
- "m6": {
-  "num": "M6",
-  "phase": "Phase 2 · Program logic",
+ "hoare": {
+  "num": "22",
+  "phase": "Phase 4 · The program logic",
   "title": "Hoare triples",
   "ex": {
    "m6-1": {
     "name": "hoare_consequence",
-    "goal": "theorem hoare_consequence {P P' Q Q' : Assertion} {c : Cmd}\n    (hpre : P' ⊢ P) (hc : Hoare P c Q) (hpost : Q ⊢ Q') : Hoare P' c Q'",
+    "goal": "theorem hoare_consequence {P P' Q Q' : Assertion} {c : Cmd}\n    (hpre : P' ⊢ P) (hc : Hoare (P) (c) (Q)) (hpost : Q ⊢ Q') : Hoare (P') (c) (Q') := by",
     "sol": "theorem hoare_consequence {P P' Q Q' : Assertion} {c : Cmd}\n    (hpre : P' ⊢ P) (hc : Hoare (P) (c) (Q)) (hpost : Q ⊢ Q') : Hoare (P') (c) (Q') := by\n  intro σ h hp\n  obtain ⟨s', hex, hq⟩ := hc σ h (hpre σ h hp)\n  exact ⟨s', hex, hpost s'.store s'.heap hq⟩",
     "hard": false
    },
    "m6-2": {
     "name": "hoare_skip / hoare_seq",
-    "goal": "theorem hoare_skip (P : Assertion) : Hoare P .skip P\n\ntheorem hoare_seq {P Q R : Assertion} {c₁ c₂ : Cmd}\n    (h₁ : Hoare P c₁ Q) (h₂ : Hoare Q c₂ R) : Hoare P (c₁ ;; c₂) R",
+    "goal": "theorem hoare_skip (P : Assertion) : Hoare (P) (.skip) (P) :=\n  sorry\n\ntheorem hoare_seq {P Q R : Assertion} {c₁ c₂ : Cmd}\n    (h₁ : Hoare (P) (c₁) (Q)) (h₂ : Hoare (Q) (c₂) (R)) : Hoare (P) ((c₁ ;; c₂)) (R) := by",
     "sol": "theorem hoare_skip (P : Assertion) : Hoare (P) (.skip) (P) :=\n  fun σ h hp => ⟨⟨σ, h⟩, Exec.skip, hp⟩\n\ntheorem hoare_seq {P Q R : Assertion} {c₁ c₂ : Cmd}\n    (h₁ : Hoare (P) (c₁) (Q)) (h₂ : Hoare (Q) (c₂) (R)) : Hoare (P) ((c₁ ;; c₂)) (R) := by\n  intro σ h hp\n  obtain ⟨s₁, hex₁, hq⟩ := h₁ σ h hp\n  obtain ⟨s₂, hex₂, hr⟩ := h₂ s₁.store s₁.heap hq\n  exact ⟨s₂, Exec.seq hex₁ hex₂, hr⟩",
     "hard": false
    },
    "m6-3": {
     "name": "hoare_assign",
-    "goal": "theorem hoare_assign (x : Var) (e : Atom) (Q : Assertion) :\n    Hoare (subst x e Q) (.assign x e) Q",
+    "goal": "theorem hoare_assign (x : Var) (e : Atom) (Q : Assertion) :\n    Hoare (subst x e Q) ((.assign x e)) (Q) := by",
     "sol": "theorem hoare_assign (x : Var) (e : Atom) (Q : Assertion) :\n    Hoare (subst x e Q) ((.assign x e)) (Q) := by\n  intro σ h hq\n  exact ⟨⟨Store.set σ x (e.eval σ), h⟩, Exec.assign, hq⟩",
     "hard": false
    },
    "m6-4": {
     "name": "assign_constant",
-    "goal": "theorem assign_constant (x : Var) :\n    Hoare emp (.assign x (.const 10))\n      (aAnd (fact (fun σ => σ x = 10)) emp)",
+    "goal": "theorem assign_constant (x : Var) :\n    Hoare emp (.assign x (.const 10)) (aAnd (fact (fun σ => σ x = 10)) emp) := by",
     "sol": "theorem assign_constant (x : Var) :\n    Hoare emp (.assign x (.const 10)) (aAnd (fact (fun σ => σ x = 10)) emp) := by\n  intro σ h he\n  refine ⟨⟨Store.set σ x 10, h⟩, Exec.assign, ?_, he⟩\n  show Store.set σ x 10 x = 10\n  simp [Store.set]",
     "hard": false
    },
    "m6-5": {
     "name": "assign_twice",
-    "goal": "theorem assign_twice (x y : Var) :\n    Hoare emp (.assign x (.const 3) ;; .assign y (.var x))\n      (aAnd (fact (fun σ => σ x = 3 ∧ σ y = 3)) emp)",
+    "goal": "theorem assign_twice (x y : Var) :\n    Hoare emp (.assign x (.const 3) ;; .assign y (.var x))\n      (aAnd (fact (fun σ => σ x = 3 ∧ σ y = 3)) emp) := by",
     "sol": "theorem assign_twice (x y : Var) :\n    Hoare emp (.assign x (.const 3) ;; .assign y (.var x))\n      (aAnd (fact (fun σ => σ x = 3 ∧ σ y = 3)) emp) := by\n  refine hoare_seq (Q := aAnd (fact (fun σ => σ x = 3)) emp) ?_ ?_\n  · intro σ h he\n    refine ⟨⟨Store.set σ x 3, h⟩, Exec.assign, ?_, he⟩\n    show Store.set σ x 3 x = 3\n    simp [Store.set]\n  · intro σ h hpre\n    obtain ⟨hx, he⟩ := hpre\n    have hx' : σ x = 3 := hx\n    refine ⟨⟨Store.set σ y (σ x), h⟩, Exec.assign, ?_, he⟩\n    show Store.set σ y (σ x) x = 3 ∧ Store.set σ y (σ x) y = 3\n    constructor\n    · show (if x = y then σ x else σ x) = 3\n      simp [hx']\n    · show (if y = y then σ x else σ y) = 3\n      simp [hx']",
     "hard": false
    }
-  },
-  "code": [
-   "def Hoare (P : Assertion) (c : Cmd) (Q : Assertion) : Prop :=\n  ∀ σ h, P σ h → ∃ s', Exec c ⟨σ, h⟩ s' ∧ Q s'.store s'.heap",
-   "def PartialHoare (P : Assertion) (c : Cmd) (Q : Assertion) : Prop :=\n  ∀ σ h s', P σ h → Exec c ⟨σ, h⟩ s' → Q s'.store s'.heap",
-   "def subst (x : Var) (e : Atom) (Q : Assertion) : Assertion :=\n  fun σ h => Q (Store.set σ x (e.eval σ)) h"
-  ]
+  }
  },
- "m7": {
-  "num": "M7",
-  "phase": "Phase 2 · Program logic",
-  "title": "The small-footprint rules",
+ "small-footprint": {
+  "num": "23",
+  "phase": "Phase 4 · The program logic",
+  "title": "Rules that mention only what they touch",
   "ex": {
    "m7-1": {
     "name": "hoare_load",
-    "goal": "theorem hoare_load (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) (.load x l)\n      (pure (fun σ => σ x = v) ∗ (l ↦ v))",
+    "goal": "theorem hoare_load (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) ((.load x l)) (pure (fun σ => σ x = v) ∗ (l ↦ v)) := by",
     "sol": "theorem hoare_load (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) ((.load x l)) (pure (fun σ => σ x = v) ∗ (l ↦ v)) := by\n  intro σ h hp\n  subst hp\n  refine ⟨⟨Store.set σ x v, Heap.singleton l v⟩, Exec.load (singleton_same l v), ?_⟩\n  refine ⟨Heap.empty, Heap.singleton l v, disjoint_empty_left _, (union_empty_left _).symm, ⟨?_, rfl⟩, rfl⟩\n  show Store.set σ x v x = v\n  simp [Store.set]",
     "hard": false
    },
    "m7-2": {
     "name": "hoare_write",
-    "goal": "theorem hoare_write (l : Loc) (e : Atom) (old : Val) :\n    Hoare (l ↦ old) (.write l e)\n      (fun σ h => (l ↦ (e.eval σ)) σ h)",
+    "goal": "theorem hoare_write (l : Loc) (e : Atom) (old : Val) :\n    Hoare (l ↦ old) ((.write l e)) (fun σ h => (l ↦ (e.eval σ)) σ h) := by",
     "sol": "theorem hoare_write (l : Loc) (e : Atom) (old : Val) :\n    Hoare (l ↦ old) ((.write l e)) (fun σ h => (l ↦ (e.eval σ)) σ h) := by\n  intro σ h hp\n  subst hp\n  exact ⟨⟨σ, Heap.write (Heap.singleton l old) l (e.eval σ)⟩,\n         Exec.write (singleton_same l old),\n         write_singleton l old (e.eval σ)⟩",
     "hard": false
    },
    "m7-3": {
     "name": "hoare_free",
-    "goal": "theorem hoare_free (l : Loc) (v : Val) : Hoare (l ↦ v) (.free l) emp",
+    "goal": "theorem hoare_free (l : Loc) (v : Val) : Hoare (l ↦ v) ((.free l)) (emp) := by",
     "sol": "theorem hoare_free (l : Loc) (v : Val) : Hoare (l ↦ v) ((.free l)) (emp) := by\n  intro σ h hp\n  subst hp\n  exact ⟨⟨σ, Heap.erase (Heap.singleton l v) l⟩,\n         Exec.free (singleton_same l v),\n         erase_singleton l v⟩",
     "hard": false
    },
    "m7-4": {
     "name": "clearCell_spec",
-    "goal": "def clearCell (l : Loc) : Cmd := .write l (.const 0)\n\ntheorem clearCell_spec (l : Loc) (old : Val) :\n    Hoare (l ↦ old) (clearCell l) (l ↦ 0)",
-    "sol": "def clearCell (l : Loc) : Cmd := .write l (.const 0)\n\ntheorem clearCell_spec (l : Loc) (old : Val) : Hoare (l ↦ old) ((clearCell l)) (l ↦ 0) :=\n  hoare_write l (.const 0) old",
+    "goal": "theorem clearCell_spec (l : Loc) (old : Val) : Hoare (l ↦ old) ((clearCell l)) (l ↦ 0) :=",
+    "sol": "theorem clearCell_spec (l : Loc) (old : Val) : Hoare (l ↦ old) ((clearCell l)) (l ↦ 0) :=\n  hoare_write l (.const 0) old",
+    "hard": false
+   },
+   "x48": {
+    "name": "writeTwice_spec",
+    "goal": "theorem writeTwice_spec (l : Loc) (old : Val) :\n    Hoare (l ↦ old) ((.write l (.const 1) ;; .write l (.const 2))) (l ↦ 2) :=",
+    "sol": "theorem writeTwice_spec (l : Loc) (old : Val) :\n    Hoare (l ↦ old) ((.write l (.const 1) ;; .write l (.const 2))) (l ↦ 2) :=\n  hoare_seq (hoare_write l (.const 1) old) (hoare_write l (.const 2) 1)",
     "hard": false
    },
    "m7-5": {
     "name": "readAndFree_spec",
-    "goal": "def readAndFree (x : Var) (l : Loc) : Cmd := .load x l ;; .free l\n\ntheorem readAndFree_spec (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) (readAndFree x l) (pure (fun σ => σ x = v))",
-    "sol": "def readAndFree (x : Var) (l : Loc) : Cmd := .load x l ;; .free l\n\ntheorem readAndFree_spec (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) ((readAndFree x l)) (pure (fun σ => σ x = v)) := by\n  intro σ h hp\n  subst hp\n  refine ⟨⟨Store.set σ x v, Heap.erase (Heap.singleton l v) l⟩, ?_, ?_, ?_⟩\n  · exact Exec.seq (Exec.load (singleton_same l v)) (Exec.free (singleton_same l v))\n  · show Store.set σ x v x = v\n    simp [Store.set]\n  · exact erase_singleton l v",
+    "goal": "theorem readAndFree_spec (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) ((readAndFree x l)) (pure (fun σ => σ x = v)) := by",
+    "sol": "theorem readAndFree_spec (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) ((readAndFree x l)) (pure (fun σ => σ x = v)) := by\n  intro σ h hp\n  subst hp\n  refine ⟨⟨Store.set σ x v, Heap.erase (Heap.singleton l v) l⟩, ?_, ?_, ?_⟩\n  · exact Exec.seq (Exec.load (singleton_same l v)) (Exec.free (singleton_same l v))\n  · show Store.set σ x v x = v\n    simp [Store.set]\n  · exact erase_singleton l v",
     "hard": false
    }
-  },
-  "code": []
+  }
  },
- "m8": {
-  "num": "M8",
-  "phase": "Phase 2 · Program logic",
-  "title": "Locality and the frame rule",
+ "locality": {
+  "num": "24",
+  "phase": "Phase 5 · Locality and the frame rule",
+  "title": "What \"local\" has to mean",
   "ex": {
    "m8-1": {
     "name": "heapLocal_skip / heapLocal_assign / heapLocal_load",
-    "goal": "theorem heapLocal_skip : HeapLocal .skip\ntheorem heapLocal_assign (x : Var) (e : Atom) : HeapLocal (.assign x e)\ntheorem heapLocal_load (x : Var) (l : Loc) : HeapLocal (.load x l)",
+    "goal": "theorem heapLocal_skip : HeapLocal .skip := by\n  sorry\n\ntheorem heapLocal_assign (x : Var) (e : Atom) : HeapLocal (.assign x e) := by\n  sorry\n\ntheorem heapLocal_load (x : Var) (l : Loc) : HeapLocal (.load x l) := by",
     "sol": "theorem heapLocal_skip : HeapLocal .skip := by\n  intro σ h hFrame s' hd hex\n  cases hex\n  exact ⟨hd, ⟨σ, Heap.union h hFrame⟩, Exec.skip, rfl, rfl⟩\n\ntheorem heapLocal_assign (x : Var) (e : Atom) : HeapLocal (.assign x e) := by\n  intro σ h hFrame s' hd hex\n  cases hex\n  exact ⟨hd, ⟨Store.set σ x (e.eval σ), Heap.union h hFrame⟩, Exec.assign, rfl, rfl⟩\n\ntheorem heapLocal_load (x : Var) (l : Loc) : HeapLocal (.load x l) := by\n  intro σ h hFrame s' hd hex\n  cases hex with\n  | load hl =>\n      refine ⟨hd, ⟨Store.set σ x _, Heap.union h hFrame⟩, Exec.load ?_, rfl, rfl⟩\n      exact union_of_some hFrame hl",
     "hard": false
    },
+   "x51": {
+    "name": "The store counterexample, as a refutation",
+    "goal": "-- Delete the line below and write your own `theorem frame_needs_preserves …`.\n-- Part 1: the triple { x = 0 } x := 1 { x = 1 } holds.\n-- Part 2: framing it with the assertion `x = 0` gives a triple that does not.\nexample : True := by",
+    "sol": "theorem frame_needs_preserves (x : Var) :\n    Hoare (pure (fun σ => σ x = 0)) (.assign x (.const 1)) (pure (fun σ => σ x = 1))\n    ∧ ¬ Hoare (pure (fun σ => σ x = 0) ∗ pure (fun σ => σ x = 0))\n              (.assign x (.const 1))\n              (pure (fun σ => σ x = 1) ∗ pure (fun σ => σ x = 0)) := by\n  constructor\n  · intro σ h ⟨_, he⟩\n    refine ⟨⟨Store.set σ x 1, h⟩, Exec.assign, ?_, he⟩\n    show Store.set σ x 1 x = 1\n    simp [Store.set]\n  · intro hall\n    obtain ⟨s', hex, h₁, h₂, _, _, hq, hr⟩ :=\n      hall (fun _ => 0) Heap.empty\n        ⟨Heap.empty, Heap.empty, disjoint_empty_left _, (union_empty_left _).symm,\n         ⟨rfl, rfl⟩, ⟨rfl, rfl⟩⟩\n    cases hex\n    have e0 : Store.set (fun _ => 0) x 1 x = 0 := hr.1\n    rw [show Store.set (fun _ => 0) x 1 x = 1 from by simp [Store.set]] at e0\n    exact absurd e0 (by simp)",
+    "hard": true
+   },
+   "x49": {
+    "name": "heapOnly_pointsTo / heapOnly_emp / heapOnly_star",
+    "goal": "theorem heapOnly_pointsTo (l : Loc) (v : Val) : HeapOnly (l ↦ v) := by\n  sorry\n\ntheorem heapOnly_emp : HeapOnly emp := by\n  sorry\n\ntheorem heapOnly_star {P Q : Assertion} (hp : HeapOnly P) (hq : HeapOnly Q) :\n    HeapOnly (P ∗ Q) := by",
+    "sol": "theorem heapOnly_pointsTo (l : Loc) (v : Val) : HeapOnly (l ↦ v) :=\n  fun _ _ _ hr => hr\n\ntheorem heapOnly_emp : HeapOnly emp := fun _ _ _ hr => hr\n\ntheorem heapOnly_star {P Q : Assertion} (hp : HeapOnly P) (hq : HeapOnly Q) :\n    HeapOnly (P ∗ Q) := by\n  intro σ σ' h ⟨h₁, h₂, hd, hu, h1, h2⟩\n  exact ⟨h₁, h₂, hd, hu, hp σ σ' h₁ h1, hq σ σ' h₂ h2⟩",
+    "hard": false
+   },
+   "x50": {
+    "name": "not_heapOnly_pure",
+    "goal": "theorem not_heapOnly_pure (x : Var) : ¬ HeapOnly (pure (fun σ => σ x = 0)) := by",
+    "sol": "theorem not_heapOnly_pure (x : Var) : ¬ HeapOnly (pure (fun σ => σ x = 0)) := by\n  intro hho\n  have h := hho (fun _ => 0) (fun _ => 1) Heap.empty ⟨rfl, rfl⟩\n  have h1 : (1 : Nat) = 0 := h.1\n  exact absurd h1 (by simp)",
+    "hard": true
+   }
+  }
+ },
+ "local-heap": {
+  "num": "25",
+  "phase": "Phase 5 · Locality and the frame rule",
+  "title": "Locality of write and free",
+  "ex": {
    "m8-2": {
     "name": "heapLocal_write",
-    "goal": "theorem heapLocal_write (l : Loc) (e : Atom) : HeapLocal (.write l e)",
+    "goal": "theorem heapLocal_write (l : Loc) (e : Atom) : HeapLocal (.write l e) := by",
     "sol": "theorem heapLocal_write (l : Loc) (e : Atom) : HeapLocal (.write l e) := by\n  intro σ h hFrame s' hd hex\n  cases hex with\n  | write hl =>\n      have hl' : h l = _ := hl\n      have hdw : Heap.disjoint (Heap.write h l (e.eval σ)) hFrame := by\n        intro x\n        rcases hd x with hx | hx\n        · by_cases hxl : x = l\n          · subst hxl; rw [hl'] at hx; exact absurd hx (by simp)\n          · left; rw [write_other h l x (e.eval σ) hxl]; exact hx\n        · exact Or.inr hx\n      refine ⟨hdw, ⟨σ, Heap.write (Heap.union h hFrame) l (e.eval σ)⟩,\n              Exec.write (union_of_some hFrame hl'), rfl, ?_⟩\n      show Heap.write (Heap.union h hFrame) l (e.eval σ)\n             = Heap.union (Heap.write h l (e.eval σ)) hFrame\n      funext x\n      by_cases hxl : x = l\n      · subst hxl\n        rw [write_same (Heap.union h hFrame) x (e.eval σ),\n            union_of_some hFrame (write_same h x (e.eval σ))]\n      · rw [write_other (Heap.union h hFrame) l x (e.eval σ) hxl]\n        have hwx : Heap.write h l (e.eval σ) x = h x := write_other h l x (e.eval σ) hxl\n        cases hx : h x with\n        | none => rw [union_of_none hFrame hx, union_of_none hFrame (hwx.trans hx)]\n        | some w => rw [union_of_some hFrame hx, union_of_some hFrame (hwx.trans hx)]",
     "hard": true
    },
    "m8-3": {
     "name": "heapLocal_free",
-    "goal": "theorem heapLocal_free (l : Loc) : HeapLocal (.free l)",
+    "goal": "theorem heapLocal_free (l : Loc) : HeapLocal (.free l) := by",
     "sol": "theorem heapLocal_free (l : Loc) : HeapLocal (.free l) := by\n  intro σ h hFrame s' hd hex\n  cases hex with\n  | free hl =>\n      have hl' : h l = _ := hl\n      have hde : Heap.disjoint (Heap.erase h l) hFrame := by\n        intro x\n        rcases hd x with hx | hx\n        · left\n          by_cases hxl : x = l\n          · subst hxl; exact erase_same h x\n          · rw [erase_other h l x hxl]; exact hx\n        · exact Or.inr hx\n      refine ⟨hde, ⟨σ, Heap.erase (Heap.union h hFrame) l⟩,\n              Exec.free (union_of_some hFrame hl'), rfl, ?_⟩\n      show Heap.erase (Heap.union h hFrame) l = Heap.union (Heap.erase h l) hFrame\n      funext x\n      by_cases hxl : x = l\n      · subst hxl\n        rw [erase_same (Heap.union h hFrame) x,\n            union_of_none hFrame (erase_same h x)]\n        rcases hd x with hx | hx\n        · rw [hx] at hl'; exact absurd hl' (by simp)\n        · exact hx.symm\n      · rw [erase_other (Heap.union h hFrame) l x hxl]\n        have hex' : Heap.erase h l x = h x := erase_other h l x hxl\n        cases hx : h x with\n        | none => rw [union_of_none hFrame hx, union_of_none hFrame (hex'.trans hx)]\n        | some w => rw [union_of_some hFrame hx, union_of_some hFrame (hex'.trans hx)]",
     "hard": true
-   },
+   }
+  }
+ },
+ "local-compose": {
+  "num": "26",
+  "phase": "Phase 5 · Locality and the frame rule",
+  "title": "Locality composes",
+  "ex": {
    "m8-4": {
     "name": "heapLocal_seq",
-    "goal": "theorem heapLocal_seq {c₁ c₂ : Cmd} (h₁ : HeapLocal c₁) (h₂ : HeapLocal c₂) :\n    HeapLocal (c₁ ;; c₂)",
+    "goal": "theorem heapLocal_seq {c₁ c₂ : Cmd} (h₁ : HeapLocal c₁) (h₂ : HeapLocal c₂) :\n    HeapLocal (c₁ ;; c₂) := by",
     "sol": "theorem heapLocal_seq {c₁ c₂ : Cmd} (h₁ : HeapLocal c₁) (h₂ : HeapLocal c₂) :\n    HeapLocal (c₁ ;; c₂) := by\n  intro σ h hFrame s' hd hex\n  cases hex with\n  | seq hex₁ hex₂ =>\n      rename_i sMid\n      obtain ⟨hdMid, r₁, hr₁, hst₁, hhp₁⟩ := h₁ σ h hFrame sMid hd hex₁\n      obtain ⟨hdEnd, r₂, hr₂, hst₂, hhp₂⟩ := h₂ sMid.store sMid.heap hFrame s' hdMid hex₂\n      refine ⟨hdEnd, r₂, Exec.seq hr₁ ?_, hst₂, hhp₂⟩\n      have heq : r₁ = ⟨sMid.store, Heap.union sMid.heap hFrame⟩ := by\n        rw [← hst₁, ← hhp₁]\n      rw [heq]\n      exact hr₂",
     "hard": false
    },
+   "x52": {
+    "name": "heapLocal_ite",
+    "goal": "theorem heapLocal_ite {b : BExpr} {c₁ c₂ : Cmd}\n    (h₁ : HeapLocal c₁) (h₂ : HeapLocal c₂) : HeapLocal (.ite b c₁ c₂) := by",
+    "sol": "theorem heapLocal_ite {b : BExpr} {c₁ c₂ : Cmd}\n    (h₁ : HeapLocal c₁) (h₂ : HeapLocal c₂) : HeapLocal (.ite b c₁ c₂) := by\n  intro σ h hFrame s' hd hex\n  cases hex with\n  | iteTrue hb hex' =>\n      obtain ⟨hdEnd, r, hr, hst, hhp⟩ := h₁ σ h hFrame s' hd hex'\n      exact ⟨hdEnd, r, Exec.iteTrue hb hr, hst, hhp⟩\n  | iteFalse hb hex' =>\n      obtain ⟨hdEnd, r, hr, hst, hhp⟩ := h₂ σ h hFrame s' hd hex'\n      exact ⟨hdEnd, r, Exec.iteFalse hb hr, hst, hhp⟩",
+    "hard": false
+   },
+   "x53": {
+    "name": "heapLocal_loop",
+    "goal": "theorem heapLocal_loop_aux {b₀ : BExpr} {c₀ : Cmd} (hc : HeapLocal c₀) :\n    ∀ {cmd : Cmd} {s s' : State}, Exec cmd s s' → cmd = .loop b₀ c₀ →\n      ∀ hFrame, Heap.disjoint s.heap hFrame →\n        Heap.disjoint s'.heap hFrame ∧\n        ∃ r : State, Exec (.loop b₀ c₀) ⟨s.store, Heap.union s.heap hFrame⟩ r ∧\n          r.store = s'.store ∧ r.heap = Heap.union s'.heap hFrame := by\n  sorry\n\ntheorem heapLocal_loop {b : BExpr} {c : Cmd} (hc : HeapLocal c) :\n    HeapLocal (.loop b c) := by",
+    "sol": "theorem heapLocal_loop_aux {b₀ : BExpr} {c₀ : Cmd} (hc : HeapLocal c₀) :\n    ∀ {cmd : Cmd} {s s' : State}, Exec cmd s s' → cmd = .loop b₀ c₀ →\n      ∀ hFrame, Heap.disjoint s.heap hFrame →\n        Heap.disjoint s'.heap hFrame ∧\n        ∃ r : State, Exec (.loop b₀ c₀) ⟨s.store, Heap.union s.heap hFrame⟩ r ∧\n          r.store = s'.store ∧ r.heap = Heap.union s'.heap hFrame := by\n  intro cmd s s' hex\n  induction hex with\n  | skip => intro heq; cases heq\n  | assign => intro heq; cases heq\n  | load _ => intro heq; cases heq\n  | write _ => intro heq; cases heq\n  | free _ => intro heq; cases heq\n  | seq _ _ _ _ => intro heq; cases heq\n  | iteTrue _ _ _ => intro heq; cases heq\n  | iteFalse _ _ _ => intro heq; cases heq\n  | loopFalse hb =>\n      intro heq hFrame hd\n      cases heq\n      exact ⟨hd, _, Exec.loopFalse hb, rfl, rfl⟩\n  | loopTrue hb hbody _ _ ihrest =>\n      intro heq hFrame hd\n      cases heq\n      rename_i s s' s'' _ _\n      obtain ⟨hdMid, r₁, hr₁, hst₁, hhp₁⟩ := hc s.store s.heap hFrame s' hd hbody\n      obtain ⟨hdEnd, r₂, hr₂, hst₂, hhp₂⟩ := ihrest rfl hFrame hdMid\n      have heq2 : r₁ = ⟨s'.store, Heap.union s'.heap hFrame⟩ := by\n        rw [← hst₁, ← hhp₁]\n      refine ⟨hdEnd, r₂, Exec.loopTrue (s' := r₁) hb hr₁ ?_, hst₂, hhp₂⟩\n      rw [heq2]\n      exact hr₂\n\ntheorem heapLocal_loop {b : BExpr} {c : Cmd} (hc : HeapLocal c) :\n    HeapLocal (.loop b c) := by\n  intro σ h hFrame s' hd hex\n  exact heapLocal_loop_aux hc hex rfl hFrame hd",
+    "hard": true
+   }
+  }
+ },
+ "frame": {
+  "num": "27",
+  "phase": "Phase 5 · Locality and the frame rule",
+  "title": "The frame rule",
+  "ex": {
    "m8-5": {
     "name": "hoare_frame",
-    "goal": "theorem hoare_frame {P Q R : Assertion} {c : Cmd}\n    (hc : Hoare P c Q) (hlocal : HeapLocal c) (hpres : Preserves c R) :\n    Hoare (P ∗ R) c (Q ∗ R)",
+    "goal": "theorem hoare_frame {P Q R : Assertion} {c : Cmd}\n    (hc : Hoare P c Q) (hlocal : HeapLocal c) (hpres : Preserves c R) :\n    Hoare (P ∗ R) c (Q ∗ R) := by",
     "sol": "theorem hoare_frame {P Q R : Assertion} {c : Cmd}\n    (hc : Hoare P c Q) (hlocal : HeapLocal c) (hpres : Preserves c R) :\n    Hoare (P ∗ R) c (Q ∗ R) := by\n  intro σ h hstar\n  obtain ⟨hP, hR, hd, hu, hp, hr⟩ := hstar\n  obtain ⟨s', hex, hq⟩ := hc σ hP hp\n  obtain ⟨hdEnd, r, hrex, hrst, hrhp⟩ := hlocal σ hP hR s' hd hex\n  subst hu\n  refine ⟨r, hrex, s'.heap, hR, hdEnd, hrhp, ?_, ?_⟩\n  · rw [hrst]; exact hq\n  · exact hpres ⟨σ, Heap.union hP hR⟩ r hrex hR hr",
     "hard": true
    },
    "m8-6": {
     "name": "write_with_frame",
-    "goal": "theorem write_with_frame (l other : Loc) (old new w : Val) :\n    Hoare ((l ↦ old) ∗ (other ↦ w)) (.write l (.const new))\n      ((l ↦ new) ∗ (other ↦ w))",
+    "goal": "theorem write_with_frame (l other : Loc) (old new w : Val) :\n    Hoare ((l ↦ old) ∗ (other ↦ w)) (.write l (.const new)) ((l ↦ new) ∗ (other ↦ w)) := by",
     "sol": "theorem write_with_frame (l other : Loc) (old new w : Val) :\n    Hoare ((l ↦ old) ∗ (other ↦ w)) (.write l (.const new)) ((l ↦ new) ∗ (other ↦ w)) := by\n  have base : Hoare (l ↦ old) (.write l (.const new)) (l ↦ new) :=\n    hoare_write l (.const new) old\n  exact hoare_frame base (heapLocal_write l (.const new))\n    (preserves_of_heapOnly _ (heapOnly_pointsTo other w))",
     "hard": false
+   },
+   "x54": {
+    "name": "free_with_frame",
+    "goal": "theorem free_with_frame (l other : Loc) (v w : Val) :\n    Hoare ((l ↦ v) ∗ (other ↦ w)) (.free l) (other ↦ w) := by",
+    "sol": "theorem free_with_frame (l other : Loc) (v w : Val) :\n    Hoare ((l ↦ v) ∗ (other ↦ w)) (.free l) (other ↦ w) := by\n  have base : Hoare (l ↦ v) (.free l) emp := hoare_free l v\n  have framed : Hoare ((l ↦ v) ∗ (other ↦ w)) (.free l) (emp ∗ (other ↦ w)) :=\n    hoare_frame base (heapLocal_free l) (preserves_of_heapOnly _ (heapOnly_pointsTo other w))\n  exact hoare_consequence (entails_refl _) framed (star_emp_left _)",
+    "hard": false
    }
-  },
-  "code": [
-   "def HeapLocal (c : Cmd) : Prop :=\n  ∀ σ h hFrame s',\n    Heap.disjoint h hFrame →\n    Exec c ⟨σ, h⟩ s' →\n    Heap.disjoint s'.heap hFrame ∧\n    ∃ r : State,\n      Exec c ⟨σ, Heap.union h hFrame⟩ r ∧\n      r.store = s'.store ∧\n      r.heap = Heap.union s'.heap hFrame",
-   "def Preserves (c : Cmd) (R : Assertion) : Prop :=\n  ∀ s s', Exec c s s' → ∀ hFrame, R s.store hFrame → R s'.store hFrame",
-   "def HeapOnly (R : Assertion) : Prop := ∀ σ σ' h, R σ h → R σ' h\n\ntheorem preserves_of_heapOnly {R : Assertion} (c : Cmd) (h : HeapOnly R) : Preserves c R :=\n  fun s s' _ hFrame hr => h s.store s'.store hFrame hr\n\ntheorem heapOnly_pointsTo (l : Loc) (v : Val) : HeapOnly (l ↦ v) :=\n  fun _ _ _ hr => hr\n\ntheorem heapOnly_emp : HeapOnly emp := fun _ _ _ hr => hr\n\ntheorem heapOnly_star {P Q : Assertion} (hp : HeapOnly P) (hq : HeapOnly Q) :\n    HeapOnly (P ∗ Q) := by\n  intro σ σ' h ⟨h₁, h₂, hd, hu, h1, h2⟩\n  exact ⟨h₁, h₂, hd, hu, hp σ σ' h₁ h1, hq σ σ' h₂ h2⟩"
-  ]
+  }
  },
- "m9": {
-  "num": "M9",
-  "phase": "Phase 2 · Program logic",
-  "title": "Symbolic execution — verifying real programs",
+ "aliasing-closed": {
+  "num": "28",
+  "phase": "Phase 5 · Locality and the frame rule",
+  "title": "The opening question, closed",
   "ex": {
+   "x55": {
+    "name": "classical_conjunction_rule_is_false",
+    "goal": "theorem classical_conjunction_rule_is_false :\n    ¬ (∀ (l₁ l₂ : Loc) (a b : Val),\n        Hoare (ptsAtLeast l₁ a) (.write l₂ (.const b))\n              (aAnd (ptsAtLeast l₁ a) (ptsAtLeast l₂ b))) := by\n  sorry",
+    "sol": "theorem classical_conjunction_rule_is_false :\n    ¬ (∀ (l₁ l₂ : Loc) (a b : Val),\n        Hoare (ptsAtLeast l₁ a) (.write l₂ (.const b))\n              (aAnd (ptsAtLeast l₁ a) (ptsAtLeast l₂ b))) := by\n  intro hall\n  obtain ⟨s', hex, h3, h5⟩ :=\n    hall 0 0 3 5 (fun _ => 0) (Heap.singleton 0 3) (singleton_same 0 3)\n  cases hex with\n  | write hl =>\n      have e3 : Heap.write (Heap.singleton 0 3) 0 5 0 = some 3 := h3\n      rw [write_same] at e3\n      exact absurd e3 (by simp)",
+    "hard": true
+   },
+   "x56": {
+    "name": "separated_write_ok",
+    "goal": "theorem separated_write_ok (l₁ l₂ : Loc) (a b : Val) :\n    Hoare ((l₂ ↦ b) ∗ (l₁ ↦ a)) (.write l₂ (.const 5)) ((l₂ ↦ 5) ∗ (l₁ ↦ a)) := by\n  sorry",
+    "sol": "theorem separated_write_ok (l₁ l₂ : Loc) (a b : Val) :\n    Hoare ((l₂ ↦ b) ∗ (l₁ ↦ a)) (.write l₂ (.const 5)) ((l₂ ↦ 5) ∗ (l₁ ↦ a)) := by\n  have base : Hoare (l₂ ↦ b) (.write l₂ (.const 5)) (l₂ ↦ 5) :=\n    hoare_write l₂ (.const 5) b\n  exact hoare_frame base (heapLocal_write l₂ (.const 5))\n    (preserves_of_heapOnly _ (heapOnly_pointsTo l₁ a))",
+    "hard": false
+   }
+  }
+ },
+ "symbolic": {
+  "num": "29",
+  "phase": "Phase 6 · Verification",
+  "title": "Symbolic execution",
+  "ex": {
+   "x57": {
+    "name": "storeStable_write / storeStable_free / preserves_of_storeStable",
+    "goal": "theorem storeStable_write (l : Loc) (e : Atom) : StoreStable (.write l e) := by\n  sorry\n\ntheorem storeStable_free (l : Loc) : StoreStable (.free l) := by\n  sorry\n\ntheorem preserves_of_storeStable {c : Cmd} (h : StoreStable c) (R : Assertion) :\n    Preserves c R := by",
+    "sol": "theorem storeStable_write (l : Loc) (e : Atom) : StoreStable (.write l e) := by\n  intro s s' hex; cases hex; rfl\n\ntheorem storeStable_free (l : Loc) : StoreStable (.free l) := by\n  intro s s' hex; cases hex; rfl\n\ntheorem preserves_of_storeStable {c : Cmd} (h : StoreStable c) (R : Assertion) :\n    Preserves c R := by\n  intro s s' hex hFrame hr\n  rw [h s s' hex]; exact hr",
+    "hard": false
+   },
+   "x58": {
+    "name": "readAndFree_framed",
+    "goal": "theorem readAndFree_framed (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) (readAndFree x l) (pure (fun σ => σ x = v)) :=",
+    "sol": "theorem readAndFree_framed (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) (readAndFree x l) (pure (fun σ => σ x = v)) :=\n  hoare_seq\n    (hoare_consequence (entails_refl _) (hoare_load x l v) (star_comm _ _))\n    (hoare_consequence (entails_refl _)\n      (hoare_frame (hoare_free l v) (heapLocal_free l)\n        (preserves_of_storeStable (storeStable_free l) _))\n      (star_emp_left _))",
+    "hard": false
+   },
+   "x59": {
+    "name": "pure_star_regroup",
+    "goal": "theorem pure_star_regroup (φ : Store → Prop) (P R : Assertion) :\n    pure φ ∗ (P ∗ R) ⊢ (aAnd (fact φ) P) ∗ R := by",
+    "sol": "theorem pure_star_regroup (φ : Store → Prop) (P R : Assertion) :\n    pure φ ∗ (P ∗ R) ⊢ (aAnd (fact φ) P) ∗ R := by\n  intro σ h hstar\n  obtain ⟨h₀, hPR, hd, hu, ⟨hφ, he⟩, ⟨hP, hR, hdPR, huPR, hp, hr⟩⟩ := hstar\n  subst he\n  refine ⟨hP, hR, hdPR, ?_, ⟨hφ, hp⟩, hr⟩\n  rw [hu, union_empty_left, huPR]",
+    "hard": false
+   },
+   "x60": {
+    "name": "hoare_load_and / and_fact_star / and_fact_star_intro",
+    "goal": "theorem hoare_load_and (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) (.load x l) (aAnd (fact (fun σ => σ x = v)) (l ↦ v)) := by\n  sorry\n\ntheorem and_fact_star (φ : Store → Prop) (P R : Assertion) :\n    (aAnd (fact φ) P) ∗ R ⊢ aAnd (fact φ) (P ∗ R) := by\n  sorry\n\ntheorem and_fact_star_intro (φ : Store → Prop) (P R : Assertion) :\n    aAnd (fact φ) (P ∗ R) ⊢ (aAnd (fact φ) P) ∗ R := by",
+    "sol": "theorem hoare_load_and (x : Var) (l : Loc) (v : Val) :\n    Hoare (l ↦ v) (.load x l) (aAnd (fact (fun σ => σ x = v)) (l ↦ v)) := by\n  intro σ h hp\n  subst hp\n  refine ⟨⟨Store.set σ x v, Heap.singleton l v⟩, Exec.load (singleton_same l v), ?_, rfl⟩\n  show Store.set σ x v x = v\n  simp [Store.set]\n\ntheorem and_fact_star (φ : Store → Prop) (P R : Assertion) :\n    (aAnd (fact φ) P) ∗ R ⊢ aAnd (fact φ) (P ∗ R) := by\n  intro σ h ⟨h₁, h₂, hd, hu, ⟨hφ, hp⟩, hr⟩\n  exact ⟨hφ, h₁, h₂, hd, hu, hp, hr⟩\n\ntheorem and_fact_star_intro (φ : Store → Prop) (P R : Assertion) :\n    aAnd (fact φ) (P ∗ R) ⊢ (aAnd (fact φ) P) ∗ R := by\n  intro σ h ⟨hφ, h₁, h₂, hd, hu, hp, hr⟩\n  exact ⟨h₁, h₂, hd, hu, ⟨hφ, hp⟩, hr⟩",
+    "hard": false
+   },
    "m9-1": {
     "name": "copyCell_spec",
-    "goal": "theorem copyCell_spec (tmp : Var) (src dst : Loc) (a b : Val) :\n    Hoare ((src ↦ a) ∗ (dst ↦ b)) (copyCell tmp src dst)\n      ((src ↦ a) ∗ (dst ↦ a))",
+    "goal": "theorem copyCell_spec (tmp : Var) (src dst : Loc) (a b : Val) :\n    Hoare ((src ↦ a) ∗ (dst ↦ b)) (copyCell tmp src dst) ((src ↦ a) ∗ (dst ↦ a)) := by",
     "sol": "theorem copyCell_spec (tmp : Var) (src dst : Loc) (a b : Val) :\n    Hoare ((src ↦ a) ∗ (dst ↦ b)) (copyCell tmp src dst) ((src ↦ a) ∗ (dst ↦ a)) := by\n  refine hoare_seq (Q := (aAnd (fact (fun σ => σ tmp = a)) (dst ↦ b)) ∗ (src ↦ a)) ?_ ?_\n  · -- the load, framed by `dst ↦ b`, then renormalised\n    have step : Hoare ((src ↦ a) ∗ (dst ↦ b)) (.load tmp src)\n        ((pure (fun σ => σ tmp = a) ∗ (src ↦ a)) ∗ (dst ↦ b)) :=\n      hoare_frame (hoare_load tmp src a) (heapLocal_load tmp src)\n        (preserves_of_heapOnly _ (heapOnly_pointsTo dst b))\n    refine hoare_consequence (entails_refl _) step ?_\n    refine entails_trans (star_assoc_left _ _ _) ?_\n    refine entails_trans (star_mono_right _ (star_comm (src ↦ a) (dst ↦ b))) ?_\n    exact pure_star_regroup _ _ _\n  · -- the write, with the value known from the pure fact, framed by `src ↦ a`\n    have step : Hoare ((aAnd (fact (fun σ => (Atom.var tmp).eval σ = a)) (dst ↦ b)) ∗ (src ↦ a))\n        (.write dst (.var tmp)) ((dst ↦ a) ∗ (src ↦ a)) :=\n      hoare_frame (hoare_write_val dst (.var tmp) b a) (heapLocal_write dst (.var tmp))\n        (preserves_of_storeStable (storeStable_write dst (.var tmp)) _)\n    exact hoare_consequence (entails_refl _) step (star_comm (dst ↦ a) (src ↦ a))",
     "hard": true
    },
    "m9-2": {
     "name": "exec_seq_assoc",
-    "goal": "theorem exec_seq_assoc {c₁ c₂ c₃ : Cmd} {s s' : State} :\n    Exec ((c₁ ;; c₂) ;; c₃) s s' ↔ Exec (c₁ ;; (c₂ ;; c₃)) s s'",
+    "goal": "theorem exec_seq_assoc {c₁ c₂ c₃ : Cmd} {s s' : State} :\n    Exec ((c₁ ;; c₂) ;; c₃) s s' ↔ Exec (c₁ ;; (c₂ ;; c₃)) s s' := by",
     "sol": "theorem exec_seq_assoc {c₁ c₂ c₃ : Cmd} {s s' : State} :\n    Exec ((c₁ ;; c₂) ;; c₃) s s' ↔ Exec (c₁ ;; (c₂ ;; c₃)) s s' := by\n  constructor\n  · intro h\n    cases h with | seq h₁ h₂ => cases h₁ with | seq ha hb => exact .seq ha (.seq hb h₂)\n  · intro h\n    cases h with | seq h₁ h₂ => cases h₂ with | seq ha hb => exact .seq (.seq h₁ ha) hb",
     "hard": false
    },
    "m9-3": {
     "name": "moveCell_spec",
-    "goal": "theorem moveCell_spec (tmp : Var) (src dst : Loc) (a b : Val) :\n    Hoare ((src ↦ a) ∗ (dst ↦ b)) (moveCell tmp src dst) (dst ↦ a)",
+    "goal": "theorem moveCell_spec (tmp : Var) (src dst : Loc) (a b : Val) :\n    Hoare ((src ↦ a) ∗ (dst ↦ b)) (moveCell tmp src dst) (dst ↦ a) := by",
     "sol": "theorem moveCell_spec (tmp : Var) (src dst : Loc) (a b : Val) :\n    Hoare ((src ↦ a) ∗ (dst ↦ b)) (moveCell tmp src dst) (dst ↦ a) := by\n  refine hoare_seq (Q := (src ↦ a) ∗ (dst ↦ a)) (copyCell_spec tmp src dst a b) ?_\n  have step : Hoare ((src ↦ a) ∗ (dst ↦ a)) (.free src) (emp ∗ (dst ↦ a)) :=\n    hoare_frame (hoare_free src a) (heapLocal_free src)\n      (preserves_of_storeStable (storeStable_free src) _)\n  exact hoare_consequence (entails_refl _) step (star_emp_left _)",
     "hard": false
-   },
+   }
+  }
+ },
+ "swap": {
+  "num": "30",
+  "phase": "Phase 6 · Verification",
+  "title": "swap",
+  "ex": {
    "m9-4": {
+    "name": "preserves_load_fact",
+    "goal": "theorem preserves_load_fact {x y : Var} {v : Val} (l : Loc) (hne : y ≠ x) :\n    Preserves (.load x l) (pure (fun σ => σ y = v)) := by",
+    "sol": "theorem preserves_load_fact {x y : Var} {v : Val} (l : Loc) (hne : y ≠ x) :\n    Preserves (.load x l) (pure (fun σ => σ y = v)) := by\n  intro s s' hex hFrame hr\n  cases hex with\n  | load hl =>\n      obtain ⟨hy, he⟩ := hr\n      refine ⟨?_, he⟩\n      show Store.set s.store x _ y = v\n      simp [Store.set, hne]\n      exact hy",
+    "hard": false
+   },
+   "x61": {
+    "name": "swap_heap",
+    "goal": "theorem swap_heap (l₁ l₂ : Loc) (a b : Val) (hne : l₁ ≠ l₂) :\n    Heap.write (Heap.write (Heap.union (Heap.singleton l₁ a) (Heap.singleton l₂ b)) l₁ b) l₂ a\n      = Heap.union (Heap.singleton l₁ b) (Heap.singleton l₂ a) := by",
+    "sol": "theorem swap_heap (l₁ l₂ : Loc) (a b : Val) (hne : l₁ ≠ l₂) :\n    Heap.write (Heap.write (Heap.union (Heap.singleton l₁ a) (Heap.singleton l₂ b)) l₁ b) l₂ a\n      = Heap.union (Heap.singleton l₁ b) (Heap.singleton l₂ a) := by\n  funext x\n  by_cases hx₂ : x = l₂\n  · subst hx₂\n    rw [write_same]\n    rw [union_of_none (Heap.singleton x a) (singleton_other l₁ x b (fun h => hne h.symm))]\n    rw [singleton_same]\n  · rw [write_other _ l₂ x a hx₂]\n    by_cases hx₁ : x = l₁\n    · subst hx₁\n      rw [write_same, union_of_some (Heap.singleton l₂ a) (singleton_same x b)]\n    · rw [write_other _ l₁ x b hx₁,\n          union_of_none (Heap.singleton l₂ b) (singleton_other l₁ x a hx₁),\n          union_of_none (Heap.singleton l₂ a) (singleton_other l₁ x b hx₁),\n          singleton_other l₂ x b hx₂, singleton_other l₂ x a hx₂]",
+    "hard": true
+   },
+   "x62": {
     "name": "swap_spec",
-    "goal": "def swap (tmp₁ tmp₂ : Var) (l₁ l₂ : Loc) : Cmd :=\n  .load tmp₁ l₁ ;;\n  (.load tmp₂ l₂ ;;\n   (.write l₁ (.var tmp₂) ;; .write l₂ (.var tmp₁)))\n\n-- { l₁ ↦ a ∗ l₂ ↦ b }  swap tmp₁ tmp₂ l₁ l₂  { l₁ ↦ b ∗ l₂ ↦ a }",
-    "sol": "theorem preserves_load_fact {x y : Var} {v : Val} (l : Loc) (hne : y ≠ x) :\n    Preserves (.load x l) (pure (fun σ => σ y = v)) := by\n  intro s s' hex hFrame hr\n  cases hex with\n  | load hl =>\n      obtain ⟨hy, he⟩ := hr\n      refine ⟨?_, he⟩\n      show Store.set s.store x _ y = v\n      simp [Store.set, hne]\n      exact hy\n\n-- The remaining work: four applications of hoare_seq, each of the form\n--   frame the untouched cell  →  apply the small rule  →  renormalise.\n-- The intermediate assertions, in order:\n--   pure (tmp₁ = a) ∗ (l₁ ↦ a ∗ l₂ ↦ b)\n--   pure (tmp₁ = a) ∗ (pure (tmp₂ = b) ∗ (l₁ ↦ a ∗ l₂ ↦ b))\n--   pure (tmp₁ = a) ∗ (l₁ ↦ b ∗ l₂ ↦ b)\n--   l₁ ↦ b ∗ l₂ ↦ a",
-    "hard": false
-   }
-  },
-  "code": [
-   "def StoreStable (c : Cmd) : Prop := ∀ s s', Exec c s s' → s'.store = s.store\n\ntheorem storeStable_write (l : Loc) (e : Atom) : StoreStable (.write l e) := by\n  intro s s' hex; cases hex; rfl\n\ntheorem storeStable_free (l : Loc) : StoreStable (.free l) := by\n  intro s s' hex; cases hex; rfl\n\ntheorem preserves_of_storeStable {c : Cmd} (h : StoreStable c) (R : Assertion) :\n    Preserves c R := by\n  intro s s' hex hFrame hr\n  rw [h s s' hex]; exact hr",
-   "theorem hoare_write_val (l : Loc) (e : Atom) (old v : Val) :\n    Hoare (aAnd (fact (fun σ => e.eval σ = v)) (l ↦ old)) (.write l e) (l ↦ v) := by\n  intro σ h hpre\n  obtain ⟨hv, hp⟩ := hpre\n  subst hp\n  refine ⟨⟨σ, Heap.write (Heap.singleton l old) l (e.eval σ)⟩,\n          Exec.write (singleton_same l old), ?_⟩\n  show Heap.write (Heap.singleton l old) l (e.eval σ) = Heap.singleton l v\n  rw [write_singleton]\n  have : e.eval σ = v := hv\n  rw [this]",
-   "theorem pure_star_regroup (φ : Store → Prop) (P R : Assertion) :\n    pure φ ∗ (P ∗ R) ⊢ (aAnd (fact φ) P) ∗ R := by\n  intro σ h hstar\n  obtain ⟨h₀, hPR, hd, hu, ⟨hφ, he⟩, ⟨hP, hR, hdPR, huPR, hp, hr⟩⟩ := hstar\n  subst he\n  refine ⟨hP, hR, hdPR, ?_, ⟨hφ, hp⟩, hr⟩\n  rw [hu, union_empty_left, huPR]",
-   "def copyCell (tmp : Var) (src dst : Loc) : Cmd :=\n  .load tmp src ;; .write dst (.var tmp)",
-   "def moveCell (tmp : Var) (src dst : Loc) : Cmd :=\n  copyCell tmp src dst ;; .free src"
-  ]
- },
- "m10": {
-  "num": "M10",
-  "phase": "Phase 3 · Advanced separation logic",
-  "title": "Recursive predicates and linked structures",
-  "ex": {
-   "m10-1": {
-    "name": "listRep_nil / listRep_cons_unfold / listRep_cons_fold",
-    "goal": "theorem listRep_nil (p : Loc) :\n    listRep [] p ⊢ pure (fun _ => p = 0)\n\ntheorem listRep_cons_unfold (x : Nat) (xs : List Nat) (p : Loc) :\n    listRep (x :: xs) p ⊢\n      aExists fun next => pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next\n\ntheorem listRep_cons_fold (x : Nat) (xs : List Nat) (p : Loc) :\n    (aExists fun next => pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next) ⊢\n      listRep (x :: xs) p",
-    "sol": "theorem listRep_nil (p : Loc) : listRep [] p ⊢ pure (fun _ => p = 0) := entails_refl _\n\ntheorem listRep_cons_unfold (x : Nat) (xs : List Nat) (p : Loc) :\n    listRep (x :: xs) p ⊢\n      aExists fun next => pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next :=\n  entails_refl _\n\ntheorem listRep_cons_fold (x : Nat) (xs : List Nat) (p : Loc) :\n    (aExists fun next => pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next) ⊢\n      listRep (x :: xs) p :=\n  entails_refl _",
-    "hard": false
-   },
-   "m10-2": {
-    "name": "node_cells_distinct",
-    "goal": "theorem node_cells_distinct (p : Loc) (x next : Nat) :\n    node p x next ⊢ fact (fun _ => p ≠ p + 1)",
-    "sol": "theorem node_cells_distinct (p : Loc) (x next : Nat) :\n    node p x next ⊢ fact (fun _ => p ≠ p + 1) :=\n  two_cells_distinct p (p + 1) x next",
-    "hard": false
-   },
-   "m10-3": {
-    "name": "concrete three-node list",
-    "goal": "theorem concrete_list (p : Loc) (a b c : Nat) (q r : Loc)\n    (hp : p ≠ 0) (hq : q ≠ 0) (hr : r ≠ 0) :\n    node p a q ∗ node q b r ∗ node r c 0 ⊢ listRep [a, b, c] p",
-    "sol": "theorem concrete_list (p : Loc) (a b c : Nat) (q r : Loc)\n    (hp : p ≠ 0) (hq : q ≠ 0) (hr : r ≠ 0) :\n    node p a q ∗ node q b r ∗ node r c 0 ⊢ listRep [a, b, c] p := by\n  intro σ h hstar\n  obtain ⟨h₁, h₂, hd, hu, hn₁, h₃, h₄, hd', hu', hn₂, hn₃⟩ := hstar\n  subst hu'\n  subst hu\n  refine ⟨q, Heap.empty, Heap.union h₁ (Heap.union h₃ h₄), disjoint_empty_left _,\n          (union_empty_left _).symm, ⟨hp, rfl⟩, ?_⟩\n  refine ⟨h₁, Heap.union h₃ h₄, hd, rfl, hn₁, ?_⟩\n  refine ⟨r, Heap.empty, Heap.union h₃ h₄, disjoint_empty_left _,\n          (union_empty_left _).symm, ⟨hq, rfl⟩, ?_⟩\n  refine ⟨h₃, h₄, hd', rfl, hn₂, ?_⟩\n  refine ⟨0, Heap.empty, h₄, disjoint_empty_left _, (union_empty_left _).symm, ⟨hr, rfl⟩, ?_⟩\n  exact ⟨h₄, Heap.empty, disjoint_empty_right _, (union_empty_right _).symm, hn₃, rfl, rfl⟩",
+    "goal": "theorem swap_spec (tmp₁ tmp₂ : Var) (l₁ l₂ : Loc) (a b : Val) (hne : tmp₁ ≠ tmp₂) :\n    Hoare ((l₁ ↦ a) ∗ (l₂ ↦ b)) (swap tmp₁ tmp₂ l₁ l₂) ((l₁ ↦ b) ∗ (l₂ ↦ a)) := by",
+    "sol": "theorem swap_spec (tmp₁ tmp₂ : Var) (l₁ l₂ : Loc) (a b : Val) (hne : tmp₁ ≠ tmp₂) :\n    Hoare ((l₁ ↦ a) ∗ (l₂ ↦ b)) (swap tmp₁ tmp₂ l₁ l₂) ((l₁ ↦ b) ∗ (l₂ ↦ a)) := by\n  intro σ h hstar\n  obtain ⟨h₁, h₂, hd, hu, hp, hq⟩ := hstar\n  subst hp; subst hq; subst hu\n  have hlne : l₁ ≠ l₂ := (singleton_disjoint_iff a b).mp hd\n  have hH1 : Heap.union (Heap.singleton l₁ a) (Heap.singleton l₂ b) l₁ = some a :=\n    union_of_some _ (singleton_same l₁ a)\n  have hH2 : Heap.union (Heap.singleton l₁ a) (Heap.singleton l₂ b) l₂ = some b := by\n    rw [union_of_none (Heap.singleton l₂ b) (singleton_other l₁ l₂ a (Ne.symm hlne)), singleton_same]\n  have e2 : Store.set (Store.set σ tmp₁ a) tmp₂ b tmp₂ = b := by simp [Store.set]\n  have e1 : Store.set (Store.set σ tmp₁ a) tmp₂ b tmp₁ = a := by simp [Store.set, hne]\n  have hH3 : Heap.write (Heap.union (Heap.singleton l₁ a) (Heap.singleton l₂ b)) l₁\n      (Store.set (Store.set σ tmp₁ a) tmp₂ b tmp₂) l₂ = some b := by\n    rw [write_other _ l₁ l₂ _ hlne.symm]; exact hH2\n  refine ⟨_, Exec.seq (Exec.load hH1) (Exec.seq (Exec.load hH2)\n      (Exec.seq (Exec.write hH1) (Exec.write hH3))), ?_⟩\n  refine ⟨Heap.singleton l₁ b, Heap.singleton l₂ a, singleton_disjoint b a hlne, ?_, rfl, rfl⟩\n  show Heap.write (Heap.write (Heap.union (Heap.singleton l₁ a) (Heap.singleton l₂ b)) l₁\n        (Store.set (Store.set σ tmp₁ a) tmp₂ b tmp₂)) l₂\n        (Store.set (Store.set σ tmp₁ a) tmp₂ b tmp₁) = _\n  rw [e1, e2]\n  exact swap_heap l₁ l₂ a b hlne",
     "hard": true
-   },
-   "m10-4": {
-    "name": "lseg_append",
-    "goal": "theorem lseg_append : ∀ (xs ys : List Nat) (p q r : Loc),\n    lseg xs p q ∗ lseg ys q r ⊢ lseg (xs ++ ys) p r",
-    "sol": "theorem aExists_mono {α : Sort u} {P Q : α → Assertion} (h : ∀ x, P x ⊢ Q x) :\n    aExists P ⊢ aExists Q := by\n  intro σ hh ⟨x, hp⟩\n  exact ⟨x, h x σ hh hp⟩\n\ntheorem lseg_append : ∀ (xs ys : List Nat) (p q r : Loc),\n    lseg xs p q ∗ lseg ys q r ⊢ lseg (xs ++ ys) p r := by\n  intro xs\n  induction xs with\n  | nil =>\n      intro ys p q r σ h hstar\n      obtain ⟨h₁, h₂, _, hu, ⟨hpq, he⟩, hys⟩ := hstar\n      have hpq' : p = q := hpq\n      subst hpq'\n      subst he\n      rw [hu, union_empty_left]\n      exact hys\n  | cons x xs ih =>\n      intro ys p q r\n      refine entails_trans (star_mono_left _ (entails_refl (lseg (x :: xs) p q))) ?_\n      refine entails_trans (star_exists_left _ _) ?_\n      refine aExists_mono (fun n => ?_)\n      refine entails_trans (star_assoc_left _ _ _) ?_\n      refine star_mono_right _ ?_\n      refine entails_trans (star_assoc_left _ _ _) ?_\n      exact star_mono_right _ (ih ys n q r)",
-    "hard": true
-   },
-   "m10-5": {
-    "name": "lseg_listRep",
-    "goal": "theorem lseg_listRep : ∀ (xs ys : List Nat) (p q : Loc),\n    lseg xs p q ∗ listRep ys q ⊢ listRep (xs ++ ys) p",
-    "sol": "theorem lseg_listRep : ∀ (xs ys : List Nat) (p q : Loc),\n    lseg xs p q ∗ listRep ys q ⊢ listRep (xs ++ ys) p := by\n  intro xs\n  induction xs with\n  | nil =>\n      intro ys p q σ h hstar\n      obtain ⟨h₁, h₂, _, hu, ⟨hpq, he⟩, hys⟩ := hstar\n      have hpq' : p = q := hpq\n      subst hpq'\n      subst he\n      rw [hu, union_empty_left]\n      exact hys\n  | cons x xs ih =>\n      intro ys p q\n      refine entails_trans (star_exists_left _ _) ?_\n      refine aExists_mono (fun n => ?_)\n      refine entails_trans (star_assoc_left _ _ _) ?_\n      refine star_mono_right _ ?_\n      refine entails_trans (star_assoc_left _ _ _) ?_\n      exact star_mono_right _ (ih ys n q)",
-    "hard": false
    }
-  },
-  "code": [
-   "def node (p : Loc) (value next : Nat) : Assertion :=\n  (p ↦ value) ∗ ((p + 1) ↦ next)\n\ndef listRep : List Nat → Loc → Assertion\n  | [],      p => pure (fun _ => p = 0)\n  | x :: xs, p =>\n      aExists fun next =>\n        pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next",
-   "def lseg : List Nat → Loc → Loc → Assertion\n  | [],      start, finish => pure (fun _ => start = finish)\n  | x :: xs, start, finish =>\n      aExists fun next =>\n        pure (fun _ => start ≠ 0) ∗ node start x next ∗ lseg xs next finish"
-  ]
+  }
  },
- "m11": {
-  "num": "M11",
-  "phase": "Phase 3 · Advanced separation logic",
-  "title": "The magic wand",
-  "ex": {
-   "m11-1": {
-    "name": "wand_intro",
-    "goal": "theorem wand_intro {P Q R : Assertion} (h : P ∗ Q ⊢ R) : P ⊢ Q -∗ R",
-    "sol": "theorem wand_intro {P Q R : Assertion} (h : P ∗ Q ⊢ R) : P ⊢ Q -∗ R := by\n  intro σ hh hp h' hd hq\n  exact h σ (Heap.union hh h') ⟨hh, h', hd, rfl, hp, hq⟩",
-    "hard": false
-   },
-   "m11-2": {
-    "name": "wand_elim",
-    "goal": "theorem wand_elim (P Q : Assertion) : (P -∗ Q) ∗ P ⊢ Q",
-    "sol": "theorem wand_elim (P Q : Assertion) : (P -∗ Q) ∗ P ⊢ Q := by\n  intro σ h ⟨h₁, h₂, hd, hu, hw, hp⟩\n  rw [hu]\n  exact hw h₂ hd hp",
-    "hard": false
-   },
-   "m11-3": {
-    "name": "star_wand_adjunction",
-    "goal": "theorem star_wand_adjunction (P Q R : Assertion) :\n    (P ∗ Q ⊢ R) ↔ (P ⊢ Q -∗ R)",
-    "sol": "theorem star_wand_adjunction (P Q R : Assertion) : (P ∗ Q ⊢ R) ↔ (P ⊢ Q -∗ R) := by\n  constructor\n  · exact wand_intro\n  · intro h\n    refine entails_trans (star_mono_left Q h) ?_\n    exact wand_elim Q R",
-    "hard": false
-   },
-   "m11-4": {
-    "name": "wand_mono",
-    "goal": "theorem wand_mono {P P' Q Q' : Assertion} (hp : P' ⊢ P) (hq : Q ⊢ Q') :\n    (P -∗ Q) ⊢ (P' -∗ Q')",
-    "sol": "theorem wand_mono {P P' Q Q' : Assertion} (hp : P' ⊢ P) (hq : Q ⊢ Q') :\n    (P -∗ Q) ⊢ (P' -∗ Q') := by\n  intro σ h hw h' hd hp'\n  exact hq σ _ (hw h' hd (hp σ h' hp'))",
-    "hard": false
-   }
-  },
-  "code": [
-   "def wand (P Q : Assertion) : Assertion :=\n  fun σ h => ∀ h', Heap.disjoint h h' → P σ h' → Q σ (Heap.union h h')\ninfixr:54 \" -∗ \" => wand"
-  ]
- },
- "m12": {
-  "num": "M12",
-  "phase": "Phase 3 · Advanced separation logic",
+ "wp": {
+  "num": "31",
+  "phase": "Phase 6 · Verification",
   "title": "Weakest preconditions",
   "ex": {
    "m12-1": {
     "name": "wp_skip / wp_assign",
-    "goal": "theorem wp_skip (Q : Assertion) : wp .skip Q ⊣⊢ Q\ntheorem wp_assign (x : Var) (e : Atom) (Q : Assertion) :\n    wp (.assign x e) Q ⊣⊢ subst x e Q",
+    "goal": "theorem wp_skip (Q : Assertion) : wp .skip Q ⊣⊢ Q := by\n\ntheorem wp_assign (x : Var) (e : Atom) (Q : Assertion) :\n    wp (.assign x e) Q ⊣⊢ subst x e Q := by",
     "sol": "theorem wp_skip (Q : Assertion) : wp .skip Q ⊣⊢ Q := by\n  constructor\n  · intro σ h ⟨s', hex, hq⟩\n    cases hex; exact hq\n  · intro σ h hq\n    exact ⟨⟨σ, h⟩, Exec.skip, hq⟩\n\ntheorem wp_assign (x : Var) (e : Atom) (Q : Assertion) :\n    wp (.assign x e) Q ⊣⊢ subst x e Q := by\n  constructor\n  · intro σ h ⟨s', hex, hq⟩\n    cases hex; exact hq\n  · intro σ h hq\n    exact ⟨⟨Store.set σ x (e.eval σ), h⟩, Exec.assign, hq⟩",
     "hard": false
    },
    "m12-2": {
     "name": "wp_seq",
-    "goal": "theorem wp_seq (c₁ c₂ : Cmd) (Q : Assertion) :\n    wp (c₁ ;; c₂) Q ⊣⊢ wp c₁ (wp c₂ Q)",
+    "goal": "theorem wp_seq (c₁ c₂ : Cmd) (Q : Assertion) :\n    wp (c₁ ;; c₂) Q ⊣⊢ wp c₁ (wp c₂ Q) := by",
     "sol": "theorem wp_seq (c₁ c₂ : Cmd) (Q : Assertion) :\n    wp (c₁ ;; c₂) Q ⊣⊢ wp c₁ (wp c₂ Q) := by\n  constructor\n  · intro σ h ⟨s'', hex, hq⟩\n    cases hex with\n    | seq h₁ h₂ => exact ⟨_, h₁, ⟨s'', h₂, hq⟩⟩\n  · intro σ h ⟨s₁, hex₁, s₂, hex₂, hq⟩\n    exact ⟨s₂, Exec.seq hex₁ hex₂, hq⟩",
     "hard": false
    },
    "m12-3": {
     "name": "wp_mono",
-    "goal": "theorem wp_mono {Q Q' : Assertion} (c : Cmd) (h : Q ⊢ Q') : wp c Q ⊢ wp c Q'",
+    "goal": "theorem wp_mono {Q Q' : Assertion} (c : Cmd) (h : Q ⊢ Q') : wp c Q ⊢ wp c Q' := by",
     "sol": "theorem wp_mono {Q Q' : Assertion} (c : Cmd) (h : Q ⊢ Q') : wp c Q ⊢ wp c Q' := by\n  intro σ hh ⟨s', hex, hq⟩\n  exact ⟨s', hex, h s'.store s'.heap hq⟩",
+    "hard": false
+   },
+   "x63": {
+    "name": "wp_sound and wp_weakest",
+    "goal": "-- Delete the line below and write your own `theorem wp_sound …` and\n-- `theorem wp_weakest …`. Any correct statement of each fact is accepted.\nexample : True := by",
+    "sol": "theorem wp_sound (c : Cmd) (Q : Assertion) : Hoare (wp c Q) c Q := fun _ _ hp => hp\n\ntheorem wp_weakest {P Q : Assertion} {c : Cmd} (h : Hoare P c Q) : P ⊢ wp c Q := h",
     "hard": false
    },
    "m12-4": {
     "name": "wp_free_emp",
-    "goal": "theorem wp_free_emp (l : Loc) :\n    wp (.free l) emp ⊣⊢ aExists (fun v => l ↦ v)",
-    "sol": "theorem heap_eq_singleton {h : Heap} {l : Loc} {v : Val}\n    (hl : h l = some v) (hrest : Heap.erase h l = Heap.empty) :\n    h = Heap.singleton l v := by\n  funext x\n  by_cases hx : x = l\n  · subst hx; rw [hl, singleton_same]\n  · rw [singleton_other l x v hx]\n    have := congrFun hrest x\n    rw [erase_other h l x hx] at this\n    exact this\n\ntheorem wp_free_emp (l : Loc) : wp (.free l) emp ⊣⊢ aExists (fun v => l ↦ v) := by\n  constructor\n  · intro σ h ⟨s', hex, he⟩\n    cases hex with\n    | free hl =>\n        refine ⟨_, heap_eq_singleton hl ?_⟩\n        exact he\n  · intro σ h ⟨v, hp⟩\n    subst hp\n    exact ⟨⟨σ, Heap.erase (Heap.singleton l v) l⟩, Exec.free (singleton_same l v),\n           erase_singleton l v⟩",
+    "goal": "theorem wp_free_emp (l : Loc) : wp (.free l) emp ⊣⊢ aExists (fun v => l ↦ v) := by",
+    "sol": "theorem wp_free_emp (l : Loc) : wp (.free l) emp ⊣⊢ aExists (fun v => l ↦ v) := by\n  constructor\n  · intro σ h ⟨s', hex, he⟩\n    cases hex with\n    | free hl =>\n        refine ⟨_, heap_eq_singleton hl ?_⟩\n        exact he\n  · intro σ h ⟨v, hp⟩\n    subst hp\n    exact ⟨⟨σ, Heap.erase (Heap.singleton l v) l⟩, Exec.free (singleton_same l v),\n           erase_singleton l v⟩",
     "hard": true
    },
    "m12-5": {
     "name": "wp_write",
-    "goal": "theorem wp_write (l : Loc) (new : Val) :\n    wp (.write l (.const new)) (l ↦ new) ⊣⊢ aExists (fun old => l ↦ old)",
+    "goal": "theorem wp_write (l : Loc) (new : Val) :\n    wp (.write l (.const new)) (l ↦ new) ⊣⊢ aExists (fun old => l ↦ old) := by",
     "sol": "theorem wp_write (l : Loc) (new : Val) :\n    wp (.write l (.const new)) (l ↦ new) ⊣⊢ aExists (fun old => l ↦ old) := by\n  constructor\n  · intro σ h ⟨s', hex, hq⟩\n    cases hex with\n    | write hl =>\n        rename_i old\n        refine ⟨old, ?_⟩\n        have hl' : h l = some old := hl\n        have hq' : Heap.write h l new = Heap.singleton l new := hq\n        funext x\n        by_cases hx : x = l\n        · subst hx; rw [hl', singleton_same]\n        · rw [singleton_other l x old hx]\n          have := congrFun hq' x\n          rw [write_other h l x new hx, singleton_other l x new hx] at this\n          exact this\n  · intro σ h ⟨old, hp⟩\n    subst hp\n    exact ⟨⟨σ, Heap.write (Heap.singleton l old) l new⟩,\n           Exec.write (singleton_same l old), write_singleton l old new⟩",
     "hard": true
+   },
+   "x64": {
+    "name": "wp_frame",
+    "goal": "theorem wp_frame {Q R : Assertion} {c : Cmd}\n    (hlocal : HeapLocal c) (hpres : Preserves c R) : wp c Q ∗ R ⊢ wp c (Q ∗ R) :=",
+    "sol": "theorem wp_frame {Q R : Assertion} {c : Cmd}\n    (hlocal : HeapLocal c) (hpres : Preserves c R) : wp c Q ∗ R ⊢ wp c (Q ∗ R) :=\n  hoare_frame (fun _ _ hp => hp) hlocal hpres",
+    "hard": false
    }
-  },
-  "code": [
-   "def wp (c : Cmd) (Q : Assertion) : Assertion :=\n  fun σ h => ∃ s', Exec c ⟨σ, h⟩ s' ∧ Q s'.store s'.heap",
-   "theorem hoare_iff_entails_wp (P Q : Assertion) (c : Cmd) :\n    Hoare P c Q ↔ P ⊢ wp c Q := Iff.rfl"
-  ]
+  }
  },
- "m13": {
-  "num": "M13",
-  "phase": "Phase 3 · Advanced separation logic",
-  "title": "Loops, invariants, and termination",
+ "listrep": {
+  "num": "32",
+  "phase": "Phase 7 · Unbounded structures",
+  "title": "Lists in the heap",
   "ex": {
+   "m10-1": {
+    "name": "the three fold/unfold lemmas",
+    "goal": "theorem listRep_nil (p : Loc) : listRep [] p ⊢ pure (fun _ => p = 0) :=\n  sorry\n\ntheorem listRep_cons_unfold (x : Nat) (xs : List Nat) (p : Loc) :\n    listRep (x :: xs) p ⊢\n      aExists fun next => pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next :=\n  sorry\n\ntheorem listRep_cons_fold (x : Nat) (xs : List Nat) (p : Loc) :\n    (aExists fun next => pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next) ⊢\n      listRep (x :: xs) p :=",
+    "sol": "theorem listRep_nil (p : Loc) : listRep [] p ⊢ pure (fun _ => p = 0) := entails_refl _\n\ntheorem listRep_cons_unfold (x : Nat) (xs : List Nat) (p : Loc) :\n    listRep (x :: xs) p ⊢\n      aExists fun next => pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next :=\n  entails_refl _\n\ntheorem listRep_cons_fold (x : Nat) (xs : List Nat) (p : Loc) :\n    (aExists fun next => pure (fun _ => p ≠ 0) ∗ node p x next ∗ listRep xs next) ⊢\n      listRep (x :: xs) p :=\n  entails_refl _",
+    "hard": false
+   },
+   "x65": {
+    "name": "listRep_cons_ne_zero",
+    "goal": "theorem listRep_cons_ne_zero (x : Nat) (xs : List Nat) (p : Loc) :\n    listRep (x :: xs) p ⊢ fact (fun _ => p ≠ 0) := by",
+    "sol": "theorem listRep_cons_ne_zero (x : Nat) (xs : List Nat) (p : Loc) :\n    listRep (x :: xs) p ⊢ fact (fun _ => p ≠ 0) := by\n  intro σ h ⟨n, h₁, h₂, _, _, ⟨hp, _⟩, _⟩\n  exact hp",
+    "hard": false
+   },
+   "m10-2": {
+    "name": "node_cells_distinct",
+    "goal": "theorem node_cells_distinct (p : Loc) (x next : Nat) :\n    node p x next ⊢ fact (fun _ => p ≠ p + 1) :=",
+    "sol": "theorem node_cells_distinct (p : Loc) (x next : Nat) :\n    node p x next ⊢ fact (fun _ => p ≠ p + 1) :=\n  two_cells_distinct p (p + 1) x next",
+    "hard": false
+   },
+   "m10-3": {
+    "name": "concrete_list",
+    "goal": "theorem concrete_list (p : Loc) (a b c : Nat) (q r : Loc)\n    (hp : p ≠ 0) (hq : q ≠ 0) (hr : r ≠ 0) :\n    node p a q ∗ node q b r ∗ node r c 0 ⊢ listRep [a, b, c] p := by",
+    "sol": "theorem concrete_list (p : Loc) (a b c : Nat) (q r : Loc)\n    (hp : p ≠ 0) (hq : q ≠ 0) (hr : r ≠ 0) :\n    node p a q ∗ node q b r ∗ node r c 0 ⊢ listRep [a, b, c] p := by\n  intro σ h hstar\n  obtain ⟨h₁, h₂, hd, hu, hn₁, h₃, h₄, hd', hu', hn₂, hn₃⟩ := hstar\n  subst hu'\n  subst hu\n  refine ⟨q, Heap.empty, Heap.union h₁ (Heap.union h₃ h₄), disjoint_empty_left _,\n          (union_empty_left _).symm, ⟨hp, rfl⟩, ?_⟩\n  refine ⟨h₁, Heap.union h₃ h₄, hd, rfl, hn₁, ?_⟩\n  refine ⟨r, Heap.empty, Heap.union h₃ h₄, disjoint_empty_left _,\n          (union_empty_left _).symm, ⟨hq, rfl⟩, ?_⟩\n  refine ⟨h₃, h₄, hd', rfl, hn₂, ?_⟩\n  refine ⟨0, Heap.empty, h₄, disjoint_empty_left _, (union_empty_left _).symm, ⟨hr, rfl⟩, ?_⟩\n  exact ⟨h₄, Heap.empty, disjoint_empty_right _, (union_empty_right _).symm, hn₃, rfl, rfl⟩",
+    "hard": true
+   }
+  }
+ },
+ "lseg": {
+  "num": "33",
+  "phase": "Phase 7 · Unbounded structures",
+  "title": "Segments, and the theorem that joins them",
+  "ex": {
+   "x66": {
+    "name": "aExists_mono and lseg_nil_iff",
+    "goal": "theorem aExists_mono {α : Sort u} {P Q : α → Assertion} (h : ∀ x, P x ⊢ Q x) :\n    aExists P ⊢ aExists Q := by\n  sorry\n\ntheorem lseg_nil_iff (p q : Loc) : lseg [] p q ⊣⊢ pure (fun _ => p = q) :=",
+    "sol": "theorem aExists_mono {α : Sort u} {P Q : α → Assertion} (h : ∀ x, P x ⊢ Q x) :\n    aExists P ⊢ aExists Q := by\n  intro σ hh ⟨x, hp⟩\n  exact ⟨x, h x σ hh hp⟩\n\ntheorem lseg_nil_iff (p q : Loc) : lseg [] p q ⊣⊢ pure (fun _ => p = q) :=\n  ⟨entails_refl _, entails_refl _⟩",
+    "hard": false
+   },
+   "m10-4": {
+    "name": "lseg_append",
+    "goal": "theorem lseg_append : ∀ (xs ys : List Nat) (p q r : Loc),\n    lseg xs p q ∗ lseg ys q r ⊢ lseg (xs ++ ys) p r := by",
+    "sol": "theorem lseg_append : ∀ (xs ys : List Nat) (p q r : Loc),\n    lseg xs p q ∗ lseg ys q r ⊢ lseg (xs ++ ys) p r := by\n  intro xs\n  induction xs with\n  | nil =>\n      intro ys p q r σ h hstar\n      obtain ⟨h₁, h₂, _, hu, ⟨hpq, he⟩, hys⟩ := hstar\n      have hpq' : p = q := hpq\n      subst hpq'\n      subst he\n      rw [hu, union_empty_left]\n      exact hys\n  | cons x xs ih =>\n      intro ys p q r\n      refine entails_trans (star_mono_left _ (entails_refl (lseg (x :: xs) p q))) ?_\n      refine entails_trans (star_exists_left _ _) ?_\n      refine aExists_mono (fun n => ?_)\n      refine entails_trans (star_assoc_left _ _ _) ?_\n      refine star_mono_right _ ?_\n      refine entails_trans (star_assoc_left _ _ _) ?_\n      exact star_mono_right _ (ih ys n q r)",
+    "hard": true
+   },
+   "m10-5": {
+    "name": "lseg_listRep",
+    "goal": "theorem lseg_listRep : ∀ (xs ys : List Nat) (p q : Loc),\n    lseg xs p q ∗ listRep ys q ⊢ listRep (xs ++ ys) p := by",
+    "sol": "theorem lseg_listRep : ∀ (xs ys : List Nat) (p q : Loc),\n    lseg xs p q ∗ listRep ys q ⊢ listRep (xs ++ ys) p := by\n  intro xs\n  induction xs with\n  | nil =>\n      intro ys p q σ h hstar\n      obtain ⟨h₁, h₂, _, hu, ⟨hpq, he⟩, hys⟩ := hstar\n      have hpq' : p = q := hpq\n      subst hpq'\n      subst he\n      rw [hu, union_empty_left]\n      exact hys\n  | cons x xs ih =>\n      intro ys p q\n      refine entails_trans (star_exists_left _ _) ?_\n      refine aExists_mono (fun n => ?_)\n      refine entails_trans (star_assoc_left _ _ _) ?_\n      refine star_mono_right _ ?_\n      refine entails_trans (star_assoc_left _ _ _) ?_\n      exact star_mono_right _ (ih ys n q)",
+    "hard": false
+   },
+   "x67": {
+    "name": "listRep_null",
+    "goal": "-- Delete the line below and write your own `theorem listRep_null …`.\n-- Any correct statement of the fact will be accepted.\nexample : True := by",
+    "sol": "theorem listRep_null (xs : List Nat) : listRep xs 0 ⊢ pure (fun _ => xs = []) := by\n  cases xs with\n  | nil => intro σ h hp; exact ⟨rfl, hp.2⟩\n  | cons x xs =>\n      intro σ h hrep\n      obtain ⟨next, h₁, h₂, _, _, ⟨hne, _⟩, _⟩ := hrep\n      exact absurd rfl hne",
+    "hard": false
+   }
+  }
+ },
+ "wand": {
+  "num": "34",
+  "phase": "Phase 7 · Unbounded structures",
+  "title": "Giving a piece away, and getting it back",
+  "ex": {
+   "m11-1": {
+    "name": "wand_intro",
+    "goal": "theorem wand_intro {P Q R : Assertion} (h : P ∗ Q ⊢ R) : P ⊢ Q -∗ R := by",
+    "sol": "theorem wand_intro {P Q R : Assertion} (h : P ∗ Q ⊢ R) : P ⊢ Q -∗ R := by\n  intro σ hh hp h' hd hq\n  exact h σ (Heap.union hh h') ⟨hh, h', hd, rfl, hp, hq⟩",
+    "hard": false
+   },
+   "m11-2": {
+    "name": "wand_elim",
+    "goal": "theorem wand_elim (P Q : Assertion) : (P -∗ Q) ∗ P ⊢ Q := by",
+    "sol": "theorem wand_elim (P Q : Assertion) : (P -∗ Q) ∗ P ⊢ Q := by\n  intro σ h ⟨h₁, h₂, hd, hu, hw, hp⟩\n  rw [hu]\n  exact hw h₂ hd hp",
+    "hard": false
+   },
+   "m11-3": {
+    "name": "star_wand_adjunction",
+    "goal": "theorem star_wand_adjunction (P Q R : Assertion) : (P ∗ Q ⊢ R) ↔ (P ⊢ Q -∗ R) := by",
+    "sol": "theorem star_wand_adjunction (P Q R : Assertion) : (P ∗ Q ⊢ R) ↔ (P ⊢ Q -∗ R) := by\n  constructor\n  · exact wand_intro\n  · intro h\n    refine entails_trans (star_mono_left Q h) ?_\n    exact wand_elim Q R",
+    "hard": false
+   },
+   "m11-4": {
+    "name": "wand_mono",
+    "goal": "theorem wand_mono {P P' Q Q' : Assertion} (hp : P' ⊢ P) (hq : Q ⊢ Q') :\n    (P -∗ Q) ⊢ (P' -∗ Q') := by",
+    "sol": "theorem wand_mono {P P' Q Q' : Assertion} (hp : P' ⊢ P) (hq : Q ⊢ Q') :\n    (P -∗ Q) ⊢ (P' -∗ Q') := by\n  intro σ h hw h' hd hp'\n  exact hq σ _ (hw h' hd (hp σ h' hp'))",
+    "hard": false
+   },
+   "x68": {
+    "name": "wand_unit, hole_intro, hole_elim",
+    "goal": "theorem wand_unit (P Q : Assertion) : Q ⊢ P -∗ (P ∗ Q) := by\n  sorry\n\ntheorem hole_intro (P R : Assertion) : P ∗ R ⊢ P ∗ (P -∗ (P ∗ R)) :=\n  sorry\n\ntheorem hole_elim (P R : Assertion) : P ∗ (P -∗ (P ∗ R)) ⊢ P ∗ R :=",
+    "sol": "theorem wand_unit (P Q : Assertion) : Q ⊢ P -∗ (P ∗ Q) := by\n  intro σ h hq h' hd hp\n  exact ⟨h', h, disjoint_symm hd, union_comm hd, hp, hq⟩\n\ntheorem hole_intro (P R : Assertion) : P ∗ R ⊢ P ∗ (P -∗ (P ∗ R)) :=\n  star_mono_right P (wand_unit P R)\n\ntheorem hole_elim (P R : Assertion) : P ∗ (P -∗ (P ∗ R)) ⊢ P ∗ R :=\n  entails_trans (star_comm P (P -∗ (P ∗ R))) (wand_elim P (P ∗ R))",
+    "hard": false
+   },
+   "x69": {
+    "name": "wand_curry and wand_uncurry",
+    "goal": "theorem wand_curry (P Q R : Assertion) : ((P ∗ Q) -∗ R) ⊢ P -∗ (Q -∗ R) := by\n  sorry\n\ntheorem wand_uncurry (P Q R : Assertion) : (P -∗ (Q -∗ R)) ⊢ (P ∗ Q) -∗ R := by",
+    "sol": "theorem wand_curry (P Q R : Assertion) : ((P ∗ Q) -∗ R) ⊢ P -∗ (Q -∗ R) := by\n  intro σ h hw h₁ hd₁ hp h₂ hd₂ hq\n  obtain ⟨hdh2, hd12⟩ := disjoint_union_left.mp hd₂\n  have hdd : Heap.disjoint h (Heap.union h₁ h₂) :=\n    disjoint_union_right.mpr ⟨hd₁, hdh2⟩\n  have hR := hw (Heap.union h₁ h₂) hdd ⟨h₁, h₂, hd12, rfl, hp, hq⟩\n  rw [union_assoc]\n  exact hR\n\ntheorem wand_uncurry (P Q R : Assertion) : (P -∗ (Q -∗ R)) ⊢ (P ∗ Q) -∗ R := by\n  intro σ h hw h' hd ⟨h₁, h₂, hd₁₂, hu, hp, hq⟩\n  subst hu\n  obtain ⟨hdh1, hdh2⟩ := disjoint_union_right.mp hd\n  have hR := hw h₁ hdh1 hp h₂ (disjoint_union_left.mpr ⟨hdh2, hd₁₂⟩) hq\n  rw [← union_assoc]\n  exact hR",
+    "hard": false
+   }
+  }
+ },
+ "partial": {
+  "num": "35",
+  "phase": "Phase 8 · Control and termination",
+  "title": "Partial correctness, and conditionals",
+  "ex": {
+   "x70": {
+    "name": "partial_of_total",
+    "goal": "theorem partial_of_total {P Q : Assertion} {c : Cmd}\n    (h : Hoare P c Q) : PartialHoare P c Q := by",
+    "sol": "theorem partial_of_total {P Q : Assertion} {c : Cmd}\n    (h : Hoare P c Q) : PartialHoare P c Q := by\n  intro σ hh s' hp hex\n  obtain ⟨s'', hex'', hq⟩ := h σ hh hp\n  have : s' = s'' := exec_deterministic hex hex''\n  rw [this]; exact hq",
+    "hard": false
+   },
    "m13-1": {
-    "name": "partialHoare_skip / seq / consequence",
-    "goal": "theorem partialHoare_skip (P : Assertion) : PartialHoare P .skip P\n\ntheorem partialHoare_seq {P Q R : Assertion} {c₁ c₂ : Cmd}\n    (h₁ : PartialHoare P c₁ Q) (h₂ : PartialHoare Q c₂ R) :\n    PartialHoare P (c₁ ;; c₂) R\n\ntheorem partialHoare_consequence {P P' Q Q' : Assertion} {c : Cmd}\n    (hpre : P' ⊢ P) (hc : PartialHoare P c Q) (hpost : Q ⊢ Q') :\n    PartialHoare P' c Q'",
+    "name": "partialHoare_skip, partialHoare_seq, partialHoare_consequence",
+    "goal": "theorem partialHoare_skip (P : Assertion) : PartialHoare P .skip P := by\n  sorry\n\ntheorem partialHoare_seq {P Q R : Assertion} {c₁ c₂ : Cmd}\n    (h₁ : PartialHoare P c₁ Q) (h₂ : PartialHoare Q c₂ R) :\n    PartialHoare P (c₁ ;; c₂) R := by\n  sorry\n\ntheorem partialHoare_consequence {P P' Q Q' : Assertion} {c : Cmd}\n    (hpre : P' ⊢ P) (hc : PartialHoare P c Q) (hpost : Q ⊢ Q') :\n    PartialHoare P' c Q' := by",
     "sol": "theorem partialHoare_skip (P : Assertion) : PartialHoare P .skip P := by\n  intro σ h s' hp hex\n  cases hex; exact hp\n\ntheorem partialHoare_seq {P Q R : Assertion} {c₁ c₂ : Cmd}\n    (h₁ : PartialHoare P c₁ Q) (h₂ : PartialHoare Q c₂ R) :\n    PartialHoare P (c₁ ;; c₂) R := by\n  intro σ h s' hp hex\n  cases hex with\n  | seq hex₁ hex₂ =>\n      rename_i sMid\n      exact h₂ sMid.store sMid.heap s' (h₁ σ h sMid hp hex₁) hex₂\n\ntheorem partialHoare_consequence {P P' Q Q' : Assertion} {c : Cmd}\n    (hpre : P' ⊢ P) (hc : PartialHoare P c Q) (hpost : Q ⊢ Q') :\n    PartialHoare P' c Q' := by\n  intro σ h s' hp hex\n  exact hpost s'.store s'.heap (hc σ h s' (hpre σ h hp) hex)",
     "hard": false
    },
    "m13-2": {
     "name": "partialHoare_ite",
-    "goal": "theorem partialHoare_ite {P Q : Assertion} {b : BExpr} {c₁ c₂ : Cmd}\n    (h₁ : PartialHoare (aAnd P (bTrue b)) c₁ Q)\n    (h₂ : PartialHoare (aAnd P (bFalse b)) c₂ Q) :\n    PartialHoare P (.ite b c₁ c₂) Q",
+    "goal": "theorem partialHoare_ite {P Q : Assertion} {b : BExpr} {c₁ c₂ : Cmd}\n    (h₁ : PartialHoare (aAnd P (bTrue b)) c₁ Q)\n    (h₂ : PartialHoare (aAnd P (bFalse b)) c₂ Q) :\n    PartialHoare P (.ite b c₁ c₂) Q := by",
     "sol": "theorem partialHoare_ite {P Q : Assertion} {b : BExpr} {c₁ c₂ : Cmd}\n    (h₁ : PartialHoare (aAnd P (bTrue b)) c₁ Q)\n    (h₂ : PartialHoare (aAnd P (bFalse b)) c₂ Q) :\n    PartialHoare P (.ite b c₁ c₂) Q := by\n  intro σ h s' hp hex\n  cases hex with\n  | iteTrue hb hex'  => exact h₁ σ h s' ⟨hp, hb⟩ hex'\n  | iteFalse hb hex' => exact h₂ σ h s' ⟨hp, hb⟩ hex'",
     "hard": false
    },
+   "x71": {
+    "name": "hoare_ite",
+    "goal": "theorem hoare_ite {P Q : Assertion} {b : BExpr} {c₁ c₂ : Cmd}\n    (h₁ : Hoare (aAnd P (bTrue b)) c₁ Q)\n    (h₂ : Hoare (aAnd P (bFalse b)) c₂ Q) :\n    Hoare P (.ite b c₁ c₂) Q := by",
+    "sol": "theorem hoare_ite {P Q : Assertion} {b : BExpr} {c₁ c₂ : Cmd}\n    (h₁ : Hoare (aAnd P (bTrue b)) c₁ Q)\n    (h₂ : Hoare (aAnd P (bFalse b)) c₂ Q) :\n    Hoare P (.ite b c₁ c₂) Q := by\n  intro σ h hp\n  cases hbv : b.eval σ with\n  | true =>\n      obtain ⟨s', hex, hq⟩ := h₁ σ h ⟨hp, hbv⟩\n      exact ⟨s', Exec.iteTrue hbv hex, hq⟩\n  | false =>\n      obtain ⟨s', hex, hq⟩ := h₂ σ h ⟨hp, hbv⟩\n      exact ⟨s', Exec.iteFalse hbv hex, hq⟩",
+    "hard": false
+   }
+  }
+ },
+ "invariant": {
+  "num": "36",
+  "phase": "Phase 8 · Control and termination",
+  "title": "The invariant rule",
+  "ex": {
    "m13-3": {
-    "name": "the while rule",
-    "goal": "theorem partialHoare_while {I : Assertion} {b : BExpr} {c : Cmd}\n    (hbody : PartialHoare (aAnd I (bTrue b)) c I) :\n    PartialHoare I (.loop b c) (aAnd I (bFalse b))",
+    "name": "loop_invariant and partialHoare_while",
+    "goal": "theorem loop_invariant {I : Assertion} {b₀ : BExpr} {c₀ : Cmd}\n    (hbody : PartialHoare (aAnd I (bTrue b₀)) c₀ I) :\n    ∀ {cmd : Cmd} {s s' : State}, Exec cmd s s' → cmd = .loop b₀ c₀ →\n      I s.store s.heap → I s'.store s'.heap ∧ b₀.eval s'.store = false := by\n  sorry\n\ntheorem partialHoare_while {I : Assertion} {b : BExpr} {c : Cmd}\n    (hbody : PartialHoare (aAnd I (bTrue b)) c I) :\n    PartialHoare I (.loop b c) (aAnd I (bFalse b)) := by",
     "sol": "theorem loop_invariant {I : Assertion} {b₀ : BExpr} {c₀ : Cmd}\n    (hbody : PartialHoare (aAnd I (bTrue b₀)) c₀ I) :\n    ∀ {cmd : Cmd} {s s' : State}, Exec cmd s s' → cmd = .loop b₀ c₀ →\n      I s.store s.heap → I s'.store s'.heap ∧ b₀.eval s'.store = false := by\n  intro cmd s s' hex\n  induction hex with\n  | skip => intro heq; cases heq\n  | assign => intro heq; cases heq\n  | load _ => intro heq; cases heq\n  | write _ => intro heq; cases heq\n  | free _ => intro heq; cases heq\n  | seq _ _ _ _ => intro heq; cases heq\n  | iteTrue _ _ _ => intro heq; cases heq\n  | iteFalse _ _ _ => intro heq; cases heq\n  | loopFalse hb =>\n      intro heq hI\n      cases heq\n      exact ⟨hI, hb⟩\n  | loopTrue hb hbdy _ _ ihrest =>\n      intro heq hI\n      cases heq\n      exact ihrest rfl (hbody _ _ _ ⟨hI, hb⟩ hbdy)\n\ntheorem partialHoare_while {I : Assertion} {b : BExpr} {c : Cmd}\n    (hbody : PartialHoare (aAnd I (bTrue b)) c I) :\n    PartialHoare I (.loop b c) (aAnd I (bFalse b)) := by\n  intro σ h s' hI hex\n  exact loop_invariant hbody hex rfl hI",
     "hard": true
    },
+   "x72": {
+    "name": "countdown_keeps_cell",
+    "goal": "theorem countdown_keeps_cell (x : Var) (l : Loc) (v : Val) :\n    PartialHoare (l ↦ v) (countdown x) (aAnd (l ↦ v) (bFalse (counterGuard x))) := by",
+    "sol": "theorem countdown_keeps_cell (x : Var) (l : Loc) (v : Val) :\n    PartialHoare (l ↦ v) (countdown x) (aAnd (l ↦ v) (bFalse (counterGuard x))) := by\n  refine partialHoare_while (I := (l ↦ v)) ?_\n  intro σ h s' hpre hex\n  cases hex\n  exact hpre.1",
+    "hard": false
+   }
+  }
+ },
+ "variant": {
+  "num": "37",
+  "phase": "Phase 8 · Control and termination",
+  "title": "A loop that terminates, and owns a cell",
+  "ex": {
    "m13-4": {
     "name": "hoare_while_variant",
-    "goal": "theorem hoare_while_variant {I : Nat → Assertion} {b : BExpr} {c : Cmd}\n    (hstep : ∀ n, Hoare (aAnd (I (n + 1)) (bTrue b)) c (I n))\n    (hstop : ∀ σ h, I 0 σ h → b.eval σ = false) :\n    ∀ n, Hoare (I n) (.loop b c) (aExists fun m => aAnd (I m) (bFalse b))",
+    "goal": "theorem hoare_while_variant {I : Nat → Assertion} {b : BExpr} {c : Cmd}\n    (hstep : ∀ n, Hoare (aAnd (I (n + 1)) (bTrue b)) c (I n))\n    (hstop : ∀ σ h, I 0 σ h → b.eval σ = false) :\n    ∀ n, Hoare (I n) (.loop b c) (aExists fun m => aAnd (I m) (bFalse b)) := by",
     "sol": "theorem hoare_while_variant {I : Nat → Assertion} {b : BExpr} {c : Cmd}\n    (hstep : ∀ n, Hoare (aAnd (I (n + 1)) (bTrue b)) c (I n))\n    (hstop : ∀ σ h, I 0 σ h → b.eval σ = false) :\n    ∀ n, Hoare (I n) (.loop b c) (aExists fun m => aAnd (I m) (bFalse b)) := by\n  intro n\n  induction n with\n  | zero =>\n      intro σ h hI\n      exact ⟨⟨σ, h⟩, Exec.loopFalse (hstop σ h hI), 0, hI, hstop σ h hI⟩\n  | succ n ih =>\n      intro σ h hI\n      cases hbv : b.eval σ with\n      | true =>\n          obtain ⟨s₁, hex₁, hI₁⟩ := hstep n σ h ⟨hI, hbv⟩\n          obtain ⟨s₂, hex₂, hpost⟩ := ih s₁.store s₁.heap hI₁\n          exact ⟨s₂, Exec.loopTrue hbv hex₁ hex₂, hpost⟩\n      | false =>\n          exact ⟨⟨σ, h⟩, Exec.loopFalse hbv, n + 1, hI, hbv⟩",
     "hard": true
    },
    "m13-5": {
-    "name": "a loop that actually terminates",
-    "goal": "def counterGuard (x : Var) : BExpr := .not (.equals (.var x) (.const 0))\n\ndef countdown (x : Var) : Cmd :=\n  .loop (counterGuard x) (.assign x (.minus (.var x) (.const 1)))\n\ntheorem countdown_spec (x : Var) : ∀ n,\n    Hoare (fun σ _ => σ x = n) (countdown x)\n      (aExists fun m => aAnd (fun σ _ => σ x = m) (bFalse (counterGuard x)))",
-    "sol": "def counterGuard (x : Var) : BExpr := .not (.equals (.var x) (.const 0))\n\ndef countdown (x : Var) : Cmd :=\n  .loop (counterGuard x) (.assign x (.minus (.var x) (.const 1)))\n\ntheorem countdown_spec (x : Var) : ∀ n,\n    Hoare (fun σ _ => σ x = n) (countdown x)\n      (aExists fun m => aAnd (fun σ _ => σ x = m) (bFalse (counterGuard x))) := by\n  refine hoare_while_variant (I := fun n σ _ => σ x = n) ?_ ?_\n  · intro n σ h hpre\n    obtain ⟨hx, _⟩ := hpre\n    refine ⟨⟨Store.set σ x (σ x - 1), h⟩, Exec.assign, ?_⟩\n    show Store.set σ x (σ x - 1) x = n\n    have hx' : σ x = n + 1 := hx\n    simp [Store.set, hx']\n  · intro σ h hI\n    have hx : σ x = 0 := hI\n    show (!(decide (Atom.eval σ (.var x) = Atom.eval σ (.const 0)))) = false\n    simp [Atom.eval, hx]",
+    "name": "countdown_spec",
+    "goal": "theorem countdown_spec (x : Var) : ∀ n,\n    Hoare (fun σ _ => σ x = n) (countdown x)\n      (aExists fun m => aAnd (fun σ _ => σ x = m) (bFalse (counterGuard x))) := by",
+    "sol": "theorem countdown_spec (x : Var) : ∀ n,\n    Hoare (fun σ _ => σ x = n) (countdown x)\n      (aExists fun m => aAnd (fun σ _ => σ x = m) (bFalse (counterGuard x))) := by\n  refine hoare_while_variant (I := fun n σ _ => σ x = n) ?_ ?_\n  · intro n σ h hpre\n    obtain ⟨hx, _⟩ := hpre\n    refine ⟨⟨Store.set σ x (σ x - 1), h⟩, Exec.assign, ?_⟩\n    show Store.set σ x (σ x - 1) x = n\n    have hx' : σ x = n + 1 := hx\n    simp [Store.set, hx']\n  · intro σ h hI\n    have hx : σ x = 0 := hI\n    show (!(decide (Atom.eval σ (.var x) = Atom.eval σ (.const 0)))) = false\n    simp [Atom.eval, hx]",
     "hard": false
+   },
+   "x73": {
+    "name": "drain_spec, with drain_step and drain_stop as staged rungs",
+    "goal": "-- Delete the line below and write your own `def drainInv …`, then\n-- `theorem drain_step …`, `theorem drain_stop …` and `theorem drain_spec …`.\n-- Any invariant from which the two obligations follow will be accepted.\nexample : True := by",
+    "sol": "def drainInv (x : Var) (l : Loc) (n : Nat) : Assertion :=\n  aAnd (fact (fun σ => σ x = n)) (l ↦ n)\n\ntheorem drain_step (x : Var) (l : Loc) (n : Nat) :\n    Hoare (aAnd (drainInv x l (n + 1)) (bTrue (counterGuard x)))\n          (drainBody x l) (drainInv x l n) := by\n  intro σ h hpre\n  obtain ⟨⟨hx, hh⟩, _⟩ := hpre\n  have hx' : σ x = n + 1 := hx\n  subst hh\n  refine ⟨_, Exec.seq Exec.assign (Exec.write (singleton_same l (n + 1))), ?_, ?_⟩\n  · show Store.set σ x (σ x - 1) x = n\n    simp [Store.set, hx']\n  · show Heap.write (Heap.singleton l (n + 1)) l (Store.set σ x (σ x - 1) x)\n        = Heap.singleton l n\n    have hset : Store.set σ x (σ x - 1) x = n := by simp [Store.set, hx']\n    rw [hset, write_singleton]\n\ntheorem drain_stop (x : Var) (l : Loc) :\n    ∀ σ h, drainInv x l 0 σ h → (counterGuard x).eval σ = false := by\n  intro σ h hI\n  have hx : σ x = 0 := hI.1\n  show (!(decide (Atom.eval σ (.var x) = Atom.eval σ (.const 0)))) = false\n  simp [Atom.eval, hx]\n\ntheorem drain_spec (x : Var) (l : Loc) : ∀ n,\n    Hoare (drainInv x l n) (drain x l)\n      (aExists fun m => aAnd (drainInv x l m) (bFalse (counterGuard x))) :=\n  hoare_while_variant (fun n => drain_step x l n) (drain_stop x l)",
+    "hard": true
    }
-  },
-  "code": [
-   "theorem partial_of_total {P Q : Assertion} {c : Cmd}\n    (h : Hoare P c Q) : PartialHoare P c Q := by\n  intro σ hh s' hp hex\n  obtain ⟨s'', hex'', hq⟩ := h σ hh hp\n  have : s' = s'' := exec_deterministic hex hex''\n  rw [this]; exact hq",
-   "def bTrue (b : BExpr) : Assertion := fun σ _ => b.eval σ = true\n\ndef bFalse (b : BExpr) : Assertion := fun σ _ => b.eval σ = false",
-   "inductive Cmd where\n  | skip\n  | assign : Var  → Atom → Cmd\n  | load   : Var  → Atom → Cmd      -- x := [a]     address is an expression\n  | write  : Atom → Atom → Cmd      -- [a] := e\n  | free   : Atom → Cmd             -- free a\n  | seq    : Cmd → Cmd → Cmd\n  | ite    : BExpr → Cmd → Cmd → Cmd\n  | loop   : BExpr → Cmd → Cmd",
-   "theorem hoare_load' (x : Var) (a : Atom) (l : Loc) (v : Val) :\n    Hoare (aAnd (fact (fun σ => a.eval σ = l)) (l ↦ v))\n          (.load x a)\n          (pure (fun σ => σ x = v) ∗ (l ↦ v))"
-  ]
+  }
  },
- "m14": {
-  "num": "M14",
-  "phase": "Phase 3 · Advanced separation logic",
-  "title": "Optional — allocation",
+ "beyond": {
+  "num": "38",
+  "phase": "Phase 9 · Beyond",
+  "title": "Allocation, generalisation, and what is undone",
   "ex": {
-   "m14-1": {
-    "name": "add nondeterministic allocation",
-    "goal": null,
-    "sol": null,
+   "x74": {
+    "name": "pcmStar_comm",
+    "goal": "theorem pcmStar_comm {M : Type} (K : PCM M) (P Q : M → Prop) (m : M) :\n    pcmStar K P Q m → pcmStar K Q P m := by",
+    "sol": "theorem pcmStar_comm {M : Type} (K : PCM M) (P Q : M → Prop) (m : M) :\n    pcmStar K P Q m → pcmStar K Q P m := by\n  intro ⟨m₁, m₂, hv, hm, hp, hq⟩\n  exact ⟨m₂, m₁, K.valid_comm _ _ hv, by rw [hm, K.op_comm _ _ hv], hq, hp⟩",
     "hard": false
    },
-   "m14-2": {
-    "name": "small-footprint alloc rule",
-    "goal": null,
-    "sol": null,
-    "hard": false
-   },
-   "m14-3": {
-    "name": "locality of alloc under framing",
-    "goal": null,
-    "sol": null,
-    "hard": false
-   },
-   "m14-4": {
-    "name": "alloc, initialise, free",
-    "goal": null,
-    "sol": null,
+   "x75": {
+    "name": "pcmStar_unit_left, and a PCM of your own",
+    "goal": "theorem pcmStar_unit_left {M : Type} (K : PCM M) (P : M → Prop) (m : M) :\n    pcmStar K (fun x => x = K.unit) P m → P m := by",
+    "sol": "theorem pcmStar_unit_left {M : Type} (K : PCM M) (P : M → Prop) (m : M) :\n    pcmStar K (fun x => x = K.unit) P m → P m := by\n  intro ⟨m₁, m₂, _, hm, he, hp⟩\n  subst he\n  rw [hm, K.unit_left]\n  exact hp",
     "hard": false
    }
-  },
-  "code": [
-   "| alloc : Var → Atom → Cmd\n\n-- semantics: choose ANY unallocated location, store the value there,\n-- and put the location in the destination variable.\n\ntheorem hoare_alloc :\n    Hoare emp (.alloc x e)\n      (aExists fun l => pure (fun σ => σ x = l) ∗ (l ↦ e.eval σ))",
-   "abbrev Heap := List (Loc × Val)   -- with a no-duplicate-keys invariant"
-  ]
+  }
+ },
+ "tactics": {
+  "num": "§",
+  "phase": "Reference",
+  "title": "The tactic index",
+  "ex": {}
  },
  "ref": {
   "num": "§",
   "phase": "Reference",
-  "title": "Reference, discipline, and what to retain",
-  "ex": {},
-  "code": []
+  "title": "Notation, theorems, discipline",
+  "ex": {}
  }
 }

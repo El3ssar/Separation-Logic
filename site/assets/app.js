@@ -9,6 +9,30 @@
 
 /* ============ chapter registry ============ */
 const COURSE = [];
+
+/* Edition-1 chapter ids, kept alive: #m4 was a permanent link for a year, and
+   the second edition renumbered every chapter. Each old id maps to the unit that
+   inherits its opening material. */
+const REDIRECT = {
+  'overview': 'aliasing',
+  'm0': 'update',
+  'm1': 'heap',
+  'm2': 'disjoint',
+  'm3': 'assertions',
+  'm4': 'star',
+  'm5': 'language',
+  'm6': 'hoare',
+  'm7': 'small-footprint',
+  'm8': 'locality',
+  'm9': 'symbolic',
+  'm10': 'listrep',
+  'm11': 'wand',
+  'm12': 'wp',
+  'm13': 'partial',
+  'm14': 'beyond',
+  'ref': 'ref'
+};
+
 window.registerChapter = function (ch) { COURSE.push(ch); };
 
 /* ============ storage: window.storage when available, localStorage, memory ============ */
@@ -642,7 +666,7 @@ window.__boot = async function boot() {
 
   /* #id in the URL wins over the stored position */
   const hash = location.hash.replace(/^#/, '');
-  const byHash = COURSE.findIndex(c => c.id === hash);
+  const byHash = COURSE.findIndex(c => c.id === (REDIRECT[hash] || hash));
   if (byHash >= 0) cur = byHash;
   else {
     const c = await Store.get('sl:cur');
